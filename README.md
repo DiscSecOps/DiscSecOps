@@ -18,22 +18,7 @@ Social application for discussing DevSecOps
     cd DiscSecOps
     ```
 
-2.  **Server:**
-    *   Navigate to the `server` directory:
-        ```bash
-        cd server
-        ```
-    *   Install dependencies:
-        ```bash
-        npm install
-        ```
-    *   Start the server:
-        ```bash
-        npm start
-        ```
-    *   The server will be running on `http://localhost:3000`.
-
-3.  **Client:**
+2.  **Client:**
     *   Navigate to the `client` directory (from the root of the project):
         ```bash
         cd client
