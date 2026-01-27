@@ -1,0 +1,27 @@
+services:
+  # The Main App Container (VS Code connects to this)
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      # Mount the current folder to /workspace
+      - ../:/workspace:cached
+    # Keep the container running indefinitely
+    command: sleep infinity
+    # Connect to the same network as the database
+    network_mode: service:db
+
+  # The Database Container
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app_db
+
+volumes:
+  postgres-data:

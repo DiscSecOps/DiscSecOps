@@ -1,0 +1,31 @@
+{
+  "name": "Full Stack Python/React/Playwright",
+  "dockerComposeFile": "compose.yaml",
+  "service": "app",
+  "workspaceFolder": "/workspace",
+
+  "customizations": {
+    "vscode": {
+      "settings": {
+        "python.defaultInterpreterPath": "backend/.venv/bin/python",
+        "python.testing.pytestArgs": ["tests"],
+        "python.testing.unittestEnabled": false,
+        "python.testing.pytestEnabled": true,
+        "charliermarsh.ruff": { "args": ["--config=backend/pyproject.toml"]}
+      },
+      "extensions": [
+        "ms-python.python",
+        "charliermarsh.ruff",
+        "tamasfe.even-better-toml",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode"
+      ]
+    }
+  },
+
+  // 1. Install dependencies immediately after the container builds
+  "postCreateCommand": "make install-backend",
+
+  // 2. Connect as the non-root user
+  "remoteUser": "vscode"
+}

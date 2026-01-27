@@ -1,3 +1,80 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Backend for DiscSecOps FastAPI + React Social Application"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "alembic>=1.14.0",
+    "argon2-cffi>=23.1.0",
+    "email-validator>=2.2.0",
+    "fastapi>=0.115.0",
+    "pwdlib>=0.2.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "pyjwt>=2.10.0",
+    "python-dotenv>=1.0.1",
+    "python-multipart>=0.0.20",
+    "sqlalchemy>=2.0.36",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[dependency-groups]
+dev = [
+    "alembic>=1.14.0",
+    "argon2-cffi>=23.1.0",
+    "bandit>=1.8.0",
+    "email-validator>=2.2.0",
+    "fastapi>=0.115.0",
+    "httpx>=0.28.0",
+    "mypy>=1.14.0",
+    "pre-commit>=4.0.0",
+    "pwdlib>=0.2.0",
+    "pydantic>=2.10.0",
+    "pydantic-settings>=2.7.0",
+    "pyjwt>=2.10.0",
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.25.0",
+    "pytest-cov>=6.0.0",
+    "python-dotenv>=1.0.1",
+    "python-multipart>=0.0.20",
+    "ruff>=0.9.0",
+    "safety>=3.2.0",
+    "sqlalchemy>=2.0.36",
+    "uvicorn[standard]>=0.34.0",
+]
+
+[tool.ruff]
+# Target Python 3.12 (Matches your Dev Container)
+target-version = "py312"
+# 88 is the standard "Black" line length
+line-length = 88
+
+[tool.ruff.lint]
+# Select the rules that replace your old tools:
+# E, W   = pycodestyle (standard pep8)
+# F      = pyflakes (catches bugs, unused imports)
+# I      = isort (sorts imports)
+# B      = flake8-bugbear (catches common bugs)
+# UP     = pyupgrade (automatically upgrades old syntax)
+select = ["E", "W", "F", "I", "B", "UP"]
+
+ignore = [
+    # E501: Ignore line length violations (let the formatter handle it)
+    "E501",
+]
+
+[tool.ruff.lint.isort]
+# These settings ensure Ruff behaves exactly like your old isort "profile = black"
+known-first-party = ["app"]
+
+[tool.ruff.format]
+# These settings ensure Ruff behaves exactly like Black
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
@@ -11,17 +88,9 @@ addopts = [
     "--cov-report=html",
 ]
 
-[tool.black]
-line-length = 88
-target-version = ['py311']
-include = '\.pyi?$'
-
-[tool.isort]
-profile = "black"
-line_length = 88
-
 [tool.mypy]
-python_version = "3.11"
+# Updated to 3.12 to match container
+python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
