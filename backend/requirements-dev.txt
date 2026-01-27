@@ -3,21 +3,21 @@
 -r requirements.txt
 
 # Testing
-pytest==7.4.4
-pytest-asyncio==0.23.3
-pytest-cov==4.1.0
-httpx==0.26.0
+pytest>=8.0.0
+pytest-asyncio>=0.25.0
+pytest-cov>=6.0.0
+httpx>=0.28.0
 
 # Code Quality
-black==24.1.1
-flake8==7.0.0
-mypy==1.8.0
-isort==5.13.2
-pylint==3.0.3
+black>=25.1.0
+flake8>=7.1.0
+mypy>=1.14.0
+isort>=5.13.2
+pylint>=3.3.0
 
 # Security scanning
-bandit==1.7.6
-safety==3.0.1
+bandit>=1.8.0
+safety>=3.2.0
 
 # Development tools
-pre-commit==3.6.0
+pre-commit>=4.0.0

@@ -1,19 +1,31 @@
 # Production Dependencies
-fastapi==0.109.0
-uvicorn[standard]==0.27.0
-pydantic==2.5.3
-pydantic-settings==2.1.0
-python-jose[cryptography]==3.3.0
-passlib[bcrypt]==1.7.4
-python-multipart==0.0.6
+
+# Framework
+fastapi>=0.115.0
+uvicorn[standard]>=0.34.0
+
+# Data Validation & Settings
+pydantic>=2.10.0
+pydantic-settings>=2.7.0
+
+# Authentication & Security (Modernized)
+# Replaces python-jose
+PyJWT>=2.10.0
+# Replaces passlib and bcrypt
+pwdlib>=0.2.0
+argon2-cffi>=23.1.0
+
+# Critical Security Fix (DoS protection)
+python-multipart>=0.0.20
 
 # Database
-sqlalchemy==2.0.25
-alembic==1.13.1
+sqlalchemy>=2.0.36
+alembic>=1.14.0
 
-# For production use PostgreSQL:
-# psycopg2-binary==2.9.9
+# Database Driver
+# Use this for production (no binary wheels)
+# psycopg[binary]>=3.2.0
 
-# Validation & utilities
-email-validator==2.1.0
-python-dotenv==1.0.0
+# Utilities
+email-validator>=2.2.0
+python-dotenv>=1.0.1
