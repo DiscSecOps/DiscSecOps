@@ -29,13 +29,13 @@ jobs:
         run: make install-backend
 
       - name: Lint & Format (Ruff + Mypy)
-        run: make lint
+        run: make lint-backend
 
       - name: Security Scan (Bandit + Safety)
-        run: make security
+        run: make security-backend
 
       - name: Run Tests
-        run: make test
+        run: make test-backend
     
     # Uncomment when ready to build Docker image
     # - name: Build Docker image
