@@ -15,7 +15,7 @@ install-frontend:
 
 # -- Backend Commands --
 test-backend:
-    @echo "🧪 Running Backend Tests..."
+	@echo "🧪 Running Backend Tests..."
 	cd backend && uv run pytest
 
 lint-backend:
@@ -50,13 +50,13 @@ clean:
 
 help:
 	@echo "Available commands:"
-	@echo "  make install			- Install both backend and frontend dependencies"
-	@echo "  make install-backend	- Install both backend and frontend dependencies"
-	@echo "  make install-frontend	- Install both backend and frontend dependencies"
-	@echo "  make test-backend		- Run backend tests (pytest)"
-	@echo "  make lint-backend		- Run backend linters (ruff, mypy)"
-	@echo "  make format-backend	- Format backend code (ruff)"
-	@echo "  make security-backend	- Run security scans (bandit, safety)"
-	@echo "  make run-backend		- Start FastAPI server (accessible outside container)"
-	@echo "  make run-frontend		- Start React dev server"
-	@echo "  make clean				- Remove artifacts and virtual environments"
+	@echo "  make install - Install both backend and frontend dependencies"
+	@echo "  make install-backend - Install both backend and frontend dependencies"
+	@echo "  make install-frontend - Install both backend and frontend dependencies"
+	@echo "  make test-backend - Run backend tests (pytest)"
+	@echo "  make lint-backend - Run backend linters (ruff, mypy)"
+	@echo "  make format-backend - Format backend code (ruff)"
+	@echo "  make security-backend - Run security scans (bandit, safety)"
+	@echo "  make run-backend - Start FastAPI server (accessible outside container)"
+	@echo "  make run-frontend - Start React dev server"
+	@echo "  make clean - Remove artifacts and virtual environments"
