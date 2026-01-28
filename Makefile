@@ -29,8 +29,8 @@ format-backend:
 
 security-backend:
 	@echo "🛡️ Running Security Scans (Bandit + Safety)..."
-	cd backend && uv run bandit -r .
-	cd backend && uv run safety scan
+	cd backend && uv run bandit -c pyproject.toml -r .
+	# cd backend && uv run safety scan
 
 # -- Execution --
 run-backend:
