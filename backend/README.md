@@ -10,134 +10,122 @@ This is the Python backend environment setup for a social application project fo
 
 ```
 backend/
-├── requirements.txt           # Production dependencies
-├── requirements-dev.txt       # Development dependencies
+├── .venv/                    # Virtual environment (managed by uv)
+├── app/                      # Application source code
+├── tests/                    # Test suite
 ├── .env.example              # Environment variables template
 ├── .gitignore                # Git ignore rules
-├── pyproject.toml            # Python project configuration
-└── setup.ps1                 # Quick setup script
+├── pyproject.toml            # Project configuration & dependencies
+└── uv.lock                   # Exact dependency versions
 ```
+
+(Note: The Makefile and .devcontainer configuration reside in the project root)
 
 ## 🚀 Quick Start
 
-### Prerequisites
-- Python 3.11+
-- pip
+### Option 1: Dev Container (Recommended)
+This project is designed to run in a VS Code Dev Container. This ensures you have Python, Node.js, Postgres, and all tools pre-installed.
 
-### Installation
+Open the project root in VS Code.
 
-**Option 1: Quick Setup (Recommended)**
-```powershell
-.\setup.ps1
+When prompted, click "Reopen in Container".
+
+Wait for the build to finish. The environment will automatically run make install to set up dependencies.
+
+### Option 2: Manual Setup (Local)
+If you prefer running locally, you must have uv installed.
+
+### Install dependencies: (Run from the project root)
+
+```Bash
+make install-backend
 ```
 
-**Option 2: Manual Setup**
+### Create environment file:
 
-1. **Create virtual environment:**
-```powershell
-python -m venv venv
-```
-
-2. **Activate virtual environment:**
-```powershell
-.\venv\Scripts\Activate.ps1
-```
-
-3. **Install dependencies:**
-```powershell
-pip install -r requirements.txt
-pip install -r requirements-dev.txt
-```
-
-4. **Create environment file:**
-```powershell
-copy .env.example .env
-# Edit .env and update SECRET_KEY and other settings
+```Bash
+cd backend
+cp .env.example .env
+# Edit .env to set your DATABASE_URL and SECRET_KEY
 ```
 
 ## 🧪 Testing
+We use pytest via the root Makefile.
 
-**Run tests (when implemented):**
-```powershell
-pytest
-```
+### Run tests:
 
-**Run tests with coverage:**
-```powershell
-pytest --cov=app --cov-report=html
+```Bash
+make test-backend
 ```
+(Runs pytest with coverage reports automatically)
+
 
 ## 🔒 Security
 
 ### Environment Variables
-Never commit `.env` file with real secrets! Use `.env.example` as template.
+Never commit .env file with real secrets! Use .env.example as template.
 
-### Security Tools (Development):
-```powershell
-# Check for security vulnerabilities in dependencies
-safety check
+### Security Tools
+We use Bandit (SAST) and Safety (SCA).
 
-# Scan code for security issues (when code is added)
-bandit -r app/
+### Run full security scan:
+
+```Bash
+make security-backend
 ```
 
 ## 📊 Code Quality
+We use Ruff (an ultra-fast replacement for Black, Flake8, and Isort) and Mypy for type checking.
 
-**Format code (when implemented):**
-```powershell
-black app/ tests/
+### Format code (Fix style issues):
+
+```Bash
+make format-backend
 ```
 
-**Sort imports:**
-```powershell
-isort app/ tests/
-```
+### Lint code (Check for errors & types):
 
-**Lint code:**
-```powershell
-flake8 app/ tests/
-```
-
-**Type checking:**
-```powershell
-mypy app/
+````Bash
+make lint-backend
 ```
 
 ## 🎯 Development Workflow
 
 1. **Create feature branch** from main
-2. **Implement feature** with tests
-3. **Run tests locally**: `pytest`
-4. **Check code quality**: `black`, `flake8`, `mypy`
-5. **Security scan**: `bandit`, `safety`
-6. **Commit and push** to feature branch
-7. **Create Pull Request**
-8. **Code review** by team
-9. **Merge** to main
+2. **Implement feature** with testsRun tests: make test
+3. **Check code quality:** make lint-backend
+4. **Security scan:** make security-backend
+5. **Commit and push** to feature branch
+6. **Create Pull Request** (CI will run these same checks automatically)
+7. **Code review** by team
+8. **Merge** to main
 
 ## 🛠️ Technology Stack
 
-- **Framework:** FastAPI (to be implemented)
+- **Containerization:** Docker Dev Containers (Playwright Base)
+- **Dependency Manager:** uv (replaces pip/poetry)
+- **Framework:** FastAPI 
 - **Server:** Uvicorn
-- **Authentication:** JWT (python-jose)
-- **Password Hashing:** Passlib + bcrypt
-- **Validation:** Pydantic
+- **Authentication:** PyJWT (Modern replacement for python-jose)
+- **Password Hashing:** pwdlib + argon2 (Modern replacement for passlib)
+- **Validation:** Pydantic v2
 - **Database:** SQLAlchemy (SQLite for dev, PostgreSQL for prod)
 - **Testing:** pytest
-- **Code Quality:** black, flake8, mypy, isort
+- **Code Quality:** Ruff (replaces black/flake8/isort) + mypy
 - **Security:** bandit, safety
 
 ## 📖 Next Steps
 
-1. ✅ Environment setup completed (Issue #8)
-2. 🔄 Create application structure
-3. 🔄 Implement database models
-4. 🔄 Implement authentication
-5. 🔄 Implement user management
-6. 🔄 Implement circles functionality
-7. 🔄 Setup CI/CD pipeline
-8. 🔄 Add Docker configuration
-9. 🔄 Deploy to production
+1.  ✅ Environment setup completed (Issue #8)
+2.  ✅ Modernized stack (uv, ruff, devcontainers)
+3.  🔄 Create application structure
+4.  🔄 Implement database models
+5.  🔄 Implement authentication
+6.  🔄 Implement user management
+7.  🔄 Implement circles functionality
+8.  🔄 Setup CI/CD pipeline
+9.  🔄 Add Docker configuration
+10. 🔄 Deploy to production
 
 ## 🤝 Contributing
 
