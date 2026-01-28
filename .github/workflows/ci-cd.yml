@@ -1,0 +1,53 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+ 
+  # Backend CI/CD Job
+  backend-ci:
+    name: Backend CI
+    runs-on: ubuntu-latest
+        
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      # Sets up Python 3.12 + uv + Caching automatically
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
+      - name: Install Backend Dependencies
+        run: make install-backend
+
+      - name: Lint & Format (Ruff + Mypy)
+        run: make lint-backend
+
+      - name: Security Scan (Bandit + Safety)
+        run: make security-backend
+
+      - name: Run Tests
+        run: make test-backend
+    
+    # Uncomment when ready to build Docker image
+    # - name: Build Docker image
+    #   run: docker build -t backend-app .
+
+  # Deploy Job (runs after both frontend and backend pass)
+  # deploy:
+  #   name: Deploy
+  #   needs: [frontend-ci, backend-ci]
+  #   runs-on: ubuntu-latest
+  #   if: github.ref == 'refs/heads/main'
+  #   
+  #   steps:
+  #   - name: Deploy to production
+  #     run: echo "Deploy to your hosting platform"
