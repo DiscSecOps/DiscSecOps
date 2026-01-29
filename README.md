@@ -4,10 +4,33 @@
 
 A modern social web application built with React, FastAPI, and DevSecOps practices. This project focuses on continuous integration, automated testing, and secure deployment.
 
+## 🛠️ Development Environment
+
+This project is built using **Visual Studio Code Dev Containers**. This ensures that everyone working on the project uses the exact same OS, tools, and dependencies (Python, Node.js, Playwright browsers, etc.) without needing to install them manually on their local machine.
+
+### Prerequisites
+
+Before you begin, ensure you have the following installed:
+
+1.  **Container Runtime** (Choose one):
+    * [**Docker Desktop**](https://www.docker.com/products/docker-desktop/)
+    * [**Rancher Desktop**](https://rancherdesktop.io/) (Ensure `dockerd` (moby) is selected in Kubernetes Settings if using this)
+2.  [**Visual Studio Code**](https://code.visualstudio.com/)
+3.  **Dev Containers Extension** for VS Code (id: `ms-vscode-remote.remote-containers`)
+
+## 🚀 Quick Start: Dev Container
+
+This project is designed to run in a VS Code Dev Container. This ensures you have Python, Node.js, Postgres, and all tools pre-installed.
+
+1. Open Docker Desktop (or Rancher Desktop)
+2. Open the project root in VS Code.
+3. When prompted, click "Reopen in Container". 
+4. Wait for the build to finish. The environment will automatically run make install to set up dependencies.
+
 ## Project Structure
 
-text
-social-app-devsecops/
+```
+/
 ├── frontend/                    # React application with Vite
 │   ├── src/                    # Source code
 │   ├── node_modules/           # Frontend dependencies
@@ -17,10 +40,18 @@ social-app-devsecops/
 │   └── index.html  
     ├── tests/
             e2e           # Entry point
-├── backend/                    # FastAPI application (to be developed)
+├── backend/
+│   ├── .venv/                    # Virtual environment (managed by uv)
+│   ├── app/                      # Application source code
+│   ├── tests/                    # Test suite
+│   ├── .env.example              # Environment variables template
+│   ├── .gitignore                # Git ignore rules
+│   ├── pyproject.toml            # Project configuration & dependencies
+│   └── uv.lock                   # Exact dependency versions
                      # Playwright E2E tests
 ├── .github/workflows/         # CI/CD pipelines
 └── README.md                  # This file
+```
 
 ## Frontend Setup
 
