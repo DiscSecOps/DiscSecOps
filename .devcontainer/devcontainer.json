@@ -4,6 +4,13 @@
   "service": "app",
   "workspaceFolder": "/workspace",
 
+  // 1. FEATURES: This is the modern way to add tools
+  "features": {
+    // 1. Adds a lightweight desktop environment + VNC Server
+    "ghcr.io/devcontainers/features/desktop-lite:1": {
+      "version": "latest"
+    }},
+
   "customizations": {
     "vscode": {
       "settings": {
@@ -14,6 +21,7 @@
         "charliermarsh.ruff": { "args": ["--config=backend/pyproject.toml"]}
       },
       "extensions": [
+        "ms-playwright.playwright",
         "ms-python.python",
         "charliermarsh.ruff",
         "tamasfe.even-better-toml",

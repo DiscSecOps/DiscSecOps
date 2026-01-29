@@ -25,5 +25,14 @@ export default defineConfig([
     rules: {
       'no-unused-vars': ['error', { varsIgnorePattern: '^[A-Z_]' }],
     },
+  },// 2. Node.js Configuration (NEW)
+  // This tells ESLint: "For these specific files, allow Node variables like 'process'"
+  {
+    files: ['playwright.config.js', 'vite.config.js', 'eslint.config.js'],
+    languageOptions: {
+      globals: {
+        ...globals.node,
+      },
+    },
   },
 ])

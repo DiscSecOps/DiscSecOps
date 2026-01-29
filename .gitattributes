@@ -1,0 +1,11 @@
+# Force all files to be checkout out with Linux line endings (LF)
+* text=auto eol=lf
+
+# Binary files should not be touched
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary

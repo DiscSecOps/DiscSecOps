@@ -6,6 +6,7 @@ import react from '@vitejs/plugin-react'
 export default defineConfig({
   plugins: [react()],
   server: {
+    host: '0.0.0.0', // host for container
     port: 3000,  // force Vite dev server to run on port 3000
     open: true, // Automatically open browser on startup
   },
