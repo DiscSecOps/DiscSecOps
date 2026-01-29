@@ -1,6 +1,6 @@
 # Base: Official Playwright Python image (Ubuntu 24.04 "Noble")
 # This gives you Python 3.12+ and all browsers (Chromium, Firefox, WebKit) pre-installed.
-FROM mcr.microsoft.com/playwright/python:v1.56.0-noble
+FROM mcr.microsoft.com/playwright/python:v1.57.0-noble
 
 # Avoid Python writing .pyc files and buffering stdout
 ENV PYTHONDONTWRITEBYTECODE=1 \
