@@ -1,6 +1,6 @@
 # Root Makefile
 
-.PHONY: install install-backend install-frontend test-backend lint-backend format-backend security-backend run-backend run-frontend clean help
+.PHONY: install install-backend install-frontend install-frontend-clean test-backend lint-backend format-backend security-backend run-backend run-frontend clean help
 
 # -- Installation (Handles both stacks) --
 install: install-backend install-frontend
@@ -11,9 +11,9 @@ install-backend:
 
 install-frontend:
 	@echo "🚀 Installing Frontend dependencies..."
-	cd frontend && npm install	
+	cd frontend && npm install
 
-# -- Backend Commands --
+# -- Testing and Quality Control --
 test-backend:
 	@echo "🧪 Running Backend Tests..."
 	cd backend && uv run pytest
@@ -22,6 +22,10 @@ lint-backend:
 	@echo "🔍 Running Linters (Ruff + Mypy)..."
 	cd backend && uv run ruff check .
 	cd backend && uv run mypy .
+
+lint-frontend:
+	@echo "🔍 Running Linter (eslint)..."
+	cd frontend && npm run lint
 
 format-backend:
 	@echo "🎨 Formatting Code (Ruff)..."
@@ -32,6 +36,24 @@ security-backend:
 	cd backend && uv run bandit -c pyproject.toml -r .
 	# cd backend && uv run safety scan
 
+test-frontend-unit:
+	@echo "🧪 Running Frontend Unit Tests (Vitest)..."
+	cd frontend && npm run test:run
+
+test-e2e:
+	@echo "🎭 Running E2E Tests..."
+	cd frontend && npm run test:e2e
+
+test-e2e-ui:
+	@echo "📺 Running Headed Tests (Check Port 6080)..."
+	# We manually set DISPLAY to :1 (the default for desktop-lite)
+	cd frontend && DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 npm run test:e2e:ui
+
+test-e2e-headed:
+	@echo "🎭 Running Headed Tests (Virtual Screen)..."
+	# We wrap the npm command inside xvfb-run
+	cd frontend && xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test:e2e:headed
+
 # -- Execution --
 run-backend:
 	@echo "🐍 Starting FastAPI Backend..."
@@ -40,7 +62,7 @@ run-backend:
 
 run-frontend:
 	@echo "⚛️ Starting React Frontend..."
-	cd frontend && npm start
+	cd frontend && npm run dev
 
 # -- Maintenance --
 clean:
@@ -54,7 +76,12 @@ help:
 	@echo "  make install-backend - Install both backend and frontend dependencies"
 	@echo "  make install-frontend - Install both backend and frontend dependencies"
 	@echo "  make test-backend - Run backend tests (pytest)"
+	@echo "  make test-frontend-unit - Run frontend tests (Vitest)"
+	@echo "  make test-e2e - Run end-to-end tests (Playwright)"
+	@echo "  make test-e2e-ui - Run headed end-to-end tests (Playwright with UI via VNC on port localhost:6080)"
+	@echo "  make test-e2e-headed - Run headed end-to-end tests (Playwright with virtual screen)"	
 	@echo "  make lint-backend - Run backend linters (ruff, mypy)"
+	@echo "  make lint-frontend - Run frontend linters (eslint)"
 	@echo "  make format-backend - Format backend code (ruff)"
 	@echo "  make security-backend - Run security scans (bandit, safety)"
 	@echo "  make run-backend - Start FastAPI server (accessible outside container)"
