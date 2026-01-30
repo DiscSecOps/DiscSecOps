@@ -31,7 +31,7 @@ jobs:
       working-directory: ./frontend
     
     - name: Run Vitest unit tests
-      run: make test-frontend #npm run test:run
+      run: make test-frontend-unit #npm run test:run
     
     - name: Install Playwright browsers
       run: npx playwright install chromium
