@@ -28,6 +28,7 @@ jobs:
     
     - name: Install frontend dependencies (clean)
       run: npm ci
+      working-directory: ./frontend
     
     - name: Run Vitest unit tests
       run: make test-frontend #npm run test:run
