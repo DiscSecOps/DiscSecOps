@@ -1,9 +1,11 @@
 services:
   # The Main App Container (VS Code connects to this)
   app:
+    shm_size: '2gb' # this helps with running browsers inside the container (the default is just 64mb)
     build:
       context: .
       dockerfile: Dockerfile
+
     volumes:
       # Mount the current folder to /workspace
       - ../:/workspace:cached
