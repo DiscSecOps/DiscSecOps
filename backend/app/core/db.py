@@ -1,11 +1,12 @@
 from collections.abc import AsyncGenerator
 
-from backend.app.core.config import settings
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
     create_async_engine,
 )
+
+from app.core.config import settings
 
 # Create an asynchronous engine to connect to the PostgreSQL database
 # The DATABASE_URL is loaded from settings, which defaults to the local dev container DB
