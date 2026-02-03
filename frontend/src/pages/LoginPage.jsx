@@ -41,6 +41,7 @@ function LoginPage() {
           <div className="form-group">
             <label htmlFor="username">Username</label>
             <input
+              name='username'
               id="username"
               type="text"
               value={username}
@@ -55,6 +56,7 @@ function LoginPage() {
           <div className="form-group">
             <label htmlFor="password">Password</label>
             <input
+              name='password'
               id="password"
               type="password"
               value={password}

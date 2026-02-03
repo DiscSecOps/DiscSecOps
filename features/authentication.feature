@@ -1,20 +1,22 @@
-
+# features/authentication.feature
 Feature: User Authentication
+  
+  @auth @smoke
+  Scenario: Existing user can login
+    Given I am an existing user with username "alex"
+    When I go to login page
+    And I enter username "alex" and password "secret123"
+    And I submit login form
+    Then I should see my feed page
+    And I should see my username "alex" displayed
 
-  As a user
-  I want to register and login
-  So I can access the social circles app
-
-  Scenario: Successful user registration
-    Given I am on the registration page
-    When I fill in valid registration details
-    And I submit the registration form
-    Then I should see a success message
-    And I should be redirected to the login page
-
-  Scenario: User login with valid credentials
-    Given I have a registered account
-    When I enter my email and password
-    And I click the login button
-    Then I should be redirected to the dashboard
-    And I should see my profile information"
+  @auth @registration
+  Scenario: New user is redirected to registration
+    Given I am not a registered user
+    When I go to login page
+    And I enter username "newuser" and password "pass123"
+    And I submit login form
+    Then I should see message "User not found"
+    And I should see link "Create an account"
+    When I click "Create an account"
+    Then I should be on registration page

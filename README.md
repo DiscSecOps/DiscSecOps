@@ -222,7 +222,7 @@ Testing
 bash
 npm test             # Run Vitest in watch mode
 npm run test:run     # Run Vitest once
-npm run test:e2e     # Run Playwright E2E tests ***Test*** development server on [http://localhost:3001]
+npm run test:e2e     # Run Playwright E2E tests ***Test*** development server on [http://localhost:3000]
 npm run test:e2e:ui  # Run Playwright with UI mode
 npm run test:e2e:headed  # Run Playwright in headed browser
 
