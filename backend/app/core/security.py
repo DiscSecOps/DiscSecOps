@@ -4,6 +4,7 @@ Handles password hashing, JWT tokens, and session management
 """
 import secrets
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 import jwt
 from pwdlib import PasswordHash
@@ -85,7 +86,8 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return encoded_jwt
 
 
-from typing import Any
+
+
 
 def decode_token(token: str) -> Any:
     """

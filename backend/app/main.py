@@ -2,8 +2,9 @@
 Main FastAPI application (ASYNC with PostgreSQL)
 Initializes the API with authentication endpoints and CORS for frontend
 """
+from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
-from typing import Any, AsyncGenerator
+from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware

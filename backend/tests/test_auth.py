@@ -2,8 +2,9 @@
 Comprehensive tests for async authentication endpoints
 Tests username-based login, registration, JWT, and sessions
 """
+from collections.abc import AsyncGenerator
+
 import pytest
-from typing import AsyncGenerator
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool

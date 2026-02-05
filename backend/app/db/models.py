@@ -7,6 +7,7 @@ from sqlalchemy import Boolean, DateTime, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import func
 
+
 class Base(DeclarativeBase):
     pass
 

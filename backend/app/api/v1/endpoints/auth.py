@@ -11,8 +11,8 @@ import logging
 import secrets
 import traceback
 from datetime import datetime, timedelta
-
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -196,7 +196,9 @@ async def login(
 
 
 @router.post("/logout")
-async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
+async def logout(
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
+) -> dict[str, Any]:
     """
     Logout user (invalidate session if using session-based auth)
 
