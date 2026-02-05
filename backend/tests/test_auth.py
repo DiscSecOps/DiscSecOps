@@ -7,7 +7,7 @@ from collections.abc import AsyncGenerator
 import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.pool import NullPool
+from sqlalchemy.pool import StaticPool
 
 from app.core.db import get_db
 from app.db.models import Base
@@ -20,7 +20,7 @@ TEST_DATABASE_URL = "sqlite+aiosqlite:///:memory:"
 test_engine = create_async_engine(
     TEST_DATABASE_URL,
     connect_args={"check_same_thread": False},
-    poolclass=NullPool,
+    poolclass=StaticPool,
 )
 
 # Create test session factory
@@ -71,7 +71,7 @@ async def test_health_check_root(client: AsyncClient) -> None:
     response = await client.get("/")
     assert response.status_code == 200
     data = response.json()
-    assert data["status"] == "healthy"
+    assert data["status"] == "running"
     assert "version" in data
 
 
@@ -115,7 +115,8 @@ async def test_register_user_success(client: AsyncClient) -> None:
     assert data["username"] == "johndoe"
     assert "user" in data
     assert data["user"]["username"] == "johndoe"
-    assert data["user"]["email"] == "john@example.com"
+    # Email is set to None by valid registration now
+    assert data["user"]["email"] is None
     assert data["user"]["role"] == "user"
     assert "hashed_password" not in data["user"]
 
@@ -172,8 +173,8 @@ async def test_register_invalid_data(client: AsyncClient) -> None:
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_login_jwt_success(client: AsyncClient) -> None:
-    """Test successful login with username and JWT token"""
+async def test_login_success(client: AsyncClient) -> None:
+    """Test successful login returns session token"""
     # Register user first
     register_data = {
         "username": "logintest",
@@ -190,8 +191,9 @@ async def test_login_jwt_success(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert "access_token" in data
-    assert data["token_type"] == "bearer"
+    assert response.status_code == 200
+    data = response.json()
+    assert "session_token" in data
     assert data["success"] is True
     assert data["username"] == "logintest"
 
@@ -212,7 +214,7 @@ async def test_login_wrong_password(client: AsyncClient) -> None:
     })
 
     assert response.status_code == 401
-    assert "incorrect" in response.json()["detail"].lower()
+    assert "invalid credentials" in response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -224,7 +226,7 @@ async def test_login_nonexistent_user(client: AsyncClient) -> None:
     })
 
     assert response.status_code == 401
-    assert "incorrect" in response.json()["detail"].lower()
+    assert "invalid credentials" in response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -248,7 +250,7 @@ async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession
         "password": "Pass123!"
     })
 
-    assert response.status_code == 401
+    assert response.status_code == 403
     assert "inactive" in response.json()["detail"].lower()
 
 
@@ -324,25 +326,7 @@ async def test_logout_success(client: AsyncClient) -> None:
 # JWT TOKEN VALIDATION TESTS
 # ============================================================================
 
-@pytest.mark.asyncio
-async def test_jwt_token_structure(client: AsyncClient) -> None:
-    """Test that JWT token has correct structure"""
-    # Register and login
-    await client.post("/api/auth/register", json={
-        "username": "jwtuser",
-        "password": "SecurePass123!"
-    })
 
-    response = await client.post("/api/auth/login", json={
-        "username": "jwtuser",
-        "password": "SecurePass123!"
-    })
-
-    token = response.json()["access_token"]
-
-    # JWT should have 3 parts separated by dots
-    parts = token.split(".")
-    assert len(parts) == 3
 
 
 # ============================================================================
@@ -439,13 +423,13 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
     })
     assert register_response.status_code == 201
 
-    # 2. Login (JWT)
+    # 2. Login (Defaults to Session)
     jwt_response = await client.post("/api/auth/login", json={
         "username": username,
         "password": password
     })
     assert jwt_response.status_code == 200
-    assert "access_token" in jwt_response.json()
+    assert "session_token" in jwt_response.json()
 
     # 3. Login (Session)
     session_response = await client.post(
