@@ -41,7 +41,7 @@ def print_response(response):
         data = response.json()
         print(f"Status: {response.status_code}")
         print(f"Response: {json.dumps(data, indent=2)}")
-    except:
+    except Exception:
         print(f"Status: {response.status_code}")
         print(f"Response: {response.text[:200]}")
 
@@ -55,7 +55,7 @@ time.sleep(2)
 try:
     response = httpx.get(f"{BASE_URL}/health", timeout=5)
     print_success("Server is running!")
-except:
+except Exception:
     print_fail("Server is NOT running!")
     print_info("Please start the server first:")
     print_info("  cd backend")
