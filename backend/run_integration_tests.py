@@ -19,24 +19,24 @@ YELLOW = '\033[93m'
 CYAN = '\033[96m'
 RESET = '\033[0m'
 
-def print_header(text):
+def print_header(text: str) -> None:
     print(f"\n{CYAN}{'='*60}")
     print(f"{text}")
     print(f"{'='*60}{RESET}\n")
 
-def print_test(name):
+def print_test(name: str) -> None:
     print(f"{CYAN}{name}{RESET}")
 
-def print_success(msg):
+def print_success(msg: str) -> None:
     print(f"{GREEN}✅ {msg}{RESET}")
 
-def print_fail(msg):
+def print_fail(msg: str) -> None:
     print(f"{RED}❌ {msg}{RESET}")
 
-def print_info(msg):
+def print_info(msg: str) -> None:
     print(f"{YELLOW}ℹ️  {msg}{RESET}")
 
-def print_response(response):
+def print_response(response: httpx.Response) -> None:
     try:
         data = response.json()
         print(f"Status: {response.status_code}")

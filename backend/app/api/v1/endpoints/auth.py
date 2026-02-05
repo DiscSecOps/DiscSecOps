@@ -12,6 +12,7 @@ import secrets
 import traceback
 from datetime import datetime, timedelta
 
+from typing import Any
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,7 +28,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
+async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> SessionResponse:
     """
     Register a new user (ASYNC)
 
@@ -81,7 +82,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 @router.post("/login")
 async def login(
     credentials: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)
-):
+) -> SessionResponse:
     """
     Login user and create session (SESSION-BASED AUTH as per frontend team request)
 
@@ -195,7 +196,7 @@ async def login(
 
 
 @router.post("/logout")
-async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
+async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)) -> dict[str, Any]:
     """
     Logout user (invalidate session if using session-based auth)
 

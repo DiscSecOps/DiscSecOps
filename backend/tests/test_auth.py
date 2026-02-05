@@ -3,6 +3,7 @@ Comprehensive tests for async authentication endpoints
 Tests username-based login, registration, JWT, and sessions
 """
 import pytest
+from typing import AsyncGenerator
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.pool import NullPool
@@ -30,7 +31,7 @@ TestAsyncSessionLocal = async_sessionmaker(
 
 
 @pytest.fixture
-async def db_session():
+async def db_session() -> AsyncGenerator[AsyncSession, None]:
     """Create test database tables and provide session"""
     async with test_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
@@ -43,9 +44,9 @@ async def db_session():
 
 
 @pytest.fixture
-async def client(db_session):
+async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Create test client with overridden database dependency"""
-    async def override_get_db():
+    async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
@@ -64,7 +65,7 @@ async def client(db_session):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_health_check_root(client):
+async def test_health_check_root(client: AsyncClient) -> None:
     """Test root health endpoint"""
     response = await client.get("/")
     assert response.status_code == 200
@@ -74,7 +75,7 @@ async def test_health_check_root(client):
 
 
 @pytest.mark.asyncio
-async def test_health_check_health(client):
+async def test_health_check_health(client: AsyncClient) -> None:
     """Test /health endpoint"""
     response = await client.get("/health")
     assert response.status_code == 200
@@ -83,7 +84,7 @@ async def test_health_check_health(client):
 
 
 @pytest.mark.asyncio
-async def test_health_check_api(client):
+async def test_health_check_api(client: AsyncClient) -> None:
     """Test /api/health endpoint"""
     response = await client.get("/api/health")
     assert response.status_code == 200
@@ -96,7 +97,7 @@ async def test_health_check_api(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_register_user_success(client):
+async def test_register_user_success(client: AsyncClient) -> None:
     """Test successful user registration with username"""
     user_data = {
         "username": "johndoe",
@@ -119,7 +120,7 @@ async def test_register_user_success(client):
 
 
 @pytest.mark.asyncio
-async def test_register_minimal_data(client):
+async def test_register_minimal_data(client: AsyncClient) -> None:
     """Test registration with only username and password (email optional)"""
     user_data = {
         "username": "minimaluser",
@@ -136,7 +137,7 @@ async def test_register_minimal_data(client):
 
 
 @pytest.mark.asyncio
-async def test_register_duplicate_username(client):
+async def test_register_duplicate_username(client: AsyncClient) -> None:
     """Test that duplicate username registration fails"""
     user_data = {
         "username": "duplicate",
@@ -154,7 +155,7 @@ async def test_register_duplicate_username(client):
 
 
 @pytest.mark.asyncio
-async def test_register_invalid_data(client):
+async def test_register_invalid_data(client: AsyncClient) -> None:
     """Test registration with invalid data"""
     # Missing password
     response = await client.post("/api/auth/register", json={"username": "test"})
@@ -170,7 +171,7 @@ async def test_register_invalid_data(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_login_jwt_success(client):
+async def test_login_jwt_success(client: AsyncClient) -> None:
     """Test successful login with username and JWT token"""
     # Register user first
     register_data = {
@@ -195,7 +196,7 @@ async def test_login_jwt_success(client):
 
 
 @pytest.mark.asyncio
-async def test_login_wrong_password(client):
+async def test_login_wrong_password(client: AsyncClient) -> None:
     """Test login with incorrect password"""
     # Register user
     await client.post("/api/auth/register", json={
@@ -214,7 +215,7 @@ async def test_login_wrong_password(client):
 
 
 @pytest.mark.asyncio
-async def test_login_nonexistent_user(client):
+async def test_login_nonexistent_user(client: AsyncClient) -> None:
     """Test login with non-existent username"""
     response = await client.post("/api/auth/login", json={
         "username": "nonexistent",
@@ -226,7 +227,7 @@ async def test_login_nonexistent_user(client):
 
 
 @pytest.mark.asyncio
-async def test_login_inactive_user(client, db_session):
+async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession) -> None:
     """Test that inactive users cannot login"""
     from app.core.security import get_password_hash
     from app.db.models import User
@@ -255,7 +256,7 @@ async def test_login_inactive_user(client, db_session):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_login_session_mode(client):
+async def test_login_session_mode(client: AsyncClient) -> None:
     """Test session-based authentication"""
     # Register user
     await client.post("/api/auth/register", json={
@@ -288,7 +289,7 @@ async def test_login_session_mode(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_logout_success(client):
+async def test_logout_success(client: AsyncClient) -> None:
     """Test logout endpoint"""
     # Register and login
     await client.post("/api/auth/register", json={
@@ -304,6 +305,7 @@ async def test_logout_success(client):
         }
     )
     session_token = login_response.cookies.get("session_token")
+    assert session_token is not None
 
     # Logout
     response = await client.post(
@@ -322,7 +324,7 @@ async def test_logout_success(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_jwt_token_structure(client):
+async def test_jwt_token_structure(client: AsyncClient) -> None:
     """Test that JWT token has correct structure"""
     # Register and login
     await client.post("/api/auth/register", json={
@@ -347,7 +349,7 @@ async def test_jwt_token_structure(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_password_hashing(client, db_session):
+async def test_password_hashing(client: AsyncClient, db_session: AsyncSession) -> None:
     """Test that passwords are properly hashed (Argon2)"""
     from sqlalchemy import select
 
@@ -374,7 +376,7 @@ async def test_password_hashing(client, db_session):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_username_case_sensitivity(client):
+async def test_username_case_sensitivity(client: AsyncClient) -> None:
     """Test username case sensitivity"""
     # Register user
     await client.post("/api/auth/register", json={
@@ -393,7 +395,7 @@ async def test_username_case_sensitivity(client):
 
 
 @pytest.mark.asyncio
-async def test_special_characters_in_username(client):
+async def test_special_characters_in_username(client: AsyncClient) -> None:
     """Test usernames with special characters"""
     response = await client.post("/api/auth/register", json={
         "username": "user_test-123",
@@ -405,7 +407,7 @@ async def test_special_characters_in_username(client):
 
 
 @pytest.mark.asyncio
-async def test_username_length_limits(client):
+async def test_username_length_limits(client: AsyncClient) -> None:
     """Test username length constraints"""
     # Very long username (>50 chars)
     long_username = "a" * 51
@@ -423,7 +425,7 @@ async def test_username_length_limits(client):
 # ============================================================================
 
 @pytest.mark.asyncio
-async def test_full_auth_flow(client):
+async def test_full_auth_flow(client: AsyncClient) -> None:
     """Test complete authentication flow: register -> login -> logout"""
     username = "fullflowuser"
     password = "SecurePass123!"
@@ -454,6 +456,7 @@ async def test_full_auth_flow(client):
     )
     assert session_response.status_code == 200
     session_token = session_response.cookies.get("session_token")
+    assert session_token is not None
 
     # 4. Logout
     logout_response = await client.post(

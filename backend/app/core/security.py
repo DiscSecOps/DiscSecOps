@@ -85,7 +85,9 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     return encoded_jwt
 
 
-def decode_token(token: str) -> dict:
+from typing import Any
+
+def decode_token(token: str) -> Any:
     """
     Decode and verify JWT token
 

@@ -3,6 +3,7 @@ Main FastAPI application (ASYNC with PostgreSQL)
 Initializes the API with authentication endpoints and CORS for frontend
 """
 from contextlib import asynccontextmanager
+from typing import Any, AsyncGenerator
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -14,7 +15,7 @@ from app.db.models import Base
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan event handler for startup and shutdown
     Creates database tables on startup
@@ -52,7 +53,7 @@ app.include_router(auth.router, prefix="/api")
 
 
 @app.get("/")
-async def root():
+async def root() -> dict[str, Any]:
     """Health check endpoint"""
     return {
         "message": "DevSecOps Social App API",
@@ -68,7 +69,7 @@ async def root():
 
 
 @app.get("/health")
-async def health_check():
+async def health_check() -> dict[str, str]:
     """
     Health check for monitoring
     Frontend can use this to verify backend is running
@@ -77,6 +78,6 @@ async def health_check():
 
 
 @app.get("/api/health")
-async def api_health():
+async def api_health() -> dict[str, str]:
     """API-specific health check"""
     return {"status": "healthy", "api_version": settings.VERSION}
