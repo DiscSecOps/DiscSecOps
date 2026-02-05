@@ -5,7 +5,7 @@ Handles password hashing, JWT tokens, and session management
 import secrets
 from datetime import UTC, datetime, timedelta
 
-from jose import jwt
+import jwt
 from pwdlib import PasswordHash
 from pwdlib.hashers.argon2 import Argon2Hasher
 
