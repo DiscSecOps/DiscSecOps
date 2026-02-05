@@ -34,7 +34,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
     Yields an AsyncSession object that can be used for database operations.
     The session is automatically closed after the request is finished.
-    
+
     Example:
         @app.get("/users")
         async def get_users(db: AsyncSession = Depends(get_db)):

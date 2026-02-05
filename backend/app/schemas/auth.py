@@ -11,13 +11,13 @@ from pydantic import BaseModel, Field
 class UserCreate(BaseModel):
     """
     Schema for user registration request from frontend
-    
+
     Frontend sends (from RegisterPage.jsx):
     {
         "username": "johndoe",
         "password": "SecurePass123!"
     }
-    
+
     Email removed as per frontend team request - only username and password required
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
@@ -28,13 +28,13 @@ class UserCreate(BaseModel):
 class UserLogin(BaseModel):
     """
     Schema for user login request from frontend
-    
+
     Frontend sends (from LoginPage.jsx and auth.service.js):
     {
         "username": "johndoe",
         "password": "SecurePass123!"
     }
-    
+
     Note: Frontend uses USERNAME, not email!
     """
     username: str = Field(..., description="Username")
@@ -44,7 +44,7 @@ class UserLogin(BaseModel):
 class UserResponse(BaseModel):
     """
     Schema for user data in API responses
-    
+
     Note: Never includes password or hashed_password
     Email removed as per frontend team request
     """
@@ -65,7 +65,7 @@ class UserResponse(BaseModel):
 class Token(BaseModel):
     """
     Schema for JWT token response after successful login
-    
+
     Example response:
     {
         "access_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...",
@@ -80,7 +80,7 @@ class SessionResponse(BaseModel):
     """
     Schema for session-based authentication response
     Frontend team requested sessions as alternative to JWT
-    
+
     Example response:
     {
         "success": true,

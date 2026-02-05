@@ -6,6 +6,7 @@ Matches frontend expectations:
 - Username-based authentication (not email!)
 - Port 5000 (configured in main.py or frontend updated)
 """
+
 import logging
 import secrets
 import traceback
@@ -15,14 +16,13 @@ from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-logger = logging.getLogger(__name__)
-
 from app.core.config import settings
 from app.core.db import get_db
 from app.core.security import get_password_hash, verify_password
 from app.db.models import User, UserSession
 from app.schemas.auth import SessionResponse, UserCreate, UserLogin, UserResponse
 
+logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/auth", tags=["Authentication"])
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
     """
     Register a new user (ASYNC)
-    
+
     Frontend sends POST request to /api/auth/register with:
     ```json
     {
@@ -38,9 +38,9 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         "password": "SecurePass123!"
     }
     ```
-    
+
     Email field removed as per frontend team request.
-    
+
     Returns:
     - 201: User created successfully
     - 400: Username already registered
@@ -51,8 +51,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
     if db_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Username already taken"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
         )
 
     # Hash password using Argon2
@@ -66,7 +65,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
         hashed_password=hashed_password,
         role="user",
         is_active=True,
-        is_superuser=False
+        is_superuser=False,
     )
 
     db.add(new_user)
@@ -75,22 +74,17 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)):
 
     # Return success response matching frontend expectations
     return SessionResponse(
-        success=True,
-        username=new_user.username,
-        user=UserResponse.model_validate(new_user)
+        success=True, username=new_user.username, user=UserResponse.model_validate(new_user)
     )
 
 
 @router.post("/login")
 async def login(
-    credentials: UserLogin,
-    request: Request,
-    response: Response,
-    db: AsyncSession = Depends(get_db)
+    credentials: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ):
     """
     Login user and create session (SESSION-BASED AUTH as per frontend team request)
-    
+
     Frontend sends POST request to /api/auth/login with:
     ```json
     {
@@ -98,44 +92,53 @@ async def login(
         "password": "SecurePass123!"
     }
     ```
-    
+
     Returns:
     - 200: Login successful with session token
     - 401: Invalid credentials
-    
+
     Changed from JWT to session-based authentication as per frontend team request.
     Session stored in HTTP-only cookie for security.
     """
     try:
         # Find user by username with eager loading (fixes MissingGreenlet with async PostgreSQL)
         # Using populate_existing to ensure all attributes are loaded immediately
-        stmt = select(User).where(User.username == credentials.username).execution_options(populate_existing=True)
+        stmt = (
+            select(User)
+            .where(User.username == credentials.username)
+            .execution_options(populate_existing=True)
+        )
         result = await db.execute(stmt)
         user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
             )
 
         # Explicitly access all attributes now to force loading in async context
-        _ = (user.id, user.username, user.email, user.full_name, user.role,
-             user.is_active, user.is_superuser, user.created_at, user.updated_at, user.hashed_password)
+        _ = (
+            user.id,
+            user.username,
+            user.email,
+            user.full_name,
+            user.role,
+            user.is_active,
+            user.is_superuser,
+            user.created_at,
+            user.updated_at,
+            user.hashed_password,
+        )
 
         # Verify password using Argon2
         if not verify_password(credentials.password, user.hashed_password):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid credentials"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials"
             )
 
         # Check if user is active
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is inactive"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
 
         # Session-based authentication (default now as per frontend team request)
         # Generate secure session token
@@ -150,7 +153,7 @@ async def login(
             created_at=now,
             expires_at=expires_at,
             ip_address=request.client.host if request.client else None,
-            user_agent=request.headers.get("user-agent")
+            user_agent=request.headers.get("user-agent"),
         )
 
         db.add(new_session)
@@ -163,7 +166,7 @@ async def login(
             httponly=True,
             secure=False,  # Set to True in production with HTTPS
             samesite="lax",
-            max_age=settings.SESSION_EXPIRE_MINUTES * 60
+            max_age=settings.SESSION_EXPIRE_MINUTES * 60,
         )
 
         # Build user response manually to avoid MissingGreenlet with async PostgreSQL
@@ -176,32 +179,26 @@ async def login(
             is_active=user.is_active,
             is_superuser=user.is_superuser,
             created_at=user.created_at,
-            updated_at=user.updated_at
+            updated_at=user.updated_at,
         )
 
         return SessionResponse(
-            success=True,
-            username=user.username,
-            session_token=session_token,
-            user=user_response
+            success=True, username=user.username, session_token=session_token, user=user_response
         )
     except HTTPException:
         raise
     except Exception as e:
         logger.error(f"Login error: {type(e).__name__}: {str(e)}")
         logger.error(traceback.format_exc())
-        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}")
+        # Add 'from e' here:
+        raise HTTPException(status_code=500, detail=f"Login failed: {str(e)}") from e
 
 
 @router.post("/logout")
-async def logout(
-    request: Request,
-    response: Response,
-    db: AsyncSession = Depends(get_db)
-):
+async def logout(request: Request, response: Response, db: AsyncSession = Depends(get_db)):
     """
     Logout user (invalidate session if using session-based auth)
-    
+
     For JWT: Frontend just deletes the token (can't invalidate server-side)
     For Sessions: Delete session from database
     """

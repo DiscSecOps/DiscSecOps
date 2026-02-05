@@ -48,8 +48,8 @@ dev = [
 [tool.ruff]
 # Target Python 3.12 (Matches your Dev Container)
 target-version = "py312"
-# 88 is the standard "Black" line length
-line-length = 88
+# Increase the line length to something more modern (standard was 88)
+line-length = 100
 
 [tool.ruff.lint]
 # Select the rules that replace your old tools:
@@ -59,6 +59,10 @@ line-length = 88
 # B      = flake8-bugbear (catches common bugs)
 # UP     = pyupgrade (automatically upgrades old syntax)
 select = ["E", "W", "F", "I", "B", "UP"]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# FastAPI dependencies necessarily use function calls in argument defaults
+"**/api/**/*.py" = ["B008"]
 
 ignore = [
     # E501: Ignore line length violations (let the formatter handle it)

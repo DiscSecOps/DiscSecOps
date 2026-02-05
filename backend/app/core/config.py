@@ -9,9 +9,9 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 class Settings(BaseSettings):
     """
     Application settings loaded from environment variables
-    
+
     Create a .env file in backend/ folder with these values:
-    
+
     DATABASE_URL=postgresql+asyncpg://user:password@db/app_db
     SECRET_KEY=your-super-secret-key-change-in-production
     SESSION_SECRET_KEY=your-session-secret-change-in-production

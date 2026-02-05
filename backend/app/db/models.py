@@ -14,7 +14,7 @@ Base = declarative_base()
 class User(Base):
     """
     User model for authentication with async PostgreSQL
-    
+
     Attributes:
         id: Unique user identifier
         username: User's username (UNIQUE, PRIMARY LOGIN FIELD - matches frontend!)
