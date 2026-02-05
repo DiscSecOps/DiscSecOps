@@ -3,9 +3,9 @@ Authentication schemas
 Request and response models for registration, login, and user data
 Updated to match frontend expectations: username-based login!
 """
-from pydantic import BaseModel, EmailStr, Field
-from typing import Optional
 from datetime import datetime
+
+from pydantic import BaseModel, Field
 
 
 class UserCreate(BaseModel):
@@ -22,7 +22,7 @@ class UserCreate(BaseModel):
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
-    full_name: Optional[str] = Field(None, max_length=100, description="User's full name")
+    full_name: str | None = Field(None, max_length=100, description="User's full name")
 
 
 class UserLogin(BaseModel):
@@ -50,14 +50,14 @@ class UserResponse(BaseModel):
     """
     id: int
     username: str
-    email: Optional[str]  # Changed from EmailStr to str since email is always None now
-    full_name: Optional[str]
+    email: str | None  # Changed from EmailStr to str since email is always None now
+    full_name: str | None
     role: str  # "user", "admin", "manager"
     is_active: bool
     is_superuser: bool
     created_at: datetime
-    updated_at: Optional[datetime]
-    
+    updated_at: datetime | None
+
     class Config:
         from_attributes = True  # Allows creation from SQLAlchemy models
 
@@ -91,8 +91,8 @@ class SessionResponse(BaseModel):
     """
     success: bool = Field(default=True)
     username: str
-    session_token: Optional[str] = None  # Only if using session-based auth
-    user: Optional[UserResponse] = None
+    session_token: str | None = None  # Only if using session-based auth
+    user: UserResponse | None = None
 
 
 class TokenData(BaseModel):
@@ -100,4 +100,4 @@ class TokenData(BaseModel):
     Schema for decoded token data
     Used internally for token validation
     """
-    username: Optional[str] = None
+    username: str | None = None

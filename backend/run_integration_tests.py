@@ -2,12 +2,13 @@
 Backend Authentication Integration Tests
 Tests all endpoints that the frontend team will use
 """
-import httpx
+
+
 import json
-import time
-import subprocess
 import sys
-from pathlib import Path
+import time
+
+import httpx
 
 BASE_URL = "http://127.0.0.1:5000"
 
@@ -124,7 +125,7 @@ user_data = {
 try:
     response = httpx.post(f"{BASE_URL}/api/auth/register", json=user_data)
     print_response(response)
-    
+
     if response.status_code == 201:
         data = response.json()
         if data.get("success") and data.get("username") == "testuser123":
@@ -155,11 +156,11 @@ try:
     client = httpx.Client()
     response = client.post(f"{BASE_URL}/api/auth/login", json=login_data)
     print_response(response)
-    
+
     if response.status_code == 200:
         data = response.json()
         cookies = response.cookies
-        
+
         if "session_token" in cookies and data.get("success"):
             session_token = cookies["session_token"]
             print_success("PASS: Session login successful")
@@ -185,7 +186,7 @@ if session_token:
     try:
         response = client.post(f"{BASE_URL}/api/auth/logout")
         print_response(response)
-        
+
         if response.status_code == 200:
             data = response.json()
             if data.get("success"):
@@ -214,7 +215,7 @@ wrong_login = {
 try:
     response = httpx.post(f"{BASE_URL}/api/auth/login", json=wrong_login)
     print_response(response)
-    
+
     if response.status_code == 401:
         print_success("PASS: Wrong password correctly rejected (401)")
         tests_passed += 1
@@ -230,7 +231,7 @@ tests_total += 1
 try:
     response = httpx.post(f"{BASE_URL}/api/auth/register", json=user_data)
     print_response(response)
-    
+
     if response.status_code == 400:
         print_success("PASS: Duplicate username correctly rejected (400)")
         tests_passed += 1
@@ -250,7 +251,7 @@ minimal_user = {
 try:
     response = httpx.post(f"{BASE_URL}/api/auth/register", json=minimal_user)
     print_response(response)
-    
+
     if response.status_code == 201:
         data = response.json()
         if data.get("success") and data.get("user", {}).get("email") is None:

@@ -2,14 +2,15 @@
 Main FastAPI application (ASYNC with PostgreSQL)
 Initializes the API with authentication endpoints and CORS for frontend
 """
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
-from app.core.config import settings
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from app.api.v1.endpoints import auth
-from app.db.models import Base
+from app.core.config import settings
 from app.core.db import engine
+from app.db.models import Base
 
 
 @asynccontextmanager
@@ -21,9 +22,9 @@ async def lifespan(app: FastAPI):
     # Create all tables on startup (async)
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     yield  # Application runs here
-    
+
     # Cleanup on shutdown (if needed)
     await engine.dispose()
 
