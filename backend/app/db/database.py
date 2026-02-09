@@ -1,3 +1,6 @@
+"""
+Async database configuration and session management
+"""
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -21,7 +24,7 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
     bind=engine,
     class_=AsyncSession,
-    expire_on_commit=False  # Prevents lazy loading issues with async PostgreSQL
+    expire_on_commit=False
 )
 
 
@@ -31,6 +34,12 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 
     Yields an AsyncSession object that can be used for database operations.
     The session is automatically closed after the request is finished.
+
+    Example:
+        @app.get("/users")
+        async def get_users(db: AsyncSession = Depends(get_db)):
+            result = await db.execute(select(User))
+            return result.scalars().all()
     """
     async with AsyncSessionLocal() as session:
         yield session
