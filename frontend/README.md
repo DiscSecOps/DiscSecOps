@@ -48,4 +48,21 @@ frontend/                    # React + Vite
 
 http://localhost:3000/login
 http://localhost:3000/register
+http://localhost:3000/dashboard
+
+
+## 🎯 For Frontend Developers (Simplified Commands)
+
+### Only 3 commands you need:
+
+```bash
+# 1. Install once
+make install
+
+# 2. Start development (in separate terminals)
+make run-backend    # Terminal 1 - API on http://localhost:5000
+make run-frontend   # Terminal 2 - App on http://localhost:3000
+
+# 3. Run tests (optional)
+make test-frontend-unit
 

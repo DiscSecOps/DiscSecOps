@@ -1,3 +1,4 @@
+# auth.py - Authentication endpoints (ASYNC for PostgreSQL)
 """
 Authentication endpoints (ASYNC for PostgreSQL)
 Matches frontend expectations:

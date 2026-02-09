@@ -1,18 +1,18 @@
 // frontend/src/pages/RegisterPage.jsx
 import { useState } from 'react';
-import { authService } from '../services/auth.service.js';
+import { useAuth } from '../contexts/useAuth.js'; 
 import './RegisterPage.css';
 
-// Registration Page Component
 function RegisterPage() {
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [fullName, setFullName] = useState(''); 
+  
+  const { register, loading } = useAuth(); 
 
-  // Handle form submission
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
@@ -24,33 +24,41 @@ function RegisterPage() {
       return;
     }
     
-    // Simple username validation add here
-    //const usernameRegex = /^[a-zA-Z0-9]{3,20}$/;
     if (password.length < 6) {
       setError('Password must be at least 6 characters');
       return;
     }
     
-    setLoading(true);
+    if (username.length < 3 || username.length > 20) {
+      setError('Username must be between 3 and 20 characters');
+      return;
+    }
 
-    // Call registration service
+    // Call registration via AuthContext
     try {
-      const result = await authService.register(username, password);
+      const result = await register(username, password, fullName); 
       console.log('Registration successful:', result);
-      setSuccess(`Account created for ${result.username}! You can now login.`);
+      
+      setSuccess(`Account created for ${result.username || username}! You can now login.`);
+      
       // Clear form
       setUsername('');
       setPassword('');
       setConfirmPassword('');
+      setFullName('');
+      
+      // Optional: Auto-redirect after 2 seconds
+      // setTimeout(() => {
+      //   window.location.href = '/login';
+      // }, 2000);
+      
     } catch (err) {
-      setError(err.error || 'Registration failed');
+      // err is expected to be an Error object with a message property
+      setError(err.message || 'Registration failed');
       console.error('Registration error:', err);
-    } finally {
-      setLoading(false);
     }
   };
 
-  // Render registration form
   return (
     <div className="register-page">
       <div className="register-container">
@@ -72,6 +80,19 @@ function RegisterPage() {
               maxLength="20"
             />
             <small className="form-hint">3-20 characters, letters and numbers only</small>
+          </div>
+          
+          <div className="form-group">
+            <label htmlFor="fullName">Full Name (Optional)</label>
+            <input
+              name='fullName'
+              id="fullName"
+              type="text"
+              value={fullName}
+              onChange={(e) => setFullName(e.target.value)}
+              placeholder="Your full name"
+              disabled={loading}
+            />
           </div>
           
           <div className="form-group">
