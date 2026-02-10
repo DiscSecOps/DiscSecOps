@@ -1,17 +1,17 @@
 
 import asyncio
 import logging
-import sys
 import os
-from datetime import datetime
+import sys
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import select
+
 from app.core.db import AsyncSessionLocal
-from app.db.models import User
 from app.core.security import get_password_hash
+from app.db.models import User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -23,7 +23,7 @@ async def create_test_users():
             # Check if user exists
             result = await db.execute(select(User).where(User.username == "testuser"))
             user = result.scalar_one_or_none()
-            
+
             if not user:
                 logger.info("Creating testuser...")
                 test_user = User(
@@ -39,7 +39,7 @@ async def create_test_users():
                 logger.info("Test user 'testuser' created.")
             else:
                 logger.info("Test user 'testuser' already exists.")
-                
+
             # Create admin user
             result = await db.execute(select(User).where(User.username == "adminuser"))
             admin = result.scalar_one_or_none()
@@ -59,7 +59,7 @@ async def create_test_users():
                 logger.info("Admin user 'adminuser' created.")
             else:
                 logger.info("Admin user 'adminuser' already exists.")
-                
+
         except Exception as e:
             logger.error(f"Error creating test users: {e}")
             raise

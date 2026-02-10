@@ -1,15 +1,16 @@
 import asyncio
 import logging
-import sys
 import os
+import sys
 
 # Add the parent directory to sys.path to allow importing app modules
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import select
+
 from app.core.db import AsyncSessionLocal, engine
-from app.db.models import Base, User
 from app.core.security import get_password_hash
+from app.db.models import Base, User
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -20,14 +21,14 @@ async def seed_data():
         # Create tables
         async with engine.begin() as conn:
             await conn.run_sync(Base.metadata.create_all)
-            
+
         async with AsyncSessionLocal() as db:
             logger.info("Seeding database...")
-            
+
             # Check if user exists
             result = await db.execute(select(User).where(User.username == "testuser"))
             user = result.scalar_one_or_none()
-            
+
             if not user:
                 logger.info("Creating testuser...")
                 test_user = User(
@@ -43,7 +44,7 @@ async def seed_data():
                 logger.info("Test user 'testuser' created.")
             else:
                 logger.info("Test user 'testuser' already exists.")
-                
+
     except Exception as e:
         logger.error(f"Error seeding database: {e}")
         raise

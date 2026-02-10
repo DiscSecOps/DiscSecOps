@@ -1,14 +1,15 @@
 
 import asyncio
 import logging
-import sys
 import os
+import sys
 from datetime import datetime
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from sqlalchemy import delete
+
 from app.core.db import AsyncSessionLocal
 from app.db.models import UserSession
 
@@ -21,13 +22,13 @@ async def cleanup_sessions():
         try:
             now = datetime.utcnow()
             logger.info(f"Cleaning up sessions expired before {now}...")
-            
+
             stmt = delete(UserSession).where(UserSession.expires_at < now)
             result = await db.execute(stmt)
             await db.commit()
-            
+
             logger.info(f"Deleted {result.rowcount} expired sessions.")
-            
+
         except Exception as e:
             logger.error(f"Error cleaning up sessions: {e}")
             raise
