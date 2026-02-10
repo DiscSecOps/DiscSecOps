@@ -11,8 +11,14 @@ services:
       - ../:/workspace:cached
     # Keep the container running indefinitely
     command: sleep infinity
+    ports:
+      - "6080:6080"  # optional: VNC desktop
+      - "3000:3000"  # frontend dev server
+      - "8000:8000"  # backend FastAPI
+    depends_on:
+      - db
     # Connect to the same network as the database
-    network_mode: service:db
+    # network_mode: service:db
 
   # The Database Container
   db:
@@ -25,5 +31,5 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: app_db
 
-volumes:
-  postgres-data:
+# volumes:
+#   postgres-data:

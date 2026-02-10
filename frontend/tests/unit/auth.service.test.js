@@ -23,7 +23,7 @@ describe('Auth Service', () => {
 
       const result = await authService.login('testuser', 'pass123');
 
-      // CORECTAT: include withCredentials
+      // Match relative URL as authService actually calls it
       expect(axios.post).toHaveBeenCalledWith(
         '/api/auth/login',
         { username: 'testuser', password: 'pass123' },
@@ -42,7 +42,7 @@ describe('Auth Service', () => {
 
       axios.post.mockRejectedValue(errorResponse);
 
-      // CORECTAT: expect Error object
+      // Make authService throw the error message
       await expect(authService.login('wrong', 'pass'))
         .rejects.toThrow('Invalid credentials');
     });
@@ -61,7 +61,7 @@ describe('Auth Service', () => {
 
       const result = await authService.register('newuser', 'pass123');
 
-      // CORECTAT: include full_name default
+      // Match relative URL and include default full_name
       expect(axios.post).toHaveBeenCalledWith(
         '/api/auth/register',
         { username: 'newuser', password: 'pass123', full_name: '' }
