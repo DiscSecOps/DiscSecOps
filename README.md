@@ -174,9 +174,19 @@ cd social-app-devsecops/frontend
 
 npm install
 
-## Start development server
-
+## Start development server frontend
+cd /workspace/frontend
 npm run dev
+
+## Start development server backend
+cd /workspace/backend
+uv run uvicorn app.main:app --reload --port 5000
+
+Backend: http://localhost:5000/health
+
+Frontend: http://localhost:3000
+
+API Docs: http://localhost:5000/docs
 
 ## Run tests (in another terminal)
 

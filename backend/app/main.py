@@ -1,3 +1,4 @@
+# backend/app/main.py
 """
 Main FastAPI application (ASYNC with PostgreSQL)
 Initializes the API with authentication endpoints and CORS for frontend

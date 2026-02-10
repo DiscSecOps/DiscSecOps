@@ -1,3 +1,4 @@
+# backend/run_integration_tests.py
 """
 Backend Authentication Integration Tests
 Tests all endpoints that the frontend team will use

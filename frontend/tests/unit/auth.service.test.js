@@ -3,62 +3,70 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
 import { authService } from '../../src/services/auth.service.js';
 
-// Mock axios
 vi.mock('axios');
 
-// Unit tests for Auth Service
 describe('Auth Service', () => {
   beforeEach(() => {
     vi.clearAllMocks();
   });
 
-  // Tests for login method
   describe('login', () => {
     it('should login successfully', async () => {
       const mockResponse = {
-        data: { success: true, username: 'testuser' }
+        data: {
+          success: true,
+          user: { username: 'testuser', id: 1 }
+        }
       };
+      
       axios.post.mockResolvedValue(mockResponse);
 
-      // Call the login method
       const result = await authService.login('testuser', 'pass123');
       
-      // Assertions
+      // CORECTAT: include withCredentials
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:5000/api/auth/login',
-        { username: 'testuser', password: 'pass123' }
+        { username: 'testuser', password: 'pass123' },
+        { withCredentials: true }
       );
       
       expect(result).toEqual(mockResponse.data);
     });
 
-    // Test for login failure
     it('should handle login error', async () => {
       const errorResponse = {
-        response: { data: { error: 'Invalid credentials' } }
+        response: {
+          data: { detail: 'Invalid credentials' }
+        }
       };
+      
       axios.post.mockRejectedValue(errorResponse);
 
+      // CORECTAT: expect Error object
       await expect(authService.login('wrong', 'pass'))
-        .rejects.toEqual({ error: 'Invalid credentials' });
+        .rejects.toThrow('Invalid credentials');
     });
   });
 
-    // Tests for register method
   describe('register', () => {
     it('should register successfully', async () => {
       const mockResponse = {
-        data: { success: true, username: 'newuser' }
+        data: {
+          success: true,
+          username: 'newuser'
+        }
       };
+      
       axios.post.mockResolvedValue(mockResponse);
 
-      // Call the register method
       const result = await authService.register('newuser', 'pass123');
       
+      // CORECTAT: include full_name default
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:5000/api/auth/register',
-        { username: 'newuser', password: 'pass123' }
+        { username: 'newuser', password: 'pass123', full_name: '' }
       );
+      
       expect(result).toEqual(mockResponse.data);
     });
   });
