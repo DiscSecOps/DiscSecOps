@@ -3,7 +3,7 @@ User model for authentication (Async SQLAlchemy 2.0)
 """
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
 from sqlalchemy.sql import func
 
@@ -76,7 +76,7 @@ class UserSession(Base):
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     session_token: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
-    user_id: Mapped[int] = mapped_column(nullable=False, index=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     ip_address: Mapped[str | None] = mapped_column(String(45), nullable=True)

@@ -7,7 +7,14 @@ export default defineConfig({
   plugins: [react()],
   server: {
     host: '0.0.0.0', // host for container
-    port: 3000,  // force Vite dev server to run on port 3000
-    open: true, // Automatically open browser on startup
+    port: 3000,
+    open: true,
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000', // Forward API requests to backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
 });

@@ -1,7 +1,7 @@
 // frontend/src/services/auth.service.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/api';
+const API_URL = '/api';
 
 export const authService = {
   /**
@@ -67,19 +67,19 @@ export const authService = {
       const response = await axios.get(`${API_URL}/dashboard`, {
         withCredentials: true
       });
-      
+
       // If we get user data in response, return it
       if (response.data.user) {
         return { authenticated: true, user: response.data.user };
       }
-      
+
       return { authenticated: true };
     } catch (err) {
       // 401/403 means not authenticated
       if (err.response?.status === 401 || err.response?.status === 403) {
         return { authenticated: false };
       }
-      
+
       // Other errors (network, server down)
       console.warn('Auth check failed:', err.message);
       return { authenticated: false };
