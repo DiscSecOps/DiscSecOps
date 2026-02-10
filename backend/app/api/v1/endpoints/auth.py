@@ -225,14 +225,9 @@ async def logout(
     return {"success": True, "message": "Logged out successfully"}
 
 @router.get("/users", response_model=list[UserResponse])
-async def get_users(
-    db: AsyncSession = Depends(get_db),
-):
-    stmt = (
-        select(User)
-        .execution_options(populate_existing=True)
-    )
-
+async def get_users(db: AsyncSession = Depends(get_db)) -> list[UserResponse]:
+    """Fetch all users from the database."""
+    stmt = select(User).execution_options(populate_existing=True)
     result = await db.execute(stmt)
     users = result.scalars().all()
 
