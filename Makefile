@@ -58,7 +58,7 @@ test-e2e-headed:
 run-backend:
 	@echo "🐍 Starting FastAPI Backend..."
 	# --host 0.0.0.0 is crucial for Docker/DevContainers so you can access it from Windows	
-	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 5000
+	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 
 run-frontend:
 	@echo "⚛️ Starting React Frontend..."

@@ -25,7 +25,7 @@ describe('Auth Service', () => {
       
       // CORECTAT: include withCredentials
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:5000/api/auth/login',
+        'http://localhost:8000/api/auth/login',
         { username: 'testuser', password: 'pass123' },
         { withCredentials: true }
       );
@@ -63,7 +63,7 @@ describe('Auth Service', () => {
       
       // CORECTAT: include full_name default
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:5000/api/auth/register',
+        'http://localhost:8000/api/auth/register',
         { username: 'newuser', password: 'pass123', full_name: '' }
       );
       

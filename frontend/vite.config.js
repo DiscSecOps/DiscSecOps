@@ -1,8 +1,7 @@
-// vite.config.js
+// vite.config.js - version corrected - use that
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
-
-// https://vite.dev/config/
+ 
 export default defineConfig({
   plugins: [react()],
   server: {
@@ -16,5 +15,13 @@ export default defineConfig({
       usePolling: true // For dev containers
     },
     open: true, // Automatically open browser on startup
+    // 👇 PROXY ADDED by feature/test-env-setup (GOOD!)
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8000', // Forward API requests to backend
+        changeOrigin: true,
+        secure: false,
+      },
+    },
   },
-});
+})
