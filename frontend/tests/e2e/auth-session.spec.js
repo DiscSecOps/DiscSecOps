@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test';
 
 test.describe('Authentication Session', () => {
-  test('Login should set session cookie and redirect to dashboard', async ({ page, context }) => {
+  test('Login should set session cookie and redirect to dashboard @auth', async ({ page, context }) => {
     // Navigate to login page
     await page.goto('/login');
 
@@ -19,11 +19,11 @@ test.describe('Authentication Session', () => {
     // Verify session cookie
     const cookies = await context.cookies();
     const sessionCookie = cookies.find(c => c.name === 'session_token');
-    
+
     expect(sessionCookie, 'Session cookie "session_token" should be present').toBeDefined();
     if (sessionCookie) {
-        expect(sessionCookie.httpOnly, 'Cookie should be HttpOnly').toBe(true);
-        expect(sessionCookie.sameSite, 'Cookie SameSite should be Lax').toBe('Lax');
+      expect(sessionCookie.httpOnly, 'Cookie should be HttpOnly').toBe(true);
+      expect(sessionCookie.sameSite, 'Cookie SameSite should be Lax').toBe('Lax');
     }
   });
 });

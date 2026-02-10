@@ -15,7 +15,7 @@ from app.db.models import Base, User
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def seed_data():
+async def seed_data() -> None:
     """Seed the database with test users."""
     try:
         # Create tables

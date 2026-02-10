@@ -16,7 +16,7 @@ from app.db.models import User
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def create_test_users():
+async def create_test_users() -> None:
     """Create test users for integration tests."""
     async with AsyncSessionLocal() as db:
         try:

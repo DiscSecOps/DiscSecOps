@@ -16,7 +16,7 @@ from app.db.models import UserSession
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-async def cleanup_sessions():
+async def cleanup_sessions() -> None:
     """Cleanup expired sessions."""
     async with AsyncSessionLocal() as db:
         try:
