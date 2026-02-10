@@ -12,6 +12,7 @@ from sqlalchemy import delete
 
 from app.core.db import AsyncSessionLocal
 from app.db.models import UserSession
+from sqlalchemy import CursorResult
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,6 +28,8 @@ async def cleanup_sessions() -> None:
             result = await db.execute(stmt)
             await db.commit()
 
+            # Cast to CursorResult for type checking
+            assert isinstance(result, CursorResult)
             logger.info(f"Deleted {result.rowcount} expired sessions.")
 
         except Exception as e:
