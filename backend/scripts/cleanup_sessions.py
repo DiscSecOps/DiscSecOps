@@ -8,11 +8,10 @@ from datetime import datetime
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from sqlalchemy import delete
+from sqlalchemy import CursorResult, delete
 
 from app.core.db import AsyncSessionLocal
 from app.db.models import UserSession
-from sqlalchemy import CursorResult
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
