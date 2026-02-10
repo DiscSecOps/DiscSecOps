@@ -12,7 +12,7 @@ import logging
 import secrets
 import traceback
 from datetime import datetime, timedelta
-from typing import Any, List
+from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
@@ -224,7 +224,7 @@ async def logout(
 
     return {"success": True, "message": "Logged out successfully"}
 
-@router.get("/users", response_model=List[UserResponse])
+@router.get("/users", response_model=list[UserResponse])
 async def get_users(
     db: AsyncSession = Depends(get_db),
 ):
