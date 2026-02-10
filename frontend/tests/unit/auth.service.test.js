@@ -18,18 +18,18 @@ describe('Auth Service', () => {
           user: { username: 'testuser', id: 1 }
         }
       };
-      
+
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.login('testuser', 'pass123');
-      
+
       // CORECTAT: include withCredentials
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:8000/api/auth/login',
+        '/api/auth/login',
         { username: 'testuser', password: 'pass123' },
         { withCredentials: true }
       );
-      
+
       expect(result).toEqual(mockResponse.data);
     });
 
@@ -39,7 +39,7 @@ describe('Auth Service', () => {
           data: { detail: 'Invalid credentials' }
         }
       };
-      
+
       axios.post.mockRejectedValue(errorResponse);
 
       // CORECTAT: expect Error object
@@ -56,17 +56,17 @@ describe('Auth Service', () => {
           username: 'newuser'
         }
       };
-      
+
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.register('newuser', 'pass123');
-      
+
       // CORECTAT: include full_name default
       expect(axios.post).toHaveBeenCalledWith(
-        'http://localhost:8000/api/auth/register',
+        '/api/auth/register',
         { username: 'newuser', password: 'pass123', full_name: '' }
       );
-      
+
       expect(result).toEqual(mockResponse.data);
     });
   });
