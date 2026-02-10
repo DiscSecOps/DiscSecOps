@@ -12,7 +12,7 @@ import logging
 import secrets
 import traceback
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, List
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import select
@@ -223,3 +223,31 @@ async def logout(
         response.delete_cookie("session_token")
 
     return {"success": True, "message": "Logged out successfully"}
+
+@router.get("/users", response_model=List[UserResponse])
+async def get_users(
+    db: AsyncSession = Depends(get_db),
+):
+    stmt = (
+        select(User)
+        .execution_options(populate_existing=True)
+    )
+
+    result = await db.execute(stmt)
+    users = result.scalars().all()
+
+    # Force-load attributes to avoid MissingGreenlet during serialization
+    for user in users:
+        _ = (
+            user.id,
+            user.username,
+            user.email,
+            user.full_name,
+            user.role,
+            user.is_active,
+            user.is_superuser,
+            user.created_at,
+            user.updated_at,
+        )
+
+    return users
