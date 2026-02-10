@@ -60,7 +60,7 @@ http://localhost:3000/dashboard
 make install
 
 # 2. Start development (in separate terminals)
-make run-backend    # Terminal 1 - API on http://localhost:8000
+make run-backend    # Terminal 1 - API on http://localhost:5000
 make run-frontend   # Terminal 2 - App on http://localhost:3000
 
 # 3. Run tests (optional)

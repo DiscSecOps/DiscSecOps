@@ -32,14 +32,13 @@ This project is designed to run in a VS Code Dev Container. This ensures you hav
 ```
 /
 ├── frontend/                    # React application with Vite
-│   ├── src/                    # Source code
-│   ├── node_modules/           # Frontend dependencies
-│   ├── package.json           # Frontend dependencies and scripts
-│   ├── vite.config.js         # Vite configuration
-│   ├── vitest.config.js       # Vitest configuration
+│   ├── src/                     # Source code
+│   ├── node_modules/            # Frontend dependencies
+│   ├── package.json             # Frontend dependencies and scripts
+│   ├── vite.config.js           # Vite configuration
+│   ├── vitest.config.js         # Vitest configuration
 │   └── index.html  
-    ├── tests/
-            e2e           # Entry point
+├── features/                    # 
 ├── backend/
 │   ├── .venv/                    # Virtual environment (managed by uv)
 │   ├── app/                      # Application source code
@@ -48,60 +47,43 @@ This project is designed to run in a VS Code Dev Container. This ensures you hav
 │   ├── .gitignore                # Git ignore rules
 │   ├── pyproject.toml            # Project configuration & dependencies
 │   └── uv.lock                   # Exact dependency versions
-                     # Playwright E2E tests
-├── .github/workflows/         # CI/CD pipelines
-└── README.md                  # This file
+├── .github/workflows/            # CI/CD pipelines
+└── README.md                     # This file
 ```
 
-## Frontend Setup
+### Frontend Tech Stack
 
-***Technologies*** Used
-React 19 - [https://tyronneratcliff.com/install-react-using-vite/#:~:text=npm%20create%20vite%40latest%20%28or%20yarn%20create%20vite%20or,This%20is%20the%20name%20of%20your%20project%20directory].
+- **React 19** with Vite
+- **React Router DOM** v6
+- **Axios** for HTTP requests
+- **Vitest** + Testing Library (unit/integration)
 
-Frontend library
+### Frontend Setup
 
-Vite - Build tool and dev server ***npm*** create vite@latest my-react-app -- --template react
-
-React Router DOM - Navigation ***npm*** install react-router-dom
-
-Axios - HTTP client for API calls [https://axios-http.com/docs/intro] ***npm*** install axios
-
-Vitest - Unit and integration testing ***npm*** install -D vitest
-
-Playwright - End-to-end testing ***npm*** init playwright@latest
-
-Testing Library - React component testing
-
-## Installation (Frontend Only)
-
-All commands must be run from the frontend directory:
-
+```bash
 cd frontend
-´´´bash
-    npm install
-´´´
-Available Scripts (Run from frontend directory)
+npm install
+npm run dev  # [http://localhost:3000]
+```
 
-### Development
+### Unit/Integration Tests
 
-´´´´bash
-npm run dev          # Start development server on [http://localhost:3000] // // vite.config.js
-npm run preview      # Preview production build
+```bash
+cd frontend
+npm test  # Vitest watch mode
+npm run test:run  # Single run
+```
 
-### Building
+### E2E Tests (Playwright BDD)
 
-´´´bash
-npm run build        # Create production build
-npm run lint         # Run ESLint
+npm run test:e2e        # Runs all .feature files
+npm run test:e2e:ui     # Interactive UI
 
-## Testing
+### API:
 
-´´´bash
-npm test             # Run Vitest in watch mode
-npm run test:run     # Run Vitest once ***npm*** install -D vitest
-npm run test:e2e     # Run Playwright E2E tests ***npm*** init playwright@latest
-npm run test:e2e:ui  # Run Playwright with UI mode
-npm run test:e2e:headed  # Run Playwright in headed browser
+http://localhost:3000/login
+http://localhost:3000/register
+http://localhost:3000/dashboard
 
 ## Testing Strategy
 
@@ -119,19 +101,10 @@ Located in tests/e2e/ directory
 
 Tests complete user flows
 
-Runs in real browsers (Chromium, Firefox, WebKit)
+Runs in real browsers (Chromium)
 
 ## Backend Setup (Future)
 
-The backend will be developed using:
-
-FastAPI - Python web framework
-
-PostgreSQL - Database
-
-Pytest - Backend testing
-
-SQLAlchemy - ORM
 
 ## CI/CD Pipeline
 
@@ -162,13 +135,9 @@ Node.js 18 or higher
 
 npm 9 or higher
 
-Quick Start
-bash
-
 ## Clone the repository
 
-git clone <repository-url>
-cd social-app-devsecops/frontend
+git clone <https://github.com/DiscSecOps/DiscSecOps>
 
 ## Install dependencies
 
@@ -208,34 +177,26 @@ The project follows DevSecOps principles with security integrated from the start
 Feature development uses slicing methodology for incremental delivery
 
 Contributors
-[Your Name/Team Name]
+Camelia Ciuca
+Haidar Alany
+Mattias Hammarhorn
+Richard Orme
+Shahzad Babar
 
 License
-[Your License]
+MIT
 
-Installation (Frontend Only)
-All commands must be run from the frontend directory:
+## 🎯 For Frontend Developers (Simplified Commands)
 
-bash
-cd frontend
-npm install
-Available Scripts (Run from frontend directory)
-Development
-bash
-npm run dev          # Start development server on [http://localhost:3000]
-npm run preview      # Preview production build
-Building
-bash
-npm run build        # Create production build
-npm run lint         # Run ESLint
-Testing
-bash
-npm test             # Run Vitest in watch mode
-npm run test:run     # Run Vitest once
-npm run test:e2e     # Run Playwright E2E tests ***Test*** development server on [http://localhost:3000]
-npm run test:e2e:ui  # Run Playwright with UI mode
-npm run test:e2e:headed  # Run Playwright in headed browser
+### Only 3 commands you need:
 
-## Testing for organization
+```bash
+# 1. Install once
+make install
 
-Testing with container 
+# 2. Start development (in separate terminals)
+make run-backend    # Terminal 1 - API on http://localhost:5000
+make run-frontend   # Terminal 2 - App on http://localhost:3000
+
+# 3. Run tests (optional)
+make test-frontend-unit

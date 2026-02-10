@@ -8,10 +8,17 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // host for container
     port: 3000,
-    open: true,
+    strictPort: true,  // exit if port is already in use
+    hmr: {
+      port: 3001, // 👈 FIX port for HMR
+    },
+    watch: {
+      usePolling: true // For dev containers
+    },
+    open: true, // Automatically open browser on startup
     proxy: {
       '/api': {
-        target: 'http://localhost:8000', // Forward API requests to backend
+        target: 'http://localhost:5000', // Forward API requests to backend
         changeOrigin: true,
         secure: false,
       },
