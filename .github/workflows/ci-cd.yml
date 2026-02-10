@@ -87,7 +87,7 @@ jobs:
           DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
         run: |
           cd backend
-          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 5000 &
           echo "Waiting for backend to start..."
           sleep 10
 
@@ -107,7 +107,7 @@ jobs:
 
       - name: Run Authentication Tests
         env:
-          BASE_URL: http://localhost:8000
+          BASE_URL: http://localhost:5000
         run: |
           cd frontend
           npm run test:e2e -- --grep "@auth"
