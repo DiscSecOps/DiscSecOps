@@ -4,6 +4,7 @@ import logging
 import os
 import sys
 from datetime import datetime
+from typing import cast
 
 # Add the parent directory to sys.path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -28,7 +29,7 @@ async def cleanup_sessions() -> None:
             await db.commit()
 
             # Cast to CursorResult for type checking
-            assert isinstance(result, CursorResult)
+            result = cast(CursorResult, result)
             logger.info(f"Deleted {result.rowcount} expired sessions.")
 
         except Exception as e:
