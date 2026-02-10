@@ -223,3 +223,17 @@ async def logout(
         response.delete_cookie("session_token")
 
     return {"success": True, "message": "Logged out successfully"}
+
+
+@router.get("/users", response_model=list[UserResponse])
+async def get_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+) -> Any:
+    """
+    Retrieve users.
+    """
+    result = await db.execute(select(User).offset(skip).limit(limit))
+    users = result.scalars().all()
+    return users
