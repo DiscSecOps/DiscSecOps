@@ -12,7 +12,7 @@ services:
     # Keep the container running indefinitely
     command: sleep infinity
     # Connect to the same network as the database
-    network_mode: service:db
+    # network_mode: service:db
 
   # The Database Container
   db:
@@ -25,5 +25,5 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: app_db
 
-volumes:
-  postgres-data:
+# volumes:
+#   postgres-data:
