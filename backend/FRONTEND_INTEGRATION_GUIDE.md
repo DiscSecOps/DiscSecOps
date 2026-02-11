@@ -101,7 +101,7 @@ Response: {
 
 ### Base URL
 ```
-http://localhost:5000/api
+http://localhost:8000/api
 ```
 
 ---
@@ -264,7 +264,7 @@ Response: {
 
 **Database:** PostgreSQL 16-alpine (Docker container)  
 **Connection:** `postgresql+asyncpg://user:password@localhost:5433/app_db`  
-**Backend Port:** `5000`  
+**Backend Port:** `8000`  
 **Python Version:** `3.14.2`
 
 ### Integration Test Results
@@ -346,7 +346,7 @@ SELECT * FROM user_sessions;
 1. **Registration Flow:**
    ```powershell
    # Register new user
-   Invoke-RestMethod -Uri "http://127.0.0.1:5000/api/auth/register" `
+   Invoke-RestMethod -Uri "http://127.0.0.1:8000/api/auth/register" `
      -Method POST -ContentType "application/json" `
      -Body '{"username":"apitest","password":"Test123!","full_name":"API Tester"}'
    # ✅ Returns 201 with user object
@@ -355,7 +355,7 @@ SELECT * FROM user_sessions;
 2. **Login Flow:**
    ```powershell
    # Login user
-   $response = Invoke-WebRequest -Uri "http://127.0.0.1:5000/api/auth/login" `
+   $response = Invoke-WebRequest -Uri "http://127.0.0.1:8000/api/auth/login" `
      -Method POST -ContentType "application/json" `
      -Body '{"username":"apitest","password":"Test123!"}' `
      -SessionVariable session
@@ -366,7 +366,7 @@ SELECT * FROM user_sessions;
 3. **Session Persistence:**
    ```powershell
    # Use session cookie for subsequent requests
-   Invoke-WebRequest -Uri "http://127.0.0.1:5000/api/health" `
+   Invoke-WebRequest -Uri "http://127.0.0.1:8000/api/health" `
      -WebSession $session
    # ✅ Cookie sent automatically
    ```
@@ -374,7 +374,7 @@ SELECT * FROM user_sessions;
 4. **Logout Flow:**
    ```powershell
    # Logout
-   Invoke-WebRequest -Uri "http://127.0.0.1:5000/api/auth/logout" `
+   Invoke-WebRequest -Uri "http://127.0.0.1:8000/api/auth/logout" `
      -Method POST -WebSession $session
    # ✅ Returns 200, session invalidated
    ```
@@ -441,7 +441,7 @@ const RegisterForm = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/register', {
+      const response = await fetch('http://localhost:8000/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -524,7 +524,7 @@ const LoginForm = () => {
     e.preventDefault();
 
     try {
-      const response = await fetch('http://localhost:5000/api/auth/login', {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -584,7 +584,7 @@ const LoginForm = () => {
 
 const fetchProtectedData = async () => {
   try {
-    const response = await fetch('http://localhost:5000/api/protected-endpoint', {
+    const response = await fetch('http://localhost:8000/api/protected-endpoint', {
       method: 'GET',
       credentials: 'include', // ⚠️ IMPORTANT: Include cookies
     });
@@ -614,7 +614,7 @@ const fetchProtectedData = async () => {
 const LogoutButton = () => {
   const handleLogout = async () => {
     try {
-      const response = await fetch('http://localhost:5000/api/auth/logout', {
+      const response = await fetch('http://localhost:8000/api/auth/logout', {
         method: 'POST',
         credentials: 'include', // ⚠️ IMPORTANT: Include cookies
       });
@@ -649,7 +649,7 @@ import axios from 'axios';
 
 // Create axios instance with default config
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: 'http://localhost:8000/api',
   withCredentials: true, // ⚠️ IMPORTANT: Send cookies with requests
   headers: {
     'Content-Type': 'application/json',
@@ -916,11 +916,11 @@ ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:5173"]
 - PostgreSQL 16 (Docker)
 - Python 3.14.2
 - FastAPI 0.115.12
-- Port: 5000
+- Port: 8000
 
 **Need Help?**
-- Check backend logs: Server runs on `http://localhost:5000`
-- Health check: `GET http://localhost:5000/health`
+- Check backend logs: Server runs on `http://localhost:8000`
+- Health check: `GET http://localhost:8000/health`
 - Integration tests: `py -3.14 run_integration_tests.py` (backend directory)
 
 ---

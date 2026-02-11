@@ -50,7 +50,7 @@ app.add_middleware(
 )
 
 # Include authentication router at /api/auth (matches frontend expectations!)
-# Frontend expects: http://localhost:5000/api/auth/login
+# Frontend expects: http://localhost:8000/api/auth/login
 app.include_router(auth.router, prefix="/api")
 
 

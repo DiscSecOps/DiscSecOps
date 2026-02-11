@@ -11,7 +11,7 @@ import time
 
 import httpx
 
-BASE_URL = "http://127.0.0.1:5000"
+BASE_URL = "http://127.0.0.1:8000"
 
 # ANSI color codes
 GREEN = '\033[92m'
@@ -50,7 +50,7 @@ def print_response(response: httpx.Response) -> None:
 print_header("🧪 BACKEND AUTHENTICATION INTEGRATION TESTS\nTesting endpoints for Frontend Team")
 
 # Wait for server (assume it's already running or start it manually)
-print_info("Checking if server is running on http://127.0.0.1:5000...")
+print_info("Checking if server is running on http://127.0.0.1:8000...")
 time.sleep(2)
 
 try:
@@ -61,7 +61,7 @@ except Exception:
     print_info("Please start the server first:")
     print_info("  cd backend")
     print_info("  $env:DATABASE_URL='sqlite+aiosqlite:///./test.db'")
-    print_info("  py -3.14 -m uvicorn app.main:app --host 127.0.0.1 --port 5000")
+    print_info("  py -3.14 -m uvicorn app.main:app --host 127.0.0.1 --port 8000")
     sys.exit(1)
 
 # TEST 1: Health Endpoints
@@ -275,7 +275,7 @@ print_header("📊 TEST SUMMARY FOR FRONTEND TEAM")
 print(f"\nTests Passed: {GREEN}{tests_passed}/{tests_total}{RESET}")
 print(f"Pass Rate: {GREEN}{(tests_passed/tests_total*100):.1f}%{RESET}\n")
 
-print("✅ Backend Server: Running on http://127.0.0.1:5000")
+print("✅ Backend Server: Running on http://127.0.0.1:8000")
 print("✅ Health Endpoints: GET /, /health, /api/health")
 print("✅ Registration: POST /api/auth/register (username-based, NO EMAIL)")
 print("✅ Session Login: POST /api/auth/login (sets HTTP-only cookie)")

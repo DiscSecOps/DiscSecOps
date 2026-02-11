@@ -5,7 +5,7 @@
   "workspaceFolder": "/workspace",
 
   // 1. FORWARD PORTS: Automates the "Ports" tab
-  "forwardPorts": [6080, 3000, 5000],
+  "forwardPorts": [6080, 3000, 8000],
 
   // 2. PORT ATTRIBUTES: Gives the ports names and behaviors
   "portsAttributes": {
@@ -17,7 +17,7 @@
       "label": "Frontend (React)",
       "onAutoForward": "silent"
     },
-    "5000": {
+    "8000": {
       "label": "Backend (FastAPI/Python)",
       "onAutoForward": "silent"
     }

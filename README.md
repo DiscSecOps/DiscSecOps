@@ -149,13 +149,13 @@ npm run dev
 
 ## Start development server backend
 cd /workspace/backend
-uv run uvicorn app.main:app --reload --port 5000
+uv run uvicorn app.main:app --reload --port 8000
 
-Backend: http://localhost:5000/health
+Backend: http://localhost:8000/health
 
 Frontend: http://localhost:3000
 
-API Docs: http://localhost:5000/docs
+API Docs: http://localhost:8000/docs
 
 ## Run tests (in another terminal)
 
@@ -195,7 +195,7 @@ MIT
 make install
 
 # 2. Start development (in separate terminals)
-make run-backend    # Terminal 1 - API on http://localhost:5000
+make run-backend    # Terminal 1 - API on http://localhost:8000
 make run-frontend   # Terminal 2 - App on http://localhost:3000
 
 # 3. Run tests (optional)
