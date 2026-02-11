@@ -5,7 +5,7 @@ Matches frontend expectations:
 - POST /api/auth/register - Create new user account
 - POST /api/auth/login - Login and get JWT token OR session
 - Username-based authentication (not email!)
-- Port 5000 (configured in main.py or frontend updated)
+- Port 8000 (configured in main.py or frontend updated)
 """
 
 import logging

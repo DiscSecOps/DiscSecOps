@@ -2,7 +2,7 @@
 Feature: User Login
 
   Background:
-    Given the backend is running on port 5000
+    Given the backend is running on port 8000
     And the frontend is running on port 3000
 
   @login @smoke @session
