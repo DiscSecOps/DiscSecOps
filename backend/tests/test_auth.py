@@ -387,11 +387,9 @@ async def test_username_case_sensitivity(client: AsyncClient) -> None:
         "email": "CASESENSITIVE@example.com",
         "password": "Pass123!"
     })
+    # Should succeed as email lookup is typically case-insensitive
+    assert response.status_code == 200
 
-    # Email case sensitivity depends on implementation, but usually it's case-insensitive for login lookup
-    # However, password must be correct.
-    # Let's see if it fails due to 401 if we expect case sensitivity or if it passes.
-    # The requirement said username case sensitivity. Let's test email case sensitivity if applicable.
     # Actually, the test was for username. Since we login by email, let's keep it to email.
 
 
