@@ -15,21 +15,21 @@ describe('Auth Service', () => {
       const mockResponse = {
         data: {
           success: true,
-          user: { username: 'testuser', id: 1 }
+          user: { username: 'testuser', email: 'test@example.com', id: 1 }
         }
       };
-      
+
       axios.post.mockResolvedValue(mockResponse);
 
-      const result = await authService.login('testuser', 'pass123');
-      
+      const result = await authService.login('test@example.com', 'pass123');
+
       // CORECTAT: include withCredentials
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:8000/api/auth/login',
-        { username: 'testuser', password: 'pass123' },
+        { email: 'test@example.com', password: 'pass123' },
         { withCredentials: true }
       );
-      
+
       expect(result).toEqual(mockResponse.data);
     });
 
@@ -39,11 +39,11 @@ describe('Auth Service', () => {
           data: { detail: 'Invalid credentials' }
         }
       };
-      
+
       axios.post.mockRejectedValue(errorResponse);
 
       // CORECTAT: expect Error object
-      await expect(authService.login('wrong', 'pass'))
+      await expect(authService.login('wrong@example.com', 'pass'))
         .rejects.toThrow('Invalid credentials');
     });
   });
@@ -53,20 +53,21 @@ describe('Auth Service', () => {
       const mockResponse = {
         data: {
           success: true,
-          username: 'newuser'
+          username: 'newuser',
+          email: 'newuser@example.com'
         }
       };
-      
+
       axios.post.mockResolvedValue(mockResponse);
 
-      const result = await authService.register('newuser', 'pass123');
-      
+      const result = await authService.register('newuser@example.com', 'pass123', 'newuser');
+
       // CORECTAT: include full_name default
       expect(axios.post).toHaveBeenCalledWith(
         'http://localhost:8000/api/auth/register',
-        { username: 'newuser', password: 'pass123', full_name: '' }
+        { email: 'newuser@example.com', password: 'pass123', username: 'newuser', full_name: '' }
       );
-      
+
       expect(result).toEqual(mockResponse.data);
     });
   });
