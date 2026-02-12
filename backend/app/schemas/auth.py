@@ -72,7 +72,8 @@ class SessionResponse(BaseModel):
     }
     """
     success: bool = Field(default=True)
-    username: str
+    email: str | None = None
+    username: str | None = None
     session_token: str | None = None  # Only if using session-based auth
     user: UserResponse | None = None
 

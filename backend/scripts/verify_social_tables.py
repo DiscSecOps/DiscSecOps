@@ -6,7 +6,7 @@ from sqlalchemy import text
 from app.db.database import get_db
 
 
-async def verify_tables():
+async def verify_tables() -> None:
     print("Verifying database tables and columns...")
     async for session in get_db():
         # Check Tables

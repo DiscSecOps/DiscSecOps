@@ -183,7 +183,11 @@ async def login(
         )
 
         return SessionResponse(
-            success=True, username=user.username, session_token=session_token, user=user_response
+            success=True,
+            email=user.email,
+            username=user.username,
+            session_token=session_token,
+            user=user_response,
         )
     except HTTPException:
         raise
