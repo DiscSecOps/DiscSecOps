@@ -1,14 +1,14 @@
 // frontend/src/components/layout/Sidebar.jsx
 import { useNavigate, useLocation } from 'react-router-dom';
-import './Sidebar.css';
+import './UserSidebar.css';
 
-function Sidebar() {
+function UserSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   
   // Determină item-ul activ bazat pe URL
   const getActiveItem = () => {
-    if (location.pathname === '/dashboard') return 'Home';
+    if (location.pathname === '/user-dashboard') return 'Home';
     if (location.pathname.includes('/circles')) return 'My Circles';
     if (location.pathname.includes('/explore')) return 'Explore';
     if (location.pathname.includes('/create-post')) return 'Create Post';
@@ -20,7 +20,7 @@ function Sidebar() {
   const activeItem = getActiveItem();
   
   const menuItems = [
-    { icon: '🏠', label: 'Home', path: '/dashboard' },
+    { icon: '🏠', label: 'Home', path: '/user-dashboard' },
     { icon: '👥', label: 'My Circles', path: '/circles' },
     { icon: '🔍', label: 'Explore', path: '/explore' },
     { icon: '✏️', label: 'Create Post', path: '/create-post' },
@@ -81,4 +81,4 @@ function Sidebar() {
   );
 }
 
-export default Sidebar;
+export default UserSidebar;
