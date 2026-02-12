@@ -20,12 +20,7 @@ from app.db.models import Base
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan event handler for startup and shutdown
-    Creates database tables on startup
     """
-    # Create all tables on startup (async)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield  # Application runs here
 
     # Cleanup on shutdown (if needed)

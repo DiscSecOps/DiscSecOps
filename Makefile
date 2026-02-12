@@ -1,6 +1,6 @@
 # Root Makefile
 
-.PHONY: install install-backend install-frontend install-frontend-clean test-backend lint-backend format-backend security-backend run-backend run-frontend clean help
+.PHONY: install install-backend install-frontend install-frontend-clean test-backend lint-backend migrate-backend format-backend security-backend run-backend run-frontend clean help
 
 # -- Installation (Handles both stacks) --
 install: install-backend install-frontend
@@ -8,6 +8,8 @@ install: install-backend install-frontend
 install-backend:
 	@echo "🚀 Installing Backend dependencies..."
 	cd backend && uv sync
+	@echo "🔄 Running Backend Migrations..."
+	cd backend && uv run alembic upgrade head
 
 install-frontend:
 	@echo "🚀 Installing Frontend dependencies..."
@@ -22,6 +24,10 @@ lint-backend:
 	@echo "🔍 Running Linters (Ruff + Mypy)..."
 	cd backend && uv run ruff check .
 	cd backend && uv run mypy .
+
+migrate-backend:
+	@echo "🔄 Running Backend Migrations..."
+	cd backend && uv run alembic upgrade head
 
 lint-frontend:
 	@echo "🔍 Running Linter (eslint)..."
@@ -81,6 +87,7 @@ help:
 	@echo "  make test-e2e-ui - Run headed end-to-end tests (Playwright with UI via VNC on port localhost:6080)"
 	@echo "  make test-e2e-headed - Run headed end-to-end tests (Playwright with virtual screen)"	
 	@echo "  make lint-backend - Run backend linters (ruff, mypy)"
+	@echo "  make migrate-backend - Run alembic migrations"
 	@echo "  make lint-frontend - Run frontend linters (eslint)"
 	@echo "  make format-backend - Format backend code (ruff)"
 	@echo "  make security-backend - Run security scans (bandit, safety)"
