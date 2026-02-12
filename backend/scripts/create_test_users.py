@@ -9,7 +9,7 @@ from sqlalchemy import select
 
 from app.core.db import AsyncSessionLocal
 from app.core.security import get_password_hash
-from app.db.models import User, Role
+from app.db.models import Role, User
 
 
 async def create_test_users() -> None:
@@ -18,7 +18,7 @@ async def create_test_users() -> None:
         # Seed Roles
         roles = ["admin", "user", "manager"]
         role_map = {}
-        
+
         for role_name in roles:
             result = await session.execute(select(Role).where(Role.name == role_name))
             role = result.scalar_one_or_none()

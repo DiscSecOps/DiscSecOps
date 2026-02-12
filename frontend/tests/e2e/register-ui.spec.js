@@ -8,6 +8,7 @@ test('Register page validation @auth', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Create Account' })).toBeDisabled();
 
   // 2. Fill in the form with valid data
+  await page.locator('#email').fill('newuser@example.com');
   await page.locator('#username').fill('testuser');
   await page.locator('#password').fill('Test123!');
   await page.locator('#confirmPassword').fill('Test123!');
@@ -32,7 +33,7 @@ test('Login page validation @auth', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Login' })).toBeDisabled();
 
   // Fill in the form - button should be enabled
-  await page.locator('#username').fill('user');
+  await page.locator('#email').fill('test@example.com');
   await page.locator('#password').fill('pass');
 
   await expect(page.getByRole('button', { name: 'Login' })).toBeEnabled();

@@ -75,8 +75,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     # Return success response matching frontend expectations
     return SessionResponse(
-        success=True, 
-        email=new_user.email, 
+        success=True,
+        email=new_user.email,
         username=new_user.username,
         user=UserResponse.model_validate(new_user)
     )

@@ -5,7 +5,7 @@ Request and response models for Posts and Circles
 from datetime import datetime
 
 from pydantic import BaseModel, Field
-from backend.app.schemas.auth import UserResponse
+
 
 class PostBase(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
@@ -20,7 +20,7 @@ class PostResponse(PostBase):
     circle_id: int | None
     created_at: datetime
     updated_at: datetime | None
-    
+
     class Config:
         from_attributes = True
 

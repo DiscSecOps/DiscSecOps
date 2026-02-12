@@ -5,17 +5,17 @@ Revises: a1b2c3d4e5f6
 Create Date: 2026-02-12 10:52:41.663479
 
 """
-from typing import Sequence, Union
+from collections.abc import Sequence
 
-from alembic import op
 import sqlalchemy as sa
 
+from alembic import op
 
 # revision identifiers, used by Alembic.
 revision: str = 'f76b7d889fc8'
-down_revision: Union[str, Sequence[str], None] = 'a1b2c3d4e5f6'
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | Sequence[str] | None = 'a1b2c3d4e5f6'
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -25,7 +25,12 @@ def upgrade() -> None:
     sa.Column('circle_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.Column('is_admin', sa.Boolean(), nullable=False),
-    sa.Column('joined_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column(
+        'joined_at',
+        sa.DateTime(timezone=True),
+        server_default=sa.text('now()'),
+        nullable=False
+    ),
     sa.PrimaryKeyConstraint('circle_id', 'user_id')
     )
     op.create_table('circles',
@@ -33,7 +38,12 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=50), nullable=False),
     sa.Column('description', sa.String(length=255), nullable=True),
     sa.Column('owner_id', sa.Integer(), nullable=False),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column(
+        'created_at',
+        sa.DateTime(timezone=True),
+        server_default=sa.text('now()'),
+        nullable=False
+    ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_circles_id'), 'circles', ['id'], unique=False)
@@ -44,7 +54,12 @@ def upgrade() -> None:
     sa.Column('content', sa.String(), nullable=False),
     sa.Column('author_id', sa.Integer(), nullable=False),
     sa.Column('circle_id', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(timezone=True), server_default=sa.text('now()'), nullable=False),
+    sa.Column(
+        'created_at',
+        sa.DateTime(timezone=True),
+        server_default=sa.text('now()'),
+        nullable=False
+    ),
     sa.Column('updated_at', sa.DateTime(timezone=True), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
