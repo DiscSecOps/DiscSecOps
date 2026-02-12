@@ -1,17 +1,17 @@
-// frontend/src/pages/DashboardPage.jsx
+// frontend/src/pages/UserDashboardPage.jsx
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom'; // 👈 Import useNavigate for redirection
 import { useAuth } from '../contexts/useAuth.js'; 
 import Navbar from '../components/layout/Navbar.jsx';
-import Sidebar from '../components/layout/Sidebar.jsx';
-import { dashboardService } from '../services/dashboard.service.js';
-import './DashboardPage.css';
+import UserSidebar from '../components/layout/UserSidebar.jsx';
+import { userDashboardService } from '../services/userDashboard.service.js';
+import './UserDashboardPage.css';
 
-function DashboardPage() {
+function UserDashboardPage() {
   const { user, logout, loading: authLoading } = useAuth(); // 👈 Include logout
   const navigate = useNavigate();
   
-  const [dashboardData, setDashboardData] = useState(null);
+  const [userDashboardData, setUserDashboardData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
@@ -23,16 +23,16 @@ function DashboardPage() {
   }, [user, authLoading, navigate]);
 
   useEffect(() => {
-    const loadDashboard = async () => {
+    const loadUserDashboard = async () => {
       if (!user) return; // Don't load if no user
       
       try {
-        // 👇 dashboardService must use withCredentials: true!
-        const data = await dashboardService.getDashboardData();
-        setDashboardData(data);
+        // 👇 userDashboardService must use withCredentials: true!
+        const data = await userDashboardService.getUserDashboardData();
+        setUserDashboardData(data);
       } catch (error) {
-        console.error('Failed to load dashboard:', error);
-        setError('Failed to load dashboard data');
+        console.error('Failed to load user dashboard:', error);
+        setError('Failed to load user dashboard data');
         
         // If 401/403, user might be logged out
         if (error.response?.status === 401 || error.response?.status === 403) {
@@ -45,7 +45,7 @@ function DashboardPage() {
       }
     };
     
-    loadDashboard();
+    loadUserDashboard();
   }, [user]); // 👈 Re-load when user changes
   
   // Show loading while checking auth
@@ -67,7 +67,7 @@ function DashboardPage() {
       <Navbar user={user} onLogout={logout} /> {/* 👈  logout function passed down */}
       
       <div className="dashboard-content">
-        <Sidebar />
+        <UserSidebar />
         
         <main className="dashboard-main">
           <div className="welcome-section">
@@ -86,9 +86,9 @@ function DashboardPage() {
               <div className="card">Notifications (0)</div>
               
               {/* Show actual dashboard data if available */}
-              {dashboardData && (
+              {userDashboardData && (
                 <div className="dashboard-stats">
-                  <pre>{JSON.stringify(dashboardData, null, 2)}</pre>
+                  <pre>{JSON.stringify(userDashboardData, null, 2)}</pre>
                 </div>
               )}
             </div>
@@ -99,4 +99,4 @@ function DashboardPage() {
   );
 }
 
-export default DashboardPage;
+export default UserDashboardPage;
