@@ -11,48 +11,30 @@ from pydantic import BaseModel, Field
 class UserCreate(BaseModel):
     """
     Schema for user registration request from frontend
-
-    Frontend sends (from RegisterPage.jsx):
-    {
-        "username": "johndoe",
-        "password": "SecurePass123!"
-    }
-
-    Email removed as per frontend team request - only username and password required
     """
-    username: str = Field(..., min_length=3, max_length=50, description="Unique username")
+    email: str = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
+    username: str | None = Field(None, description="Optional username")
 
 
 class UserLogin(BaseModel):
     """
     Schema for user login request from frontend
-
-    Frontend sends (from LoginPage.jsx and auth.service.js):
-    {
-        "username": "johndoe",
-        "password": "SecurePass123!"
-    }
-
-    Note: Frontend uses USERNAME, not email!
     """
-    username: str = Field(..., description="Username")
+    email: str = Field(..., description="User email")
     password: str = Field(..., description="User password")
 
 
 class UserResponse(BaseModel):
     """
     Schema for user data in API responses
-
-    Note: Never includes password or hashed_password
-    Email removed as per frontend team request
     """
     id: int
-    username: str
-    email: str | None  # Changed from EmailStr to str since email is always None now
+    email: str
+    username: str | None
     full_name: str | None
-    role: str  # "user", "admin", "manager"
+    role_id: int | None
     is_active: bool
     is_superuser: bool
     created_at: datetime
