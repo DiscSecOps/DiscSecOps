@@ -13,7 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import auth
 from app.core.config import settings
 from app.core.db import engine
-from app.db.models import Base
 
 
 @asynccontextmanager
