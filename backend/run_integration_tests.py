@@ -112,15 +112,15 @@ try:
 except Exception as e:
     print_fail(f"FAIL: {e}")
 
-# TEST 2: User Registration (Username-based)
-print_header("🔍 TEST 2: User Registration (Username-based, NO EMAIL)")
+# TEST 2: User Registration (email-based)
+print_header("🔍 TEST 2: User Registration (email-based)")
 
 print_test("POST /api/auth/register")
 tests_total += 1
 user_data = {
-    "username": "testuser123",
+    "email": "testuser@123.com",
     "password": "SecurePass123!",
-    "full_name": "Test User"
+    "username": "testuser123"
 }
 
 try:
@@ -129,8 +129,8 @@ try:
 
     if response.status_code == 201:
         data = response.json()
-        if data.get("success") and data.get("username") == "testuser123":
-            print_success("PASS: User registered successfully without email")
+        if data.get("success") and data.get("email") == "testuser@123.com":
+            print_success("PASS: User registered successfully")
             tests_passed += 1
         else:
             print_fail("FAIL: Registration succeeded but response format unexpected")
@@ -148,7 +148,7 @@ print_header("🔍 TEST 3: Session Login (Default Mode)")
 print_test("POST /api/auth/login")
 tests_total += 1
 login_data = {
-    "username": "testuser123",
+    "email": "testuser123",
     "password": "SecurePass123!"
 }
 
@@ -209,7 +209,7 @@ print_header("🔍 TEST 5: Error Handling")
 print_test("POST /api/auth/login (wrong password)")
 tests_total += 1
 wrong_login = {
-    "username": "testuser123",
+    "email": "testuser@123.com",
     "password": "WrongPassword!"
 }
 
@@ -242,10 +242,10 @@ except Exception as e:
     print_fail(f"FAIL: {e}")
 
 # Test 5.3: Minimal registration
-print_test("\nPOST /api/auth/register (minimal - username + password only)")
+print_test("\nPOST /api/auth/register (minimal - email + password only)")
 tests_total += 1
 minimal_user = {
-    "username": "minimaluser789",
+    "email": "minimaluser789@example.com",
     "password": "MinimalPass123!"
 }
 
@@ -277,11 +277,11 @@ print(f"Pass Rate: {GREEN}{(tests_passed/tests_total*100):.1f}%{RESET}\n")
 
 print("✅ Backend Server: Running on http://127.0.0.1:8000")
 print("✅ Health Endpoints: GET /, /health, /api/health")
-print("✅ Registration: POST /api/auth/register (username-based, NO EMAIL)")
+print("✅ Registration: POST /api/auth/register (email-based)")
 print("✅ Session Login: POST /api/auth/login (sets HTTP-only cookie)")
 print("✅ Logout: POST /api/auth/logout (invalidates session)")
 print("✅ Error Handling: 401 for wrong password, 400 for duplicates")
-print("✅ Email NOT Required: Username + password is all you need")
+print("✅ Email + password is all you need")
 print("✅ Session-Based Auth: Frontend team's preferred method")
 
 if tests_passed == tests_total:
