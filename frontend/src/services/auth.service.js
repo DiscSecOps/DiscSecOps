@@ -1,7 +1,19 @@
 // frontend/src/services/auth.service.js
 import axios from 'axios';
 
-const API_URL = 'http://localhost:8000/api';
+// Use environment variable for API URL (DevSecOps best practice)
+// Falls back to localhost if not set
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000;
+
+// Optional: Log configuration in development
+if (import.meta.env.VITE_ENABLE_DEBUG === 'true') {
+  console.log('🔧 API Configuration:', {
+    API_URL,
+    API_TIMEOUT,
+    Environment: import.meta.env.VITE_ENV
+  });
+}
 
 export const authService = {
   /**
