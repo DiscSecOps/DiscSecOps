@@ -64,6 +64,35 @@ run-frontend:
 	@echo "⚛️ Starting React Frontend..."
 	cd frontend && npm run dev
 
+# -- Environment Setup --
+.PHONY: setup-env secrets
+
+setup-env:
+	@echo "🔧 Setting up environment files..."
+	@if [ ! -f backend/.env ]; then \
+		echo "📋 Creating backend/.env from template..."; \
+		cp backend/.env.example backend/.env; \
+		echo "✅ backend/.env created. Please update with real secrets!"; \
+	else \
+		echo "✅ backend/.env already exists"; \
+	fi
+	@if [ ! -f frontend/.env ]; then \
+		echo "📋 Creating frontend/.env from template..."; \
+		cp frontend/.env.example frontend/.env; \
+		echo "✅ frontend/.env created"; \
+	else \
+		echo "✅ frontend/.env already exists"; \
+	fi
+	@echo ""
+	@echo "🔐 Next: Generate secrets using:"
+	@echo "   make secrets"
+	@echo "   OR: python3 generate-secrets.py"
+	@echo "   OR: bash generate-secrets.sh"
+
+secrets:
+	@echo "🔐 Generating secure secrets..."
+	@python3 generate-secrets.py
+
 # -- Maintenance --
 clean:
 	@echo "🧹 Cleaning up artifacts..."
@@ -73,8 +102,10 @@ clean:
 help:
 	@echo "Available commands:"
 	@echo "  make install - Install both backend and frontend dependencies"
-	@echo "  make install-backend - Install both backend and frontend dependencies"
-	@echo "  make install-frontend - Install both backend and frontend dependencies"
+	@echo "  make install-backend - Install backend dependencies"
+	@echo "  make install-frontend - Install frontend dependencies"
+	@echo "  make setup-env - Setup .env files from templates"
+	@echo "  make secrets - Generate secure secrets for .env"
 	@echo "  make test-backend - Run backend tests (pytest)"
 	@echo "  make test-frontend-unit - Run frontend tests (Vitest)"
 	@echo "  make test-e2e - Run end-to-end tests (Playwright)"
