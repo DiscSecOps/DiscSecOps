@@ -237,3 +237,50 @@ async def get_users(
     result = await db.execute(select(User).offset(skip).limit(limit))
     users = result.scalars().all()
     return users
+
+# backend/app/api/auth.py -helper function to get current user from session (for session-based auth)
+
+@router.get("/me")  # 👈 create one endpoint GET /api/auth/me
+async def get_current_user(
+    request: Request,           # 👈 receive request
+    db: AsyncSession = Depends(get_db)  # 👈 conexione to db
+):
+    """
+    Get current authenticated user
+    Returns 401 if not authenticated
+    """
+    # 1️⃣ get session token from cookie (session-based auth)
+    session_token = request.cookies.get("session_token")
+
+    # 2️⃣ if no session token -> 401
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # 3️⃣ search session in database (async) - find session by token
+    result = await db.execute(
+        select(UserSession).where(UserSession.session_token == session_token)
+    )
+    session = result.scalar_one_or_none()
+
+    # 4️⃣ is session valid? (exists and not expired)
+    if not session or session.expires_at < datetime.now():
+        raise HTTPException(status_code=401, detail="Session expired")
+
+    # 5️⃣ find user by session.user_id (async)
+    result = await db.execute(select(User).where(User.id == session.user_id))
+    user = result.scalar_one_or_none()
+
+    # 6️⃣ if no user -> 401 (should not happen if session is valid, but just in case)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # 7️⃣ return user info (matching UserResponse schema, but we can return only relevant fields)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role": user.role,  # 👈 for future rols
+        "is_active": user.is_active,
+        "is_superuser": user.is_superuser
+    }

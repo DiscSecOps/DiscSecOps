@@ -5,8 +5,7 @@ Updated to match frontend expectations: username-based login!
 """
 from datetime import datetime
 
-from pydantic import BaseModel, Field
-
+from pydantic import BaseModel, Field, EmailStr
 
 class UserCreate(BaseModel):
     """
@@ -16,14 +15,14 @@ class UserCreate(BaseModel):
     {
         "username": "johndoe",
         "password": "SecurePass123!"
+        "full_name": "John Doe",  # Optional
+        "email": "john.doe@example.com"
     }
-
-    Email removed as per frontend team request - only username and password required
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
-
+    email: EmailStr | None = Field(None, description="User's email address")
 
 class UserLogin(BaseModel):
     """

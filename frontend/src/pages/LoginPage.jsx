@@ -19,11 +19,11 @@ function LoginPage() {
     // Call login via AuthContext 
     try {
       // login function from AuthContext
-      const result = await login(username, password);
+      const result = await login({username, password});
       console.log('Login successful:', result);
       
       // Navigate to dashboard or home page after successful login
-      navigate('/dashboard');
+      navigate('/user-dashboard');
 
     } catch (err) {
       // err is Error object from authService/AuthContext
