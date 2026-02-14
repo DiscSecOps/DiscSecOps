@@ -1,7 +1,7 @@
 // frontend/src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/useAuth.js';  
+import { useAuth } from '../contexts/useAuth.js';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -69,7 +69,7 @@ function LoginPage() {
           {error && <div className="error-message">{error}</div>}
           
           <button 
-            type="submit" 
+            type="submit"
             className="submit-button"
             disabled={loading || !username || !password}
           >

@@ -1,6 +1,6 @@
 // frontend/src/pages/RegisterPage.jsx
 import { useState } from 'react';
-import { useAuth } from '../contexts/useAuth.js'; 
+import { useAuth } from '../contexts/useAuth.js';
 import './RegisterPage.css';
 
 function RegisterPage() {
@@ -163,8 +163,8 @@ if (fullName && fullName.length < 2) {
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
           
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="submit-button"
             disabled={loading || !username || !password || !confirmPassword}
           >

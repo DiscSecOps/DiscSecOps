@@ -1,6 +1,10 @@
 // frontend/src/services/userDashboard.service.js
 import axios from 'axios';
 import { API_BASE_URL } from '../config/index';
+/*
+// Use environment variable for API URL (DevSecOps best practice)
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+*/
 
 export const userDashboardService = {
   async getUserDashboardData() {
