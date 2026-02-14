@@ -1,17 +1,13 @@
 // frontend/src/contexts/AuthProvider.jsx
-import { createContext, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
+import AuthContext from './AuthContext';  // Assuming you have an AuthContext defined in the same directory
 import { authService } from '../services/auth.service';
 
-// This context will hold the authentication state and functions for login, register, and logout
-const AuthContext = createContext(); export { AuthContext };
-
-// The AuthProvider component will wrap the app and provide the authentication context to its children
+//AuthProvider component to manage authentication state and actions
 const AuthProvider = ({ children }) => {
-
   const [user, setUser] = useState(null); 
   const [loading, setLoading] = useState(true); 
 
-  // On component mount, we check if there is an existing authentication session and set the user state accordingly
   useEffect(() => {
     const checkExistingAuth = async () => {
       try {
@@ -25,15 +21,13 @@ const AuthProvider = ({ children }) => {
         setLoading(false);
       }
     };
-
     checkExistingAuth();
   }, []);
 
-  // The login function will call the authService to perform login and update the user state
-  const login = async (username, password) => {
+  const login = async ({ username, password }) => {
     try {
-      const result = await authService.login(username, password);
-      if (result.success) {
+      const result = await authService.login({ username, password });
+      if (result.success && result.user) {
         setUser(result.user);
       }
       return result;
@@ -43,10 +37,9 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // The register function will call the authService to perform registration and return the result
-  const register = async (username, password, full_name = '') => {
+  const register = async (userData) => {
     try {
-      const result = await authService.register(username, password, full_name);
+      const result = await authService.register(userData);
       return result;
     } catch (error) {
       console.error('Registration failed:', error);
@@ -54,7 +47,6 @@ const AuthProvider = ({ children }) => {
     }
   };
 
-  // The logout function will call the authService to perform logout and clear the user state
   const logout = async () => {
     try {
       await authService.logout();

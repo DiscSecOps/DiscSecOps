@@ -4,81 +4,84 @@ import { useAuth } from '../contexts/useAuth.js';
 import './RegisterPage.css';
 
 function RegisterPage() {
-  const [email, setEmail] = useState('');
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
-  const [fullName, setFullName] = useState('');
-
-  const { register, loading } = useAuth();
+  const [fullName, setFullName] = useState(''); 
+  const [email, setEmail] = useState('');
+  
+  const { register, loading } = useAuth(); 
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
-    setError('');
-    setSuccess('');
+  e.preventDefault();
+  setError('');
+  setSuccess('');
+  
+  // Validation
+  if (password !== confirmPassword) {
+    setError('Passwords do not match');
+    return;
+  }
+  
+  if (password.length < 6) {
+    setError('Password must be at least 6 characters');
+    return;
+  }
+  
+  if (username.length < 3 || username.length > 20) {
+    setError('Username must be between 3 and 20 characters');
+    return;
+  }
 
-    // Validation
-    if (password !== confirmPassword) {
-      setError('Passwords do not match');
-      return;
-    }
+  if (email && !/\S+@\S+\.\S+/.test(email)) {
+  setError('Please enter a valid email address');
+  return;
+}
 
-    if (password.length < 6) {
-      setError('Password must be at least 6 characters');
-      return;
-    }
+if (fullName && fullName.length < 2) {
+  setError('Full name must be at least 2 characters if provided');
+  return;
+}
 
-    // Optional username validation if provided
-    if (username && (username.length < 3 || username.length > 20)) {
-      setError('Username must be between 3 and 20 characters');
-      return;
-    }
-
-    // Call registration via AuthContext
-    try {
-      const result = await register(email, password, username, fullName);
-      console.log('Registration successful:', result);
-
-      setSuccess(`Account created for ${email}! You can now login.`);
-
-      // Clear form
-      setEmail('');
-      setUsername('');
-      setPassword('');
-      setConfirmPassword('');
-      setFullName('');
-
-    } catch (err) {
-      // err is expected to be an Error object with a message property
-      setError(err.message || 'Registration failed');
-      console.error('Registration error:', err);
-    }
-  };
+  try {
+    // Construct the user data object to send to the backend
+    const userData = {
+      username,
+      password,
+      full_name: fullName, 
+      email
+    };
+    
+    const result = await register(userData);  // send the whole object to the register function
+    console.log('Registration successful:', result);
+    
+    setSuccess(`Account created for ${result.username || username}! You can now login.`);
+    
+    // Clear form
+    setUsername('');
+    setPassword('');
+    setConfirmPassword('');
+    setFullName('');
+    setEmail('');
+    
+  } catch (err) {
+    setError(err.message || 'Registration failed');
+    console.error('Registration error:', err);
+  }
+};
 
   return (
     <div className="register-page">
       <div className="register-container">
         <h1 className="register-title">Create Account</h1>
-
+        
         <form onSubmit={handleSubmit} className="register-form">
-          <div className="form-group">
-            <label htmlFor="email">Email *</label>
-            <input
-              name='email'
-              id="email"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="Enter your email"
-              required
-              disabled={loading}
-            />
-          </div>
 
+          {/* Username Field */}
           <div className="form-group">
-            <label htmlFor="username">Username (Optional)</label>
+            <label htmlFor="username">Username *</label>
             <input
               name='username'
               id="username"
@@ -86,13 +89,15 @@ function RegisterPage() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               placeholder="Choose a username"
+              required
               disabled={loading}
               minLength="3"
               maxLength="20"
             />
-            <small className="form-hint">3-20 characters, letters and numbers only</small>
+            <small className="form-hint">3-20 characters, letters,numbers and underscores only</small>
           </div>
-
+          
+          {/* Full Name Field */}
           <div className="form-group">
             <label htmlFor="fullName">Full Name (Optional)</label>
             <input
@@ -105,7 +110,24 @@ function RegisterPage() {
               disabled={loading}
             />
           </div>
+          
+          {/* Email Field */}
+          <div className="form-group">
+            <label htmlFor="email">Email *</label>
+            <input
+              name='email'
+              id="email"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="Your email address"
+              required
+              disabled={loading}
+            />
+            <small className="form-hint">Required. Please use a valid email address.</small>
+          </div>
 
+          {/* Password Field */}
           <div className="form-group">
             <label htmlFor="password">Password *</label>
             <input
@@ -119,9 +141,10 @@ function RegisterPage() {
               disabled={loading}
               minLength="6"
             />
-            <small className="form-hint">At least 6 characters</small>
+            <small className="form-hint">At least 8 characters must include letters,numbers and special characters</small>
           </div>
-
+          
+          {/* Confirm Password Field */}
           <div className="form-group">
             <label htmlFor="confirmPassword">Confirm Password *</label>
             <input
@@ -134,20 +157,21 @@ function RegisterPage() {
               required
               disabled={loading}
             />
-          </div>
 
+          </div>
+          
           {error && <div className="error-message">{error}</div>}
           {success && <div className="success-message">{success}</div>}
-
+          
           <button
             type="submit"
             className="submit-button"
-            disabled={loading || !email || !password || !confirmPassword}
+            disabled={loading || !username || !password || !confirmPassword}
           >
             {loading ? 'Creating account...' : 'Create Account'}
           </button>
         </form>
-
+        
         <div className="register-links">
           <p>Already have an account? <a href="/login">Login here</a></p>
           <p className="terms-note">
