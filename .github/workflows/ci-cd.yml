@@ -1,6 +1,10 @@
 name: CI/CD Pipeline
 
 on:
+  
+  # This line enables the manual GitHub Actions trigger button 
+  workflow_dispatch:
+
   push:
     branches: [main, develop]
   pull_request:
