@@ -5,7 +5,7 @@ Updated to match frontend expectations: username-based login!
 """
 from datetime import datetime
 
-from pydantic import BaseModel, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, Field, EmailStr
 
 class UserCreate(BaseModel):
     """
@@ -20,9 +20,9 @@ class UserCreate(BaseModel):
     }
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
+    email: str = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
-    email: EmailStr | None = Field(None, description="User's email address")
 
 class UserLogin(BaseModel):
     """
@@ -45,13 +45,13 @@ class UserResponse(BaseModel):
     Schema for user data in API responses
 
     Note: Never includes password or hashed_password
-    Email removed as per frontend team request
+    Email re-added as per frontend team request
     """
     id: int
     username: str
-    email: str | None  # Changed from EmailStr to str since email is always None now
+    email: str
     full_name: str | None
-    role: str  # "user", "admin", "manager"
+    role_id: int | None
     is_active: bool
     is_superuser: bool
     created_at: datetime

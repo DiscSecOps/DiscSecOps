@@ -36,12 +36,11 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     Frontend sends POST request to /api/auth/register with:
     ```json
     {
-        "username": "johndoe",
-        "password": "SecurePass123!"
+        "email": "user@example.com",
+        "password": "SecurePass123!",
+        "username": "optional_username"
     }
     ```
-
-    Email field removed as per frontend team request.
 
     Returns:
     - 201: User created successfully
@@ -59,13 +58,13 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     # Hash password using Argon2
     hashed_password = get_password_hash(user_data.password)
 
-    # Create new user (email set to None)
+    # Create new user
     new_user = User(
+        email=user_data.email,
         username=user_data.username,
-        email=None,  # Email removed as per frontend team request
         full_name=user_data.full_name,
         hashed_password=hashed_password,
-        role="user",
+        role_id=None, # Default role (can be set later)
         is_active=True,
         is_superuser=False,
     )
@@ -76,7 +75,9 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     # Return success response matching frontend expectations
     return SessionResponse(
-        success=True, username=new_user.username, user=UserResponse.model_validate(new_user)
+        success=True,
+        username=new_user.username,
+        user=UserResponse.model_validate(new_user)
     )
 
 
@@ -85,7 +86,7 @@ async def login(
     credentials: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ) -> SessionResponse:
     """
-    Login user and create session (SESSION-BASED AUTH as per frontend team request)
+    Login user and create session (SESSION-BASED AUTH)
 
     Frontend sends POST request to /api/auth/login with:
     ```json
@@ -98,13 +99,9 @@ async def login(
     Returns:
     - 200: Login successful with session token
     - 401: Invalid credentials
-
-    Changed from JWT to session-based authentication as per frontend team request.
-    Session stored in HTTP-only cookie for security.
     """
     try:
-        # Find user by username with eager loading (fixes MissingGreenlet with async PostgreSQL)
-        # Using populate_existing to ensure all attributes are loaded immediately
+        # Find user by username with eager loading
         stmt = (
             select(User)
             .where(User.username == credentials.username)
@@ -124,7 +121,7 @@ async def login(
             user.username,
             user.email,
             user.full_name,
-            user.role,
+            user.role_id,
             user.is_active,
             user.is_superuser,
             user.created_at,
@@ -177,7 +174,7 @@ async def login(
             username=user.username,
             email=user.email,
             full_name=user.full_name,
-            role=user.role,
+            role_id=user.role_id,
             is_active=user.is_active,
             is_superuser=user.is_superuser,
             created_at=user.created_at,
@@ -185,7 +182,10 @@ async def login(
         )
 
         return SessionResponse(
-            success=True, username=user.username, session_token=session_token, user=user_response
+            success=True,
+            username=user.username,
+            session_token=session_token,
+            user=user_response
         )
     except HTTPException:
         raise
@@ -280,7 +280,7 @@ async def get_current_user(
         "username": user.username,
         "email": user.email,
         "full_name": user.full_name,
-        "role": user.role,  # 👈 for future rols
+        "role_id": user.role_id,  # 👈 for future rols
         "is_active": user.is_active,
         "is_superuser": user.is_superuser
     }

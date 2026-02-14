@@ -12,6 +12,21 @@ jobs:
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
+    
+    services:
+      db:
+        image: postgres:15
+        env:
+          POSTGRES_USER: user
+          POSTGRES_PASSWORD: password
+          POSTGRES_DB: app_db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
         
     steps:
       - name: Checkout code
@@ -26,6 +41,8 @@ jobs:
           cache-dependency-glob: "backend/uv.lock"
 
       - name: Install Backend Dependencies
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
         run: make install-backend
 
       - name: Lint & Format (Ruff + Mypy)
@@ -35,6 +52,9 @@ jobs:
         run: make security-backend
 
       - name: Run Tests
+        env:
+          # Use local DB for tests, overrides .env if present
+          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
         run: make test-backend
     
     # Uncomment when ready to build Docker image
