@@ -58,7 +58,7 @@ jobs:
       - name: Setup Test DB & Start Backend
         env:
           # TODO: Hardcoded for now. Switch to secrets or .env later.
-          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
+          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
         run: |
           
           make seed-database   
@@ -82,7 +82,7 @@ jobs:
       - name: Run Unit Tests
         if: matrix.target == 'backend'
         env:
-          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
+          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
         run: make test-backend
 
       # ======================================================
@@ -108,5 +108,5 @@ jobs:
       - name: Run E2E Tests
         if: matrix.target == 'frontend'
         env:
-          BASE_URL: http://localhost:8000
+          BASE_URL: http://127.0.0.1:8000
         run: make test-e2e
