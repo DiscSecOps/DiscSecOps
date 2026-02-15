@@ -25,6 +25,7 @@ jobs:
       db:
         image: postgres:15
         env:
+          POSTGRES_SERVER: 127.0.0.1
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
           POSTGRES_DB: app_db
