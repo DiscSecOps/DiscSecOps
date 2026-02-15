@@ -151,15 +151,10 @@ async def test_register_duplicate_username(client: AsyncClient) -> None:
     response1 = await client.post("/api/auth/register", json=user_data)
     assert response1.status_code == 201
 
-    # Second registration with same email should fail
-    user_data_2 = {
-        "email": "duplicate@example.com",
-        "username": "different",
-        "password": "SecurePass123!"
-    }
-    response2 = await client.post("/api/auth/register", json=user_data_2)
+    # Second registration with same username should fail
+    response2 = await client.post("/api/auth/register", json=user_data)
     assert response2.status_code == 400
-    assert "already registered" in response2.json()["detail"].lower()
+    assert "already taken" in response2.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -189,9 +184,9 @@ async def test_login_success(client: AsyncClient) -> None:
     }
     await client.post("/api/auth/register", json=register_data)
 
-    # Login with email
+    # Login with username
     login_data = {
-        "email": "login@example.com",
+        "username": "logintest",
         "password": "SecurePass123!"
     }
     response = await client.post("/api/auth/login", json=login_data)
@@ -217,7 +212,7 @@ async def test_login_wrong_password(client: AsyncClient) -> None:
 
     # Login with wrong password
     response = await client.post("/api/auth/login", json={
-        "email": "wrongpass@example.com",
+        "username": "wrongpass",
         "password": "WrongPass123!"
     })
 
@@ -227,9 +222,9 @@ async def test_login_wrong_password(client: AsyncClient) -> None:
 
 @pytest.mark.asyncio
 async def test_login_nonexistent_user(client: AsyncClient) -> None:
-    """Test login with non-existent email"""
+    """Test login with non-existent username"""
     response = await client.post("/api/auth/login", json={
-        "email": "nonexistent@example.com",
+        "username": "nonexistent",
         "password": "SomePass123!"
     })
 
@@ -255,7 +250,7 @@ async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession
 
     # Try to login
     response = await client.post("/api/auth/login", json={
-        "email": "inactive@example.com",
+        "username": "inactive",
         "password": "Pass123!"
     })
 
@@ -281,7 +276,7 @@ async def test_login_session_mode(client: AsyncClient) -> None:
     response = await client.post(
         "/api/auth/login?use_session=true",
         json={
-            "email": "session@example.com",
+            "username": "sessionuser",
             "password": "SecurePass123!"
         }
     )
@@ -314,7 +309,7 @@ async def test_logout_success(client: AsyncClient) -> None:
     login_response = await client.post(
         "/api/auth/login?use_session=true",
         json={
-            "email": "logout@example.com",
+            "username": "logoutuser",
             "password": "SecurePass123!"
         }
     )
@@ -382,15 +377,14 @@ async def test_username_case_sensitivity(client: AsyncClient) -> None:
         "password": "Pass123!"
     })
 
-    # Try to login with different case email
+    # Try to login with different case
     response = await client.post("/api/auth/login", json={
-        "email": "CASESENSITIVE@example.com",
+        "username": "casesensitive",
         "password": "Pass123!"
     })
+
     # Should fail as backend is currently case-sensitive (original test intent)
     assert response.status_code == 401
-
-    # Actually, the test was for username. Since we login by email, let's keep it to email.
 
 
 @pytest.mark.asyncio
@@ -441,7 +435,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
 
     # 2. Login (Defaults to Session)
     jwt_response = await client.post("/api/auth/login", json={
-        "email": "fullflow@example.com",
+        "username": username,
         "password": password
     })
     assert jwt_response.status_code == 200
@@ -451,7 +445,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
     session_response = await client.post(
         "/api/auth/login?use_session=true",
         json={
-            "email": "fullflow@example.com",
+            "username": username,
             "password": password
         }
     )

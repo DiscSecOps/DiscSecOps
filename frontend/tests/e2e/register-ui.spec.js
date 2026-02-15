@@ -33,7 +33,7 @@ test('Login page validation @auth', async ({ page }) => {
   await expect(page.getByRole('button', { name: 'Login' })).toBeDisabled();
 
   // Fill in the form - button should be enabled
-  await page.locator('#email').fill('test@example.com');
+  await page.locator('#username').fill('user');
   await page.locator('#password').fill('pass');
 
   await expect(page.getByRole('button', { name: 'Login' })).toBeEnabled();

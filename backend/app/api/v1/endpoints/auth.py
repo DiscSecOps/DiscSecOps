@@ -44,15 +44,15 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     Returns:
     - 201: User created successfully
-    - 400: Email already registered
+    - 400: Username already registered
     """
-    # Check if email already exists (ASYNC!)
-    result = await db.execute(select(User).where(User.email == user_data.email))
+    # Check if username already exists (ASYNC!)
+    result = await db.execute(select(User).where(User.username == user_data.username))
     db_user = result.scalar_one_or_none()
 
     if db_user:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already registered"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
         )
 
     # Hash password using Argon2
@@ -60,8 +60,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     # Create new user
     new_user = User(
-        email=user_data.email,
         username=user_data.username,
+        email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hashed_password,
         role_id=None, # Default role (can be set later)
@@ -76,7 +76,6 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     # Return success response matching frontend expectations
     return SessionResponse(
         success=True,
-        email=new_user.email,
         username=new_user.username,
         user=UserResponse.model_validate(new_user)
     )
@@ -92,7 +91,7 @@ async def login(
     Frontend sends POST request to /api/auth/login with:
     ```json
     {
-        "email": "user@example.com",
+        "username": "johndoe",
         "password": "SecurePass123!"
     }
     ```
@@ -102,10 +101,10 @@ async def login(
     - 401: Invalid credentials
     """
     try:
-        # Find user by email with eager loading
+        # Find user by username with eager loading
         stmt = (
             select(User)
-            .where(User.email == credentials.email)
+            .where(User.username == credentials.username)
             .execution_options(populate_existing=True)
         )
         result = await db.execute(stmt)
@@ -184,10 +183,9 @@ async def login(
 
         return SessionResponse(
             success=True,
-            email=user.email,
             username=user.username,
             session_token=session_token,
-            user=user_response,
+            user=user_response
         )
     except HTTPException:
         raise
@@ -239,3 +237,50 @@ async def get_users(
     result = await db.execute(select(User).offset(skip).limit(limit))
     users = result.scalars().all()
     return users
+
+# backend/app/api/auth.py -helper function to get current user from session (for session-based auth)
+
+@router.get("/me")  # 👈 create one endpoint GET /api/auth/me
+async def get_current_user(
+    request: Request,           # 👈 receive request
+    db: AsyncSession = Depends(get_db)  # 👈 conexione to db
+) -> dict[str, Any]: # TODO: change to specific type later
+    """
+    Get current authenticated user
+    Returns 401 if not authenticated
+    """
+    # 1️⃣ get session token from cookie (session-based auth)
+    session_token = request.cookies.get("session_token")
+
+    # 2️⃣ if no session token -> 401
+    if not session_token:
+        raise HTTPException(status_code=401, detail="Not authenticated")
+
+    # 3️⃣ search session in database (async) - find session by token
+    session_result = await db.execute(
+        select(UserSession).where(UserSession.session_token == session_token)
+    )
+    session = session_result.scalar_one_or_none()
+
+    # 4️⃣ is session valid? (exists and not expired)
+    if not session or session.expires_at < datetime.now():
+        raise HTTPException(status_code=401, detail="Session expired")
+
+    # 5️⃣ find user by session.user_id (async)
+    user_result = await db.execute(select(User).where(User.id == session.user_id))
+    user = user_result.scalar_one_or_none()
+
+    # 6️⃣ if no user -> 401 (should not happen if session is valid, but just in case)
+    if not user:
+        raise HTTPException(status_code=401, detail="User not found")
+
+    # 7️⃣ return user info (matching UserResponse schema, but we can return only relevant fields)
+    return {
+        "id": user.id,
+        "username": user.username,
+        "email": user.email,
+        "full_name": user.full_name,
+        "role_id": user.role_id,  # 👈 for future rols
+        "is_active": user.is_active,
+        "is_superuser": user.is_superuser
+    }

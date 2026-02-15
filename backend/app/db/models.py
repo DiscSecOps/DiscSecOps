@@ -29,8 +29,8 @@ class User(Base):
 
     Attributes:
         id: Unique user identifier
-        email: User's email (UNIQUE, PRIMARY LOGIN FIELD)
-        username: User's username (optional/display only)
+        username: User's username (UNIQUE, PRIMARY LOGIN FIELD)
+        email: User's email (UNIQUE, optional/display only)
         full_name: User's full name
         hashed_password: Argon2 hashed password
         role_id: ForeignKey to Role.id
@@ -44,12 +44,12 @@ class User(Base):
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    # Authentication - EMAIL is primary login
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
+    # Authentication - USERNAME is primary login
+    username: Mapped[str] = mapped_column(
+        String(50), unique=True, index=True, nullable=False
     )
-    username: Mapped[str | None] = mapped_column(
-        String(50), unique=True, index=True, nullable=True
+    email: Mapped[str | None] = mapped_column(
+        String(255), unique=True, index=True, nullable=True
     )
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
 

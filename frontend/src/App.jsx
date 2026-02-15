@@ -4,7 +4,7 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import UserDashboardPage from './pages/UserDashboardPage.jsx'; 
 import ProtectedRoute from './components/layout/ProtectedRoute.jsx'; 
-import AuthProvider from './contexts/AuthProvider.jsx'; 
+import AuthProvider from './contexts/AuthProvider'; 
 import './App.css';
 
 function App() {
@@ -17,7 +17,7 @@ function App() {
           <Route path="/register" element={<RegisterPage />} />
 
           {/* Protected routes */}
-          <Route path="/dashboard" element={
+          <Route path="/user-dashboard" element={
             <ProtectedRoute>
               <UserDashboardPage />
             </ProtectedRoute>
