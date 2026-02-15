@@ -46,6 +46,14 @@ jobs:
       # ======================================================
       # COMMON SETUP (Runs for BOTH Backend and Frontend jobs)
       # ======================================================
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+          enable-cache: true
+          cache-dependency-glob: "backend/uv.lock"
+
       - name: Debug Environment
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
@@ -58,14 +66,7 @@ jobs:
           uv run python -c "import os; print('OS Env:', os.getenv('DATABASE_URL'))"
           
           echo "--- Pydantic Settings ---"
-          uv run python -c "from app.core.config import settings; print('Settings:', settings.DATABASE_URL)"
-          
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.12"
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
+          uv run python -c "from app.core.config import settings; print('Settings:', settings.DATABASE_URL)"          
 
       - name: Install Backend
         run: make install-backend
