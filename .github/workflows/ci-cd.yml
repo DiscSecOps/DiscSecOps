@@ -29,6 +29,8 @@ jobs:
           POSTGRES_USER: user
           POSTGRES_PASSWORD: password
           POSTGRES_DB: app_db
+
+          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
         ports:
           - 5432:5432
         options: >-
