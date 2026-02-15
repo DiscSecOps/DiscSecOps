@@ -60,8 +60,8 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     # Create new user
     new_user = User(
-        email=user_data.email,
         username=user_data.username,
+        email=user_data.email,
         full_name=user_data.full_name,
         hashed_password=hashed_password,
         role_id=None, # Default role (can be set later)
@@ -244,7 +244,7 @@ async def get_users(
 async def get_current_user(
     request: Request,           # 👈 receive request
     db: AsyncSession = Depends(get_db)  # 👈 conexione to db
-):
+) -> dict[str, Any]: # TODO: change to specific type later
     """
     Get current authenticated user
     Returns 401 if not authenticated
@@ -257,18 +257,18 @@ async def get_current_user(
         raise HTTPException(status_code=401, detail="Not authenticated")
 
     # 3️⃣ search session in database (async) - find session by token
-    result = await db.execute(
+    session_result = await db.execute(
         select(UserSession).where(UserSession.session_token == session_token)
     )
-    session = result.scalar_one_or_none()
+    session = session_result.scalar_one_or_none()
 
     # 4️⃣ is session valid? (exists and not expired)
     if not session or session.expires_at < datetime.now():
         raise HTTPException(status_code=401, detail="Session expired")
 
     # 5️⃣ find user by session.user_id (async)
-    result = await db.execute(select(User).where(User.id == session.user_id))
-    user = result.scalar_one_or_none()
+    user_result = await db.execute(select(User).where(User.id == session.user_id))
+    user = user_result.scalar_one_or_none()
 
     # 6️⃣ if no user -> 401 (should not happen if session is valid, but just in case)
     if not user:

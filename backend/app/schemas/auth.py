@@ -5,7 +5,8 @@ Updated to match frontend expectations: username-based login!
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
 
 class UserCreate(BaseModel):
     """
@@ -20,7 +21,7 @@ class UserCreate(BaseModel):
     }
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
-    email: str = Field(..., description="User email (unique)")
+    email: EmailStr | None = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
 
@@ -49,7 +50,7 @@ class UserResponse(BaseModel):
     """
     id: int
     username: str
-    email: str
+    email: EmailStr | None
     full_name: str | None
     role_id: int | None
     is_active: bool
@@ -57,8 +58,7 @@ class UserResponse(BaseModel):
     created_at: datetime
     updated_at: datetime | None
 
-    class Config:
-        from_attributes = True  # Allows creation from SQLAlchemy models
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):
