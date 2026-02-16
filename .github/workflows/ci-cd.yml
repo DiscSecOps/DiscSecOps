@@ -12,15 +12,17 @@ on:
 
 jobs:
   ci:
+    # Dynamically name the job based on the matrix target
     name: ${{ matrix.target == 'backend' && 'Backend CI' || 'Frontend CI' }}
     runs-on: ubuntu-latest
     
     strategy:
+      # If one target fails (e.g., backend), let the other (frontend) finish
       fail-fast: false
       matrix:
         target: [backend, frontend]
 
-    # Shared DB Service (Available to both jobs)
+    # Shared PostgreSQL service available to both parallel jobs
     services:
       db:
         image: postgres:15
@@ -38,21 +40,22 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout code
+      - name: Common> Checkout code
         uses: actions/checkout@v4
 
       # ======================================================
-      # COMMON SETUP (Runs for BOTH Backend and Frontend jobs)
+      # 🛠️ COMMON SETUP
+      # These steps prepare the environment for both stacks.
       # ======================================================
       
-      - name: Install uv
+      - name: Common step > Install uv
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
           enable-cache: true
           cache-dependency-glob: "backend/uv.lock"        
 
-      - name: Install Backend
+      - name: Common step > Install Backend
         run: |
           # ---------------------------------------------------------
           # SECURE .ENV GENERATION
@@ -66,14 +69,11 @@ jobs:
           # 2. Inject the connection string (Using 127.0.0.1 to fix DNS issues)
           echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env
           
-          # 2. 
+          # 3. 
           make install-backend
 
       # Both jobs get a migrated DB and a running server.
-      - name: Setup Test DB & Start Backend
-        env:
-          # TODO: Hardcoded for now. Switch to secrets or .env later.
-          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
+      - name: Common step > Setup Test DB & Start Backend
         run: |
           
           make seed-database   
@@ -85,26 +85,28 @@ jobs:
           make run-backend-for-ci
 
       # ======================================================
-      # BACKEND SPECIFIC STEPS
+      # 🐍 BACKEND CI specific steps
+      # Runs only when the matrix target is 'backend'
       # ======================================================
 
-      - name: Lint, Format, Security
+      - name: Backend CI specific step > Lint, Format, Security
         if: matrix.target == 'backend'
         run: |
           make lint-backend
           make security-backend
 
-      - name: Run Unit Tests
+      - name: Backend CI specific step > Run Unit Tests
         if: matrix.target == 'backend'
         env:
           DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
         run: make test-backend
 
       # ======================================================
-      # FRONTEND SPECIFIC STEPS
+      # ⚛️ FRONTEND CI specific steps
+      # Runs only when the matrix target is 'frontend'
       # ======================================================
 
-      - name: Setup Node.js
+      - name: Frontend CI specific step > Setup Node.js
         if: matrix.target == 'frontend'
         uses: actions/setup-node@v4
         with:
@@ -112,16 +114,17 @@ jobs:
           cache: "npm"
           cache-dependency-path: "frontend/package-lock.json"
 
-      - name: Install Frontend
+      - name: Frontend CI specific step > Install Frontend
         if: matrix.target == 'frontend'
         run: make install-frontend
 
-      - name: Install Playwright Browsers
+      - name: Frontend CI specific step > Install Playwright Browsers
         if: matrix.target == 'frontend'
         run: make install-playwright
 
-      - name: Run E2E Tests
+      - name: Frontend CI specific step > Run E2E Tests
         if: matrix.target == 'frontend'
         env:
+          # Tell frontend tests where to find the API we started above
           BASE_URL: http://127.0.0.1:8000
         run: make test-e2e
