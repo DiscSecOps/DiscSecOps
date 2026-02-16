@@ -26,11 +26,9 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_SERVER: 127.0.0.1
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: app_db
-
-          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -52,21 +50,7 @@ jobs:
         with:
           python-version: "3.12"
           enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
-
-      - name: Debug Environment
-        env:
-          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
-        run: |
-          echo "--- Shell Environment ---"
-          echo $DATABASE_URL
-          
-          echo "--- Python Environment ---"
-          cd backend
-          uv run python -c "import os; print('OS Env:', os.getenv('DATABASE_URL'))"
-          
-          echo "--- Pydantic Settings ---"
-          uv run python -c "from app.core.config import settings; print('Settings:', settings.DATABASE_URL)"          
+          cache-dependency-glob: "backend/uv.lock"        
 
       - name: Install Backend
         run: |
