@@ -5,34 +5,52 @@ Updated to match frontend expectations: username-based login!
 """
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
     """
     Schema for user registration request from frontend
+
+    Frontend sends (from RegisterPage.jsx):
+    {
+        "username": "johndoe",
+        "password": "SecurePass123!"
+        "full_name": "John Doe",  # Optional
+        "email": "john.doe@example.com"
+    }
     """
-    email: str = Field(..., description="User email (unique)")
+    username: str = Field(..., min_length=3, max_length=50, description="Unique username")
+    email: EmailStr | None = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
-    username: str | None = Field(None, max_length=50, description="Optional username")
-
 
 class UserLogin(BaseModel):
     """
     Schema for user login request from frontend
+
+    Frontend sends (from LoginPage.jsx and auth.service.js):
+    {
+        "username": "johndoe",
+        "password": "SecurePass123!"
+    }
+
+    Note: Frontend uses USERNAME, not email!
     """
-    email: str = Field(..., description="User email")
+    username: str = Field(..., description="Username")
     password: str = Field(..., description="User password")
 
 
 class UserResponse(BaseModel):
     """
     Schema for user data in API responses
+
+    Note: Never includes password or hashed_password
+    Email re-added as per frontend team request
     """
     id: int
-    email: str
-    username: str | None
+    username: str
+    email: EmailStr | None
     full_name: str | None
     role_id: int | None
     is_active: bool
@@ -71,8 +89,7 @@ class SessionResponse(BaseModel):
     }
     """
     success: bool = Field(default=True)
-    email: str | None = None
-    username: str | None = None
+    username: str
     session_token: str | None = None  # Only if using session-based auth
     user: UserResponse | None = None
 
