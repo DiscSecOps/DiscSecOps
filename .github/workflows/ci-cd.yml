@@ -69,7 +69,21 @@ jobs:
           uv run python -c "from app.core.config import settings; print('Settings:', settings.DATABASE_URL)"          
 
       - name: Install Backend
-        run: make install-backend
+        run: |
+          # ---------------------------------------------------------
+          # SECURE .ENV GENERATION
+          # We construct the .env file dynamically using GitHub Secrets.
+          # This file only exists for the duration of this CI job.
+          # ---------------------------------------------------------
+          
+          # 1. create the file
+          touch backend/.env
+          
+          # 2. Inject the connection string (Using 127.0.0.1 to fix DNS issues)
+          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env
+          
+          # 2. 
+          make install-backend
 
       # Both jobs get a migrated DB and a running server.
       - name: Setup Test DB & Start Backend
