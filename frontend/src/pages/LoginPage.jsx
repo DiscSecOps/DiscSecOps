@@ -1,7 +1,7 @@
 // frontend/src/pages/LoginPage.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/useAuth.js';  
+import { useAuth } from '../contexts/useAuth.js';
 import './LoginPage.css';
 
 function LoginPage() {
@@ -19,11 +19,11 @@ function LoginPage() {
     // Call login via AuthContext 
     try {
       // login function from AuthContext
-      const result = await login(username, password);
+      const result = await login({username, password});
       console.log('Login successful:', result);
       
       // Navigate to dashboard or home page after successful login
-      navigate('/dashboard');
+      navigate('/user-dashboard');
 
     } catch (err) {
       // err is Error object from authService/AuthContext
@@ -69,7 +69,7 @@ function LoginPage() {
           {error && <div className="error-message">{error}</div>}
           
           <button 
-            type="submit" 
+            type="submit"
             className="submit-button"
             disabled={loading || !username || !password}
           >

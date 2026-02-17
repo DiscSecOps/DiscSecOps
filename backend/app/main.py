@@ -13,19 +13,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import auth
 from app.core.config import settings
 from app.core.db import engine
-from app.db.models import Base
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     """
     Lifespan event handler for startup and shutdown
-    Creates database tables on startup
     """
-    # Create all tables on startup (async)
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
     yield  # Application runs here
 
     # Cleanup on shutdown (if needed)
