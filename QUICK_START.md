@@ -113,7 +113,8 @@ ALLOWED_ORIGINS=["http://localhost:3000","http://localhost:5173"]
 ### Frontend (`frontend/.env`)
 
 ```bash
-# API Connection
+# API Connection (must include /api/v1 to match backend versioning)
+VITE_API_BASE_URL=http://localhost:8000/api/v1
 VITE_API_URL=http://localhost:8000/api/v1
 
 # Feature Flags
