@@ -107,7 +107,7 @@ async def test_register_user_success(client: AsyncClient) -> None:
         "full_name": "John Doe"
     }
 
-    response = await client.post("/api/auth/register", json=user_data)
+    response = await client.post("/api/v1/auth/register", json=user_data)
     assert response.status_code == 201
 
     data = response.json()
@@ -129,7 +129,7 @@ async def test_register_minimal_data(client: AsyncClient) -> None:
         "password": "SecurePass123!"
     }
 
-    response = await client.post("/api/auth/register", json=user_data)
+    response = await client.post("/api/v1/auth/register", json=user_data)
     assert response.status_code == 201
 
     data = response.json()
@@ -148,11 +148,11 @@ async def test_register_duplicate_username(client: AsyncClient) -> None:
     }
 
     # First registration should succeed
-    response1 = await client.post("/api/auth/register", json=user_data)
+    response1 = await client.post("/api/v1/auth/register", json=user_data)
     assert response1.status_code == 201
 
     # Second registration with same username should fail
-    response2 = await client.post("/api/auth/register", json=user_data)
+    response2 = await client.post("/api/v1/auth/register", json=user_data)
     assert response2.status_code == 400
     assert "already taken" in response2.json()["detail"].lower()
 
@@ -161,11 +161,11 @@ async def test_register_duplicate_username(client: AsyncClient) -> None:
 async def test_register_invalid_data(client: AsyncClient) -> None:
     """Test registration with invalid data"""
     # Missing password
-    response = await client.post("/api/auth/register", json={"username": "test"})
+    response = await client.post("/api/v1/auth/register", json={"username": "test"})
     assert response.status_code == 422
 
     # Missing username
-    response = await client.post("/api/auth/register", json={"password": "pass"})
+    response = await client.post("/api/v1/auth/register", json={"password": "pass"})
     assert response.status_code == 422
 
 
@@ -182,14 +182,14 @@ async def test_login_success(client: AsyncClient) -> None:
         "username": "logintest",
         "password": "SecurePass123!"
     }
-    await client.post("/api/auth/register", json=register_data)
+    await client.post("/api/v1/auth/register", json=register_data)
 
     # Login with username
     login_data = {
         "username": "logintest",
         "password": "SecurePass123!"
     }
-    response = await client.post("/api/auth/login", json=login_data)
+    response = await client.post("/api/v1/auth/login", json=login_data)
 
     assert response.status_code == 200
     data = response.json()
@@ -204,14 +204,14 @@ async def test_login_success(client: AsyncClient) -> None:
 async def test_login_wrong_password(client: AsyncClient) -> None:
     """Test login with incorrect password"""
     # Register user
-    await client.post("/api/auth/register", json={
+    await client.post("/api/v1/auth/register", json={
         "email": "wrongpass@example.com",
         "username": "wrongpass",
         "password": "CorrectPass123!"
     })
 
     # Login with wrong password
-    response = await client.post("/api/auth/login", json={
+    response = await client.post("/api/v1/auth/login", json={
         "username": "wrongpass",
         "password": "WrongPass123!"
     })
@@ -223,7 +223,7 @@ async def test_login_wrong_password(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_login_nonexistent_user(client: AsyncClient) -> None:
     """Test login with non-existent username"""
-    response = await client.post("/api/auth/login", json={
+    response = await client.post("/api/v1/auth/login", json={
         "username": "nonexistent",
         "password": "SomePass123!"
     })
@@ -249,7 +249,7 @@ async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession
     await db_session.commit()
 
     # Try to login
-    response = await client.post("/api/auth/login", json={
+    response = await client.post("/api/v1/auth/login", json={
         "username": "inactive",
         "password": "Pass123!"
     })
@@ -266,7 +266,7 @@ async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession
 async def test_login_session_mode(client: AsyncClient) -> None:
     """Test session-based authentication"""
     # Register user
-    await client.post("/api/auth/register", json={
+    await client.post("/api/v1/auth/register", json={
         "email": "session@example.com",
         "username": "sessionuser",
         "password": "SecurePass123!"
@@ -274,7 +274,7 @@ async def test_login_session_mode(client: AsyncClient) -> None:
 
     # Login with session mode
     response = await client.post(
-        "/api/auth/login?use_session=true",
+        "/api/v1/auth/login?use_session=true",
         json={
             "username": "sessionuser",
             "password": "SecurePass123!"
@@ -300,14 +300,14 @@ async def test_login_session_mode(client: AsyncClient) -> None:
 async def test_logout_success(client: AsyncClient) -> None:
     """Test logout endpoint"""
     # Register and login
-    await client.post("/api/auth/register", json={
+    await client.post("/api/v1/auth/register", json={
         "email": "logout@example.com",
         "username": "logoutuser",
         "password": "SecurePass123!"
     })
 
     login_response = await client.post(
-        "/api/auth/login?use_session=true",
+        "/api/v1/auth/login?use_session=true",
         json={
             "username": "logoutuser",
             "password": "SecurePass123!"
@@ -318,7 +318,7 @@ async def test_logout_success(client: AsyncClient) -> None:
 
     # Logout
     response = await client.post(
-        "/api/auth/logout",
+        "/api/v1/auth/logout",
         cookies={"session_token": session_token}
     )
 
@@ -347,7 +347,7 @@ async def test_password_hashing(client: AsyncClient, db_session: AsyncSession) -
     from app.db.models import User
 
     # Register user
-    await client.post("/api/auth/register", json={
+    await client.post("/api/v1/auth/register", json={
         "email": "hash@example.com",
         "username": "hashtest",
         "password": "SecurePass123!"
@@ -371,14 +371,14 @@ async def test_password_hashing(client: AsyncClient, db_session: AsyncSession) -
 async def test_username_case_sensitivity(client: AsyncClient) -> None:
     """Test username case sensitivity"""
     # Register user
-    await client.post("/api/auth/register", json={
+    await client.post("/api/v1/auth/register", json={
         "email": "casesensitive@example.com",
         "username": "CaseSensitive",
         "password": "Pass123!"
     })
 
     # Try to login with different case
-    response = await client.post("/api/auth/login", json={
+    response = await client.post("/api/v1/auth/login", json={
         "username": "casesensitive",
         "password": "Pass123!"
     })
@@ -390,7 +390,7 @@ async def test_username_case_sensitivity(client: AsyncClient) -> None:
 @pytest.mark.asyncio
 async def test_special_characters_in_username(client: AsyncClient) -> None:
     """Test usernames with special characters"""
-    response = await client.post("/api/auth/register", json={
+    response = await client.post("/api/v1/auth/register", json={
         "email": "special@example.com",
         "username": "user_test-123",
         "password": "Pass123!"
@@ -405,7 +405,7 @@ async def test_username_length_limits(client: AsyncClient) -> None:
     """Test username length constraints"""
     # Very long username (>50 chars)
     long_username = "a" * 51
-    response = await client.post("/api/auth/register", json={
+    response = await client.post("/api/v1/auth/register", json={
         "email": "long@example.com",
         "username": long_username,
         "password": "Pass123!"
@@ -426,7 +426,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
     password = "SecurePass123!"
 
     # 1. Register
-    register_response = await client.post("/api/auth/register", json={
+    register_response = await client.post("/api/v1/auth/register", json={
         "username": username,
         "password": password,
         "email": "fullflow@example.com"
@@ -434,7 +434,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
     assert register_response.status_code == 201
 
     # 2. Login (Defaults to Session)
-    jwt_response = await client.post("/api/auth/login", json={
+    jwt_response = await client.post("/api/v1/auth/login", json={
         "username": username,
         "password": password
     })
@@ -443,7 +443,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
 
     # 3. Login (Session)
     session_response = await client.post(
-        "/api/auth/login?use_session=true",
+        "/api/v1/auth/login?use_session=true",
         json={
             "username": username,
             "password": password
@@ -455,7 +455,7 @@ async def test_full_auth_flow(client: AsyncClient) -> None:
 
     # 4. Logout
     logout_response = await client.post(
-        "/api/auth/logout",
+        "/api/v1/auth/logout",
         cookies={"session_token": session_token}
     )
     assert logout_response.status_code == 200

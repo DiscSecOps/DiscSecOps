@@ -115,7 +115,7 @@ except Exception as e:
 # TEST 2: User Registration (Username-based)
 print_header("🔍 TEST 2: User Registration (Username-based, NO EMAIL)")
 
-print_test("POST /api/auth/register")
+print_test("POST /api/v1/auth/register")
 tests_total += 1
 user_data = {
     "username": "testuser123",
@@ -124,7 +124,7 @@ user_data = {
 }
 
 try:
-    response = httpx.post(f"{BASE_URL}/api/auth/register", json=user_data)
+    response = httpx.post(f"{BASE_URL}/api/v1/auth/register", json=user_data)
     print_response(response)
 
     if response.status_code == 201:
@@ -145,7 +145,7 @@ except Exception as e:
 # TEST 3: JWT Login
 print_header("🔍 TEST 3: Session Login (Default Mode)")
 
-print_test("POST /api/auth/login")
+print_test("POST /api/v1/auth/login")
 tests_total += 1
 login_data = {
     "username": "testuser123",
@@ -155,7 +155,7 @@ login_data = {
 session_token = None
 try:
     client = httpx.Client()
-    response = client.post(f"{BASE_URL}/api/auth/login", json=login_data)
+    response = client.post(f"{BASE_URL}/api/v1/auth/login", json=login_data)
     print_response(response)
 
     if response.status_code == 200:
@@ -180,12 +180,12 @@ print_header("🔍 TEST 4: Logout with Session")
 # TEST 4: Logout with Session
 print_header("🔍 TEST 4: Logout with Session")
 
-print_test("POST /api/auth/logout")
+print_test("POST /api/v1/auth/logout")
 tests_total += 1
 
 if session_token:
     try:
-        response = client.post(f"{BASE_URL}/api/auth/logout")
+        response = client.post(f"{BASE_URL}/api/v1/auth/logout")
         print_response(response)
 
         if response.status_code == 200:
@@ -206,7 +206,7 @@ else:
 print_header("🔍 TEST 5: Error Handling")
 
 # Test 5.1: Wrong password
-print_test("POST /api/auth/login (wrong password)")
+print_test("POST /api/v1/auth/login (wrong password)")
 tests_total += 1
 wrong_login = {
     "username": "testuser123",
@@ -214,7 +214,7 @@ wrong_login = {
 }
 
 try:
-    response = httpx.post(f"{BASE_URL}/api/auth/login", json=wrong_login)
+    response = httpx.post(f"{BASE_URL}/api/v1/auth/login", json=wrong_login)
     print_response(response)
 
     if response.status_code == 401:
@@ -226,11 +226,11 @@ except Exception as e:
     print_fail(f"FAIL: {e}")
 
 # Test 5.2: Duplicate username
-print_test("\nPOST /api/auth/register (duplicate username)")
+print_test("\nPOST /api/v1/auth/register (duplicate username)")
 tests_total += 1
 
 try:
-    response = httpx.post(f"{BASE_URL}/api/auth/register", json=user_data)
+    response = httpx.post(f"{BASE_URL}/api/v1/auth/register", json=user_data)
     print_response(response)
 
     if response.status_code == 400:
@@ -242,7 +242,7 @@ except Exception as e:
     print_fail(f"FAIL: {e}")
 
 # Test 5.3: Minimal registration
-print_test("\nPOST /api/auth/register (minimal - username + password only)")
+print_test("\nPOST /api/v1/auth/register (minimal - username + password only)")
 tests_total += 1
 minimal_user = {
     "username": "minimaluser789",
@@ -250,7 +250,7 @@ minimal_user = {
 }
 
 try:
-    response = httpx.post(f"{BASE_URL}/api/auth/register", json=minimal_user)
+    response = httpx.post(f"{BASE_URL}/api/v1/auth/register", json=minimal_user)
     print_response(response)
 
     if response.status_code == 201:
@@ -277,9 +277,9 @@ print(f"Pass Rate: {GREEN}{(tests_passed/tests_total*100):.1f}%{RESET}\n")
 
 print("✅ Backend Server: Running on http://127.0.0.1:8000")
 print("✅ Health Endpoints: GET /, /health, /api/health")
-print("✅ Registration: POST /api/auth/register (username-based, NO EMAIL)")
-print("✅ Session Login: POST /api/auth/login (sets HTTP-only cookie)")
-print("✅ Logout: POST /api/auth/logout (invalidates session)")
+print("✅ Registration: POST /api/v1/auth/register (username-based, NO EMAIL)")
+print("✅ Session Login: POST /api/v1/auth/login (sets HTTP-only cookie)")
+print("✅ Logout: POST /api/v1/auth/logout (invalidates session)")
 print("✅ Error Handling: 401 for wrong password, 400 for duplicates")
 print("✅ Email NOT Required: Username + password is all you need")
 print("✅ Session-Based Auth: Frontend team's preferred method")

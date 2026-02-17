@@ -2,8 +2,8 @@
 """
 Authentication endpoints (ASYNC for PostgreSQL)
 Matches frontend expectations:
-- POST /api/auth/register - Create new user account
-- POST /api/auth/login - Login and get JWT token OR session
+- POST /api/v1/auth/register - Create new user account
+- POST /api/v1/auth/login - Login and get JWT token OR session
 - Username-based authentication (not email!)
 - Port 8000 (configured in main.py or frontend updated)
 """
