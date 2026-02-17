@@ -49,9 +49,9 @@ app.add_middleware(
     allow_headers=["*"],  # Allow all headers
 )
 
-# Include authentication router at /api/auth (matches frontend expectations!)
-# Frontend expects: http://localhost:8000/api/auth/login
-app.include_router(auth.router, prefix="/api")
+# Include authentication router at /api/v1/auth (versioned API)
+# Frontend expects: http://localhost:8000/api/v1/auth/login
+app.include_router(auth.router, prefix=settings.API_V1_STR)
 
 
 @app.get("/")
@@ -63,9 +63,9 @@ async def root() -> dict[str, Any]:
         "status": "running",
         "database": "PostgreSQL (Async)",
         "auth_endpoints": {
-            "register": "POST /api/auth/register",
-            "login": "POST /api/auth/login (supports JWT and sessions)",
-            "logout": "POST /api/auth/logout"
+            "register": f"POST {settings.API_V1_STR}/auth/register",
+            "login": f"POST {settings.API_V1_STR}/auth/login (supports JWT and sessions)",
+            "logout": f"POST {settings.API_V1_STR}/auth/logout"
         }
     }
 
@@ -81,5 +81,11 @@ async def health_check() -> dict[str, str]:
 
 @app.get("/api/health")
 async def api_health() -> dict[str, str]:
-    """API-specific health check"""
+    """API-specific health check (unversioned, for backward compatibility)"""
     return {"status": "healthy", "api_version": settings.VERSION}
+
+
+@app.get(f"{settings.API_V1_STR}/health")
+async def api_v1_health() -> dict[str, str]:
+    """API v1 health check (versioned)"""
+    return {"status": "healthy", "api_version": settings.VERSION, "api": "v1"}
