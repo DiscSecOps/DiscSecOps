@@ -1,6 +1,6 @@
 # Root Makefile
 
-.PHONY: install install-backend install-frontend install-frontend-clean test-backend lint-backend format-backend security-backend run-backend run-frontend clean help
+.PHONY: install install-backend install-frontend seed-database install-playwright test-backend lint-backend migrate-backend format-backend security-backend run-backend run-backend-for-ci clean help
 
 # -- Installation (Handles both stacks) --
 install: install-backend install-frontend
@@ -8,12 +8,22 @@ install: install-backend install-frontend
 install-backend:
 	@echo "🚀 Installing Backend dependencies..."
 	cd backend && uv sync
+	@echo "🔄 Running Backend Migrations..."
+	cd backend && uv run alembic upgrade head
 
 install-frontend:
 	@echo "🚀 Installing Frontend dependencies..."
 	cd frontend && npm install
 
 # -- Testing and Quality Control --
+seed-database:
+	@echo "🌱 Seeding Backend Database..."
+	cd backend && uv run python scripts/create_test_users.py
+
+install-playwright:
+	@echo "🎭 Installing Playwright Browsers..."
+	cd frontend && npx playwright install --with-deps	
+
 test-backend:
 	@echo "🧪 Running Backend Tests..."
 	cd backend && uv run pytest
@@ -22,6 +32,10 @@ lint-backend:
 	@echo "🔍 Running Linters (Ruff + Mypy)..."
 	cd backend && uv run ruff check .
 	cd backend && uv run mypy .
+
+migrate-backend:
+	@echo "🔄 Running Backend Migrations..."
+	cd backend && uv run alembic upgrade head
 
 lint-frontend:
 	@echo "🔍 Running Linter (eslint)..."
@@ -59,6 +73,13 @@ run-backend:
 	@echo "🐍 Starting FastAPI Backend..."
 	# --host 0.0.0.0 is crucial for Docker/DevContainers so you can access it from Windows	
 	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+run-backend-for-ci:
+	@echo "🐍 Starting FastAPI Backend for CI..."
+	cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+          
+	echo "Waiting for backend to start..."
+	sleep 10
 
 run-frontend:
 	@echo "⚛️ Starting React Frontend..."
@@ -102,19 +123,23 @@ clean:
 help:
 	@echo "Available commands:"
 	@echo "  make install - Install both backend and frontend dependencies"
-	@echo "  make install-backend - Install backend dependencies"
-	@echo "  make install-frontend - Install frontend dependencies"
+	@echo "  make install-backend - Install both backend and frontend dependencies"
+	@echo "  make install-frontend - Install both backend and frontend dependencies"
 	@echo "  make setup-env - Setup .env files from templates"
 	@echo "  make secrets - Generate secure secrets for .env"
+	@echo "  make seed-database - Seed the backend database with test data"
+	@echo "  make install-playwright - Install Playwright browsers (for E2E tests)"
 	@echo "  make test-backend - Run backend tests (pytest)"
 	@echo "  make test-frontend-unit - Run frontend tests (Vitest)"
 	@echo "  make test-e2e - Run end-to-end tests (Playwright)"
 	@echo "  make test-e2e-ui - Run headed end-to-end tests (Playwright with UI via VNC on port localhost:6080)"
 	@echo "  make test-e2e-headed - Run headed end-to-end tests (Playwright with virtual screen)"	
 	@echo "  make lint-backend - Run backend linters (ruff, mypy)"
+	@echo "  make migrate-backend - Run alembic migrations"
 	@echo "  make lint-frontend - Run frontend linters (eslint)"
 	@echo "  make format-backend - Format backend code (ruff)"
 	@echo "  make security-backend - Run security scans (bandit, safety)"
 	@echo "  make run-backend - Start FastAPI server (accessible outside container)"
+	@echo "  make run-backend-for-ci - Start FastAPI server for CI (runs in background)"
 	@echo "  make run-frontend - Start React dev server"
 	@echo "  make clean - Remove artifacts and virtual environments"

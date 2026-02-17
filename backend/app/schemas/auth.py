@@ -5,7 +5,7 @@ Updated to match frontend expectations: username-based login!
 """
 from datetime import datetime
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field
 
 
 class UserCreate(BaseModel):
@@ -16,14 +16,14 @@ class UserCreate(BaseModel):
     {
         "username": "johndoe",
         "password": "SecurePass123!"
+        "full_name": "John Doe",  # Optional
+        "email": "john.doe@example.com"
     }
-
-    Email removed as per frontend team request - only username and password required
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
+    email: EmailStr | None = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
-
 
 class UserLogin(BaseModel):
     """
@@ -46,20 +46,19 @@ class UserResponse(BaseModel):
     Schema for user data in API responses
 
     Note: Never includes password or hashed_password
-    Email removed as per frontend team request
+    Email re-added as per frontend team request
     """
     id: int
     username: str
-    email: str | None  # Changed from EmailStr to str since email is always None now
+    email: EmailStr | None
     full_name: str | None
-    role: str  # "user", "admin", "manager"
+    role_id: int | None
     is_active: bool
     is_superuser: bool
     created_at: datetime
     updated_at: datetime | None
 
-    class Config:
-        from_attributes = True  # Allows creation from SQLAlchemy models
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Token(BaseModel):

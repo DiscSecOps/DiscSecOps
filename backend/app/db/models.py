@@ -12,17 +12,28 @@ class Base(DeclarativeBase):
     pass
 
 
+class Role(Base):
+    """
+    Role model for system and circle permissions
+    """
+    __tablename__ = "roles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(20), unique=True, index=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+
 class User(Base):
     """
     User model for authentication with async PostgreSQL
 
     Attributes:
         id: Unique user identifier
-        username: User's username (UNIQUE, PRIMARY LOGIN FIELD - matches frontend!)
-        email: User's email (optional, for notifications/password reset)
+        username: User's username (UNIQUE, PRIMARY LOGIN FIELD)
+        email: User's email (UNIQUE, optional/display only)
         full_name: User's full name
         hashed_password: Argon2 hashed password
-        role: User role (user, admin, manager) - for future RBAC
+        role_id: ForeignKey to Role.id
         is_active: Whether user account is active
         is_superuser: Whether user has admin privileges
         created_at: Timestamp when user was created
@@ -33,7 +44,7 @@ class User(Base):
     # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    # Authentication - USERNAME is primary login (frontend expects this!)
+    # Authentication - USERNAME is primary login
     username: Mapped[str] = mapped_column(
         String(50), unique=True, index=True, nullable=False
     )
@@ -45,10 +56,11 @@ class User(Base):
     # User information
     full_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
-    # Role-based access control (for future features)
-    role: Mapped[str] = mapped_column(
-        String(20), default="user", nullable=False
-    )  # "user", "admin", "manager"
+    # Role-based access control
+    role_id: Mapped[int | None] = mapped_column(nullable=True)  # ForeignKey to Role.id
+
+    # Legacy role field (optional, can be removed later or mapped to role_id)
+    # role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
 
     # Status flags
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
@@ -63,7 +75,61 @@ class User(Base):
     )
 
     def __repr__(self) -> str:
-        return f"<User(id={self.id}, username={self.username}, role={self.role})>"
+        return f"<User(id={self.id}, username={self.username}, role={self.role_id})>"
+
+
+class Circle(Base):
+    """
+    Circle model for groups of users
+    """
+    __tablename__ = "circles"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    owner_id: Mapped[int] = mapped_column(nullable=False)  # ForeignKey to User.id
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class CircleMember(Base):
+    """
+    Association table for Circle members
+    """
+    __tablename__ = "circle_members"
+
+    circle_id: Mapped[int] = mapped_column(primary_key=True)  # ForeignKey to Circle.id
+    user_id: Mapped[int] = mapped_column(primary_key=True)    # ForeignKey to User.id
+    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
+    is_moderator: Mapped[bool] = mapped_column(Boolean, default=False)
+    joined_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+
+
+class Post(Base):
+    """
+    Post model for user content
+    """
+    __tablename__ = "posts"
+
+    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    title: Mapped[str] = mapped_column(String(100), nullable=False)
+    content: Mapped[str] = mapped_column(String, nullable=False)
+    author_id: Mapped[int] = mapped_column(nullable=False, index=True)  # ForeignKey to User.id
+    circle_id: Mapped[int | None] = mapped_column(
+        nullable=True, index=True
+    )  # ForeignKey to Circle.id (optional)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), nullable=False
+    )
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now(), nullable=True
+    )
+
+    def __repr__(self) -> str:
+        return f"<Post(id={self.id}, title={self.title}, author_id={self.author_id})>"
 
 
 # Session model for session-based authentication (alternative to JWT)
@@ -75,7 +141,9 @@ class UserSession(Base):
     __tablename__ = "user_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    session_token: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
+    session_token: Mapped[str] = mapped_column(
+        String(255), unique=True, index=True, nullable=False
+    )
     user_id: Mapped[int] = mapped_column(nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

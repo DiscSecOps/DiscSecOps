@@ -1,57 +1,36 @@
 name: CI/CD Pipeline
 
 on:
+  
+  # This line enables the manual GitHub Actions trigger button 
+  workflow_dispatch:
+
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
 
 jobs:
- 
-  # Backend CI/CD Job
-  backend-ci:
-    name: Backend CI
+  ci:
+    # Dynamically name the job based on the matrix target
+    name: ${{ matrix.target == 'backend' && 'Backend CI' || 'Frontend CI' }}
     runs-on: ubuntu-latest
-        
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      # Sets up Python 3.12 + uv + Caching automatically
-      - name: Install uv
-        uses: astral-sh/setup-uv@v5
-        with:
-          python-version: "3.12"
-          enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
-
-      - name: Install Backend Dependencies
-        run: make install-backend
-
-      - name: Lint & Format (Ruff + Mypy)
-        run: make lint-backend
-
-      - name: Security Scan (Bandit + Safety)
-        run: make security-backend
-
-      - name: Run Tests
-        run: make test-backend
     
-    # Uncomment when ready to build Docker image
-    # - name: Build Docker image
-    #   run: docker build -t backend-app .
+    strategy:
+      # If one target fails (e.g., backend), let the other (frontend) finish
+      fail-fast: false
+      matrix:
+        target: [backend, frontend]
 
-
-  e2e-tests:
-    name: E2E Tests (Playwright)
-    runs-on: ubuntu-latest
+    # Shared PostgreSQL service available to both parallel jobs
     services:
       db:
         image: postgres:15
         env:
-          POSTGRES_USER: user
-          POSTGRES_PASSWORD: password
-          POSTGRES_DB: app_db
+          POSTGRES_SERVER: 127.0.0.1
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -61,62 +40,91 @@ jobs:
           --health-retries 5
 
     steps:
-      - name: Checkout code
+      - name: Common step > Checkout code
         uses: actions/checkout@v4
 
-      # --- Backend Setup ---
-      - name: Install uv
+      # ======================================================
+      # 🛠️ COMMON SETUP
+      # These steps prepare the environment for both stacks.
+      # ======================================================
+      
+      - name: Common step > Install uv
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
           enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"
+          cache-dependency-glob: "backend/uv.lock"        
 
-      - name: Install Backend Dependencies
-        run: cd backend && uv sync
-
-      - name: Setup Test Database
-        env:
-          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
+      - name: Common step > Install Backend
         run: |
-          cd backend
-          uv run alembic upgrade head
-          uv run python scripts/create_test_users.py
+          # ---------------------------------------------------------
+          # SECURE .ENV GENERATION
+          # We construct the .env file dynamically using GitHub Secrets.
+          # This file only exists for the duration of this CI job.
+          # ---------------------------------------------------------
+          
+          # 1. create the file
+          touch backend/.env
+          
+          # 2. Inject the connection string (Using 127.0.0.1 to fix DNS issues)
+          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env
+          
+          # 3. 
+          make install-backend
 
-      - name: Start Backend
-        env:
-          DATABASE_URL: postgresql+asyncpg://user:password@localhost:5432/app_db
+      # Both jobs get a migrated DB and a running server.
+      - name: Common step > Setup Test DB & Start Backend
         run: |
-          cd backend
-          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-          echo "Waiting for backend to start..."
-          sleep 10
+          
+          make seed-database   
+          
+          # 2. Start Server in Background
+          #    - Backend tests might ignore this (if using TestClient), 
+          #      but it ensures the environment is fully ready.
+          #    - Frontend tests (Playwright) definitely need this.
+          make run-backend-for-ci
 
-      # --- Frontend Setup ---
-      - name: Setup Node.js
+      # ======================================================
+      # 🐍 BACKEND CI specific steps
+      # Runs only when the matrix target is 'backend'
+      # ======================================================
+
+      - name: 🐍 Backend CI specific step > Lint, Format, Security
+        if: matrix.target == 'backend'
+        run: |
+          make lint-backend
+          make security-backend
+
+      - name: 🐍 Backend CI specific step > Run Unit Tests
+        if: matrix.target == 'backend'
+        env:
+          DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
+        run: make test-backend
+
+      # ======================================================
+      # ⚛️ FRONTEND CI specific steps
+      # Runs only when the matrix target is 'frontend'
+      # ======================================================
+
+      - name: ⚛️ Frontend CI specific step > Setup Node.js
+        if: matrix.target == 'frontend'
         uses: actions/setup-node@v4
         with:
           node-version: "20"
           cache: "npm"
           cache-dependency-path: "frontend/package-lock.json"
 
-      - name: Install Frontend Dependencies
-        run: cd frontend && npm ci
+      - name: ⚛️ Frontend CI specific step > Install Frontend
+        if: matrix.target == 'frontend'
+        run: make install-frontend
 
-      - name: Install Playwright Browsers
-        run: cd frontend && npx playwright install --with-deps
+      - name: ⚛️ Frontend CI specific step > Install Playwright Browsers
+        if: matrix.target == 'frontend'
+        run: make install-playwright
 
-      - name: Run Authentication Tests
+      - name: ⚛️ Frontend CI specific step > Run E2E Tests
+        if: matrix.target == 'frontend'
         env:
-          BASE_URL: http://localhost:8000
-        run: |
-          cd frontend
-          npm run test:e2e -- --grep "@auth"
-  #   name: Deploy
-  #   needs: [frontend-ci, backend-ci]
-  #   runs-on: ubuntu-latest
-  #   if: github.ref == 'refs/heads/main'
-  #   
-  #   steps:
-  #   - name: Deploy to production
-  #     run: echo "Deploy to your hosting platform"
+          # Tell frontend tests where to find the API we started above
+          BASE_URL: http://127.0.0.1:8000
+        run: make test-e2e
