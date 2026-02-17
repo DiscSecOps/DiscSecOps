@@ -54,7 +54,7 @@ class TestHealth:
 
 class TestAuthentication:
     def test_user_registration_minimal(self, api_client: httpx.Client) -> None:
-        """Test registration with only username and password."""
+        """Test registration with only username, email and password."""
         response = api_client.post("/api/auth/register", json=TEST_USER2_JSON)
         assert response.status_code in [201, 400] # Allow 201 (Created) or 400 (Already exists)
 
