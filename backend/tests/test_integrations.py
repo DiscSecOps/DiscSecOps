@@ -7,6 +7,19 @@ import pytest
 
 BASE_URL = "http://127.0.0.1:8000"
 
+TEST_USER1_JSON = {
+    "username": "testuser123",
+    "email": "testuser123@example.com",
+    "password": "SecurePass123!",
+    "full_name": "Test User 1"
+    }
+
+TEST_USER2_JSON = {
+    "username": "minimaluser789",
+    "email": "minimaluser789@example.com",
+    "password": "MinimalPass123!"
+    }
+
 # --- FIXTURES ---
 
 @pytest.fixture(scope="session")
@@ -22,18 +35,10 @@ def api_client() -> Any:
 
 @pytest.fixture(scope="session")
 def authenticated_client(api_client: httpx.Client) -> Any:
-    """Logs in and returns a client with session cookies."""
-    login_data = {"email": "testuser123@example.com", "password": "SecurePass123!"}
+    """Registers user then Logs in and returns a client with session cookies."""
+    api_client.post("/api/auth/register", json=TEST_USER1_JSON) # ignore if user already exists
 
-    # Ensure user exists first (ignoring 400 if already exists)
-    api_client.post("/api/auth/register", json={
-        "username": "testuser123",
-        "email": "testuser123@example.com",
-        "password": "SecurePass123!",
-        "full_name": "Test User"
-    })
-
-    response = api_client.post("/api/auth/login", json=login_data)
+    response = api_client.post("/api/auth/login", json=TEST_USER1_JSON)
     assert response.status_code == 200
     assert "session_token" in response.cookies
     return api_client
@@ -49,18 +54,14 @@ class TestHealth:
 
 class TestAuthentication:
     def test_user_registration_minimal(self, api_client: httpx.Client) -> None:
-        """Test registration with only email and password."""
-        user_data = {
-            "email": "minimaluser789@example.com",
-            "password": "MinimalPass123!"
-        }
-        response = api_client.post("/api/auth/register", json=user_data)
-        # Allow 201 (Created) or 400 (Already exists)
-        assert response.status_code in [201, 400]
+        """Test registration with only username and password."""
+        response = api_client.post("/api/auth/register", json=TEST_USER2_JSON)
+        assert response.status_code in [201, 400] # Allow 201 (Created) or 400 (Already exists)
 
     def test_login_wrong_password(self, api_client: httpx.Client) -> None:
         """Ensure 401 is returned for bad credentials."""
-        bad_data = {"email": "testuser123@example.com", "password": "WrongPassword!"}
+        bad_data = TEST_USER1_JSON.copy()
+        bad_data["password"] = "WrongPassword!"
         response = api_client.post("/api/auth/login", json=bad_data)
         assert response.status_code == 401
 
@@ -73,6 +74,5 @@ class TestAuthentication:
 class TestErrorHandling:
     def test_duplicate_registration(self, api_client: httpx.Client) -> None:
         """Registration should fail if email is taken."""
-        user_data = {"email": "testuser123@example.com", "password": "AnyPassword!"}
-        response = api_client.post("/api/auth/register", json=user_data)
+        response = api_client.post("/api/auth/register", json=TEST_USER1_JSON)
         assert response.status_code == 400
