@@ -5,8 +5,8 @@ import { API_BASE_URL } from '../config/index';
 // Service for handling authentication-related API calls
 /*
 // Use environment variable for API URL (DevSecOps best practice)
-// Falls back to localhost if not set
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api';
+// Falls back to versioned API path if not set
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
 const API_TIMEOUT = parseInt(import.meta.env.VITE_API_TIMEOUT) || 10000;
 
 // Optional: Log configuration in development
