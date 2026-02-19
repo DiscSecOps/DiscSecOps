@@ -59,7 +59,8 @@ def upgrade() -> None:
         op.create_index(op.f('ix_user_sessions_id'), 'user_sessions', ['id'], unique=False)
         op.create_index(op.f('ix_user_sessions_session_token'), 'user_sessions',
                         ['session_token'], unique=True)
-        op.create_index(op.f('ix_user_sessions_user_id'), 'user_sessions', ['user_id'], unique=False)
+        op.create_index(op.f('ix_user_sessions_user_id'), 'user_sessions', ['user_id'],
+                        unique=False)
 
 
 def downgrade() -> None:
