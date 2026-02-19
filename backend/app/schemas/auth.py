@@ -21,7 +21,7 @@ class UserCreate(BaseModel):
     }
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
-    email: EmailStr | None = Field(..., description="User email (unique)")
+    email: EmailStr = Field(..., description="User email (unique)")
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
 
@@ -50,11 +50,10 @@ class UserResponse(BaseModel):
     """
     id: int
     username: str
-    email: EmailStr | None
+    email: EmailStr
     full_name: str | None
     role_id: int | None
     is_active: bool
-    is_superuser: bool
     created_at: datetime
     updated_at: datetime | None
 

@@ -66,7 +66,6 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
         hashed_password=hashed_password,
         role_id=None, # Default role (can be set later)
         is_active=True,
-        is_superuser=False,
     )
 
     db.add(new_user)
@@ -123,7 +122,6 @@ async def login(
             user.full_name,
             user.role_id,
             user.is_active,
-            user.is_superuser,
             user.created_at,
             user.updated_at,
             user.hashed_password,
@@ -176,7 +174,6 @@ async def login(
             full_name=user.full_name,
             role_id=user.role_id,
             is_active=user.is_active,
-            is_superuser=user.is_superuser,
             created_at=user.created_at,
             updated_at=user.updated_at,
         )
@@ -281,6 +278,5 @@ async def get_current_user(
         "email": user.email,
         "full_name": user.full_name,
         "role_id": user.role_id,  # 👈 for future rols
-        "is_active": user.is_active,
-        "is_superuser": user.is_superuser
+        "is_active": user.is_active
     }
