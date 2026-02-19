@@ -16,7 +16,7 @@ async def create_test_users() -> None:
     """Create test users for E2E tests"""
     async with AsyncSessionLocal() as session:
         # Seed Roles
-        roles = ["admin", "user", "manager"]
+        roles = ["super_admin", "admin", "user"]
         role_map = {}
 
         for role_name in roles:
@@ -46,7 +46,6 @@ async def create_test_users() -> None:
                 hashed_password=get_password_hash("password123"),
                 role_id=role_map["user"],
                 is_active=True,
-                is_superuser=False,
             )
             session.add(new_user)
             await session.commit()
