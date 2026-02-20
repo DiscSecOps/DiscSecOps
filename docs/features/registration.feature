@@ -1,39 +1,57 @@
 # features/registration.feature
 Feature: User Registration
+  As a new user
+  I want to create an account
+  So that I can join Social Circles
 
-  Background:
-    Given the backend is running on port 8000
-    And the frontend is running on port 3000
+  Business Rules:
+    - Username: required, 3-50 chars, alphanumeric + underscore
+    - Email: required, valid format, unique
+    - Password: required, min 8 chars with 1 uppercase, 1 lowercase, 1 number, 1 special
+    - Full name: optional, max 100 chars
 
-  @registration @smoke @session
-  Scenario: New user can register an account
-    Given I am not a registered user
-    When I navigate to the registration page
-    And I enter "newuser" in the username field 
-    And I enter "New User" in the full name field
-    And I enter "SecurePass123!" in the password field
-    And I enter "SecurePass123!" in the confirm password field
-    And I click the "Create Account" button
-    Then I should see message "Account created for newuser!"
-    And I should be able to login with username "newuser"
-
-  @registration @validation @session
-  Scenario: Registration shows error on password mismatch
+  @smoke @critical
+  Scenario: Successful registration with valid data
     Given I am on the registration page
-    When I enter "user123" in the username field
-    And I enter "Password123!" in the password field
-    And I enter "Different123!" in the confirm password field
-    And I click the "Create Account" button
-    Then I should see error message "Passwords do not match"
+    When I fill in:
+      | username   | john_doe        |
+      | full_name  | John Doe        |
+      | email      | john@test.com   |
+      | password   | SecurePass123!  |
+      | confirm    | SecurePass123!  |
+    And I click the register button
+    Then I should be redirected to the login page
+    And I should see "Account created successfully" message
+
+  @security
+  Scenario: Registration with existing username
+    Given a user exists with username "john_doe"
+    When I try to register with username "john_doe"
+    Then I should see "Username already taken" error
     And I should remain on the registration page
 
-  @registration @validation @session
-  Scenario: Registration validates required fields
-    Given I am on the registration page
-    Then the "Create Account" button should be disabled
-    When I enter only a username
-    Then the button should still be disabled
-    When I enter username and password
-    Then the button should still be disabled
-    When I confirm the password
-    Then the button should be enabled
+  @security
+  Scenario: Registration with mismatched passwords
+    When I fill in:
+      | username   | john_doe        |
+      | password   | SecurePass123!  |
+      | confirm    | DifferentPass!  |
+    And I click the register button
+    Then I should see "Passwords do not match" error
+
+  @security
+  Scenario: Registration with invalid email format
+    When I fill in:
+      | username   | john_doe        |
+      | email      | invalid-email   |
+      | password   | SecurePass123!  |
+    And I click the register button
+    Then I should see "Invalid email format" error
+
+  @security
+  Scenario: Registration with weak password
+    When I fill in:
+      | username   | john_doe         |
+      | password   | weak             |
+    And I click the register button
+    Then I should see "Password must be at least 8 characters" error

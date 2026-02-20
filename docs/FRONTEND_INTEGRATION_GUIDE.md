@@ -26,7 +26,7 @@ The backend authentication API has been updated per frontend team requirements:
 POST /api/auth/register
 {
   "username": "johndoe",
-  "email": "john@example.com",     // ❌ NO LONGER REQUIRED
+  "email": "john@example.com",     // REQUIRED
   "password": "SecurePass123!",
   "full_name": "John Doe"           // Optional
 }
@@ -41,12 +41,6 @@ POST /api/auth/register
   "full_name": "John Doe"           // Optional
 }
 ```
-
-**Impact:**
-- Remove all email input fields from registration forms
-- Email validation is no longer required
-- User model still has email field (set to `null`) for future features
-
 ---
 
 ### 2. Session-Based Authentication (JWT Removed)
