@@ -3,7 +3,7 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import UserDashboardPage from './pages/UserDashboardPage.jsx'; 
-import ProtectedRoute from './components/layout/ProtectedRoute.jsx'; 
+import ProtectedRoute from './routes/ProtectedRoute.jsx'; 
 import AuthProvider from './contexts/AuthProvider'; 
 import './App.css';
 
