@@ -118,6 +118,10 @@ jobs:
         if: matrix.target == 'frontend'
         run: make install-frontend
 
+      - name: ⚛️ Frontend CI specific step > Lint
+        if: matrix.target == 'frontend'
+        run: make lint-frontend
+
       - name: ⚛️ Frontend CI specific step > Install Playwright Browsers
         if: matrix.target == 'frontend'
         run: make install-playwright
