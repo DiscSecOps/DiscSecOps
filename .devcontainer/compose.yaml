@@ -14,7 +14,7 @@ services:
     # Connect to the same network as the database
     network_mode: service:db
 
-  # The Database Container
+  # The Development Database Container
   db:
     image: postgres:16-alpine
     restart: unless-stopped
@@ -26,6 +26,20 @@ services:
       POSTGRES_DB: app_db
     ports:
       - "5433:5432"
+
+  # The Test Database Container
+  test_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Use tmpfs to keep the DB in memory for blazing fast tests!
+    tmpfs:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+    ports:
+      - "5434:5432" # Exposed on a different port so it doesn't clash with dev DB      
 
 volumes:
   postgres-data:
