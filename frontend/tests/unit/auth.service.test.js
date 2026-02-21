@@ -104,7 +104,8 @@ describe('Auth Service', () => {
 
       const result = await authService.register({ 
         username: 'newuser', 
-        password: 'pass123' 
+        password: 'pass123',
+        email: 'test@example.com'
       });
       
       expect(axios.post).toHaveBeenCalledWith(
@@ -113,7 +114,7 @@ describe('Auth Service', () => {
           username: 'newuser', 
           password: 'pass123', 
           full_name: '', 
-          email: '' 
+          email: 'test@example.com' 
         }
       );
       
@@ -152,7 +153,7 @@ describe('Auth Service', () => {
       expect(result).toEqual(mockResponse.data);
     });
 
-    it('should handle registration error', async () => {
+    it('should handle username registration error', async () => {
       const errorResponse = {
         response: {
           data: { detail: 'Username already exists' }
@@ -165,6 +166,22 @@ describe('Auth Service', () => {
         username: 'existing', 
         password: 'pass123' 
       })).rejects.toThrow('Username already exists');
+    });
+
+    it('should handle email registration error', async () => {
+        const errorResponse = {
+          response: {
+            data: { detail: 'Email already exists' }
+          }
+        };
+
+        axios.post.mockRejectedValue(errorResponse);
+
+        await expect(authService.register({
+          username: 'newuser',
+          password: 'pass123',
+          email: 'existing@email.com'
+        })).rejects.toThrow('Email already exists');
     });
   });
 

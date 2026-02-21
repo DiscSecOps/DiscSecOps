@@ -25,13 +25,18 @@ function RegisterPage() {
     return;
   }
   
-  if (password.length < 6) {
-    setError('Password must be at least 6 characters');
+  if (password.length < 8) {
+    setError('Password must be at least 8 characters');
+    return;
+  }
+
+  if (password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@£$€&]).{8,}$/.test(password)) {
+    setError('Password must include at least one upper and lower case letter, a number and a special character')
     return;
   }
   
-  if (username.length < 3 || username.length > 20) {
-    setError('Username must be between 3 and 20 characters');
+  if (username.length < 3 || username.length > 50) {
+    setError('Username must be between 3 and 50 characters');
     return;
   }
 
@@ -40,8 +45,8 @@ function RegisterPage() {
   return;
 }
 
-if (fullName && fullName.length < 2) {
-  setError('Full name must be at least 2 characters if provided');
+if (fullName && (fullName.length < 2 || fullName.length > 100)) {
+  setError('Full name must be between 2-100 characters if provided');
   return;
 }
 
@@ -92,9 +97,9 @@ if (fullName && fullName.length < 2) {
               required
               disabled={loading}
               minLength="3"
-              maxLength="20"
+              maxLength="50"
             />
-            <small className="form-hint">3-20 characters, letters,numbers and underscores only</small>
+            <small className="form-hint">3-50 characters, letters, numbers and underscores only</small>
           </div>
           
           {/* Full Name Field */}
@@ -108,6 +113,8 @@ if (fullName && fullName.length < 2) {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your full name"
               disabled={loading}
+              minLength="2"
+              maxLength="100"
             />
           </div>
           
@@ -139,9 +146,9 @@ if (fullName && fullName.length < 2) {
               placeholder="Create a password"
               required
               disabled={loading}
-              minLength="6"
+              minLength="8"
             />
-            <small className="form-hint">At least 8 characters must include letters,numbers and special characters</small>
+            <small className="form-hint">At least 8 characters must include upper and lower case letters, numbers and special characters</small>
           </div>
           
           {/* Confirm Password Field */}
