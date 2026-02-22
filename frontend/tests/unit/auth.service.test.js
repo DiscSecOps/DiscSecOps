@@ -234,8 +234,7 @@ describe('Auth Service', () => {
       email: 'test@example.com',
       full_name: 'Test User',
       role: 'user',
-      is_active: true,
-      is_superuser: false
+      is_active: true
     };
     
     // Backend returs user
