@@ -1,12 +1,18 @@
 
+import asyncio
 import os
-from collections.abc import AsyncGenerator
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
+from sqlalchemy.ext.asyncio import (
+    AsyncEngine,
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
 from sqlalchemy.pool import NullPool
 
 # Import your app components
@@ -43,18 +49,18 @@ def browser_context_args(browser_context_args: dict) -> dict:
 # 2.ASYNC DATABASE CONFIGURATION (Shared by API & E2E)
 # ==========================================
 @pytest.fixture(scope="session")
-def event_loop():
+def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
     Forces pytest to use a single async event loop for the whole test session.
     This is required so our DB engine doesn't close prematurely.
     """
-    import asyncio
+
     loop = asyncio.get_event_loop_policy().new_event_loop()
     yield loop
     loop.close()
 
 @pytest_asyncio.fixture(scope="session")
-async def async_engine():
+async def async_engine()-> AsyncGenerator[AsyncEngine, None]:
     """Creates the SQLAlchemy async engine once per test run."""
     # NullPool is great for tests to prevent connection state issues
     engine = create_async_engine(TEST_DATABASE_URL, poolclass=NullPool)
