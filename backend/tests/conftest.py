@@ -74,7 +74,7 @@ async def async_engine()-> AsyncGenerator[AsyncEngine, None]:
     await engine.dispose()
 
 @pytest_asyncio.fixture
-async def db_session(async_engine) -> AsyncGenerator[AsyncSession, None]:
+async def db_session(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, None]:
     """
     Provides a transactional database session for a test,
     then ROLLS IT BACK when the test finishes. No cleanup needed!
