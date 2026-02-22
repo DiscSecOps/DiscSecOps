@@ -56,7 +56,7 @@ test-frontend-unit:
 
 test-e2e:
 	@echo "🎭 Running E2E Tests..."
-	cd frontend && npm run test:e2e
+	cd backend && uv run pytest tests/e2e/step_defs/
 
 test-e2e-ui:
 	@echo "📺 Running Headed Tests (Check Port 6080)..."

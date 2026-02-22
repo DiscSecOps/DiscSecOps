@@ -1,7 +1,8 @@
 
 import asyncio
 import os
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
+from typing import Any
 
 import pytest
 import pytest_asyncio
@@ -17,7 +18,8 @@ from sqlalchemy.pool import NullPool
 
 # Import your app components
 from app.core.db import get_db
-from app.db.models import Base
+from app.core.security import get_password_hash
+from app.db.models import Base, User
 from app.main import app
 
 load_dotenv()
@@ -110,3 +112,26 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest_asyncio.fixture
+async def create_test_user(
+    db_session: AsyncSession
+) -> AsyncGenerator[Callable[[str, str, str], Coroutine[Any, Any, User]], None]:
+    """
+    Async factory to create a user.
+    The nested function must be awaited in your step definitions.
+    """
+    async def _create_user(username: str, plain_password: str, role: str = "User") -> User:
+        hashed_pw = get_password_hash(plain_password)
+        new_user = User(
+            username=username,
+            hashed_password=hashed_pw,
+            global_role=role
+        )
+        db_session.add(new_user)
+        await db_session.commit()
+        await db_session.refresh(new_user)
+        return new_user
+
+    yield _create_user
