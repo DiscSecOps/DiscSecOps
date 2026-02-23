@@ -27,7 +27,7 @@ install-playwright:
 
 test-backend:
 	@echo "🧪 Running Backend Tests..."
-	cd backend && uv run pytest --ignore=tests/e2e/ --ignore=tests/e2e/step_defs/
+	cd backend && uv run pytest tests/integration/
 
 lint-backend:
 	@echo "🔍 Running Linters (Ruff + Mypy)..."
