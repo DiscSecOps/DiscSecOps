@@ -106,6 +106,8 @@ addopts = [
     "--cov=app",
     "--cov-report=term-missing",
     "--cov-report=html",
+    "--browser", "chromium",
+    "--screenshot", "only-on-failure",
 ]
 pythonpath = ["."]
 asyncio_mode = "auto"

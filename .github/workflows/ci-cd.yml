@@ -100,9 +100,9 @@ jobs:
 
       - name: 🐍 Backend CI specific step > Run Unit Tests
         if: matrix.target == 'backend'
-        env:
+        # env:
           # DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
-          TEST_DATABASE_URL: postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}
+          # TEST_DATABASE_URL: postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}
         run: make test-backend
 
       # ======================================================
