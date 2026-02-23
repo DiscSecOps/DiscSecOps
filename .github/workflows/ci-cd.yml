@@ -126,9 +126,31 @@ jobs:
         if: matrix.target == 'frontend'
         run: make lint-frontend
 
-      - name: ⚛️ Frontend CI specific step > Install Playwright Browsers
+      # Playwright install 1: Define the Cache logic
+      - name: 📦 Cache Playwright Browsers
         if: matrix.target == 'frontend'
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          # The key ensures that if you update Playwright version in pyproject.toml,
+          # the cache is invalidated and fresh browsers are downloaded.
+          key: ${{ runner.os }}-playwright-${{ hashFiles('backend/pyproject.toml') }}  
+      
+      # Playwright install 2: Only install if the cache was NOT found
+      - name: ⚛️ Frontend CI specific step > Install Playwright Browsers
+        if: >-
+          matrix.target == 'frontend' &&
+          steps.playwright-cache.outputs.cache-hit != 'true'
         run: make install-playwright
+
+      # Playwright install 3: Even if cache hits, we still need the system dependencies (drivers/libs)
+      # This is much faster than downloading the whole browser
+      - name: 🏗️ Install Playwright System Dependencies
+        if: >-
+          matrix.target == 'frontend' &&
+          steps.playwright-cache.outputs.cache-hit == 'true'
+        run: uv run playwright install-deps chromium
 
       - name: ⚛️ Frontend CI specific step > Run E2E Tests
         if: matrix.target == 'frontend'

@@ -162,24 +162,26 @@ async def create_test_user(db_session):
     return _create_user
 ```    
 
+# Code generation
 
+pytest-bdd has a built-in code generator, and it is incredibly useful for speeding up your workflow. It analyzes your Gherkin .feature files and automatically writes the Python boilerplate (the @given, @when, @then decorators, and function signatures) for any steps that don't exist yet.
 
-``` bash
-uv run pytest-bdd generate ../docs/features/[my-feature].feature > tests/e2e/step_defs/test[my-test-name].py
-``` 
-e.g.
-``` bash
-uv run pytest-bdd generate ../docs/features/circle-role.feature > tests/e2e/step_defs/test_roles.py
-```
+Here are the two ways pytest-bdd handles this for you:
 
-Method 1: The pytest-bdd generate Command (Best for New Files)
+## Method 1: The pytest-bdd generate Command (Best for New Files)
 
 If you just wrote a brand new feature file (like your circle-role.feature) and want to generate the entire Python skeleton in one go, you use the CLI tool.
 
 From inside your /backend directory, run this command:
+
 ``` bash
-pytest-bdd generate ../docs/features/circle-role.feature
+uv run pytest-bdd generate ../docs/features/[my-feature].feature
+``` 
+e.g.
+``` bash
+uv run pytest-bdd generate ../docs/features/circle-role.feature
 ```
+
 What happens:
 It will output the complete Python skeleton directly to your terminal screen. It is smart enough to use parsers.parse for variables it detects in your strings!
 
@@ -194,7 +196,7 @@ def _(username):
 
 @when(parsers.parse('I view the circle settings'))
 def _():
-    raise NotImplementedError
+    raise NotImplementedErrors
 
 @then(parsers.parse('I should see "{badge_text}" badge'))
 def _(badge_text):
@@ -204,10 +206,11 @@ def _(badge_text):
 Tip: You can route this output directly into a new Python file so you don't even have to copy-paste:
 ``` bash
 
-pytest-bdd generate ../docs/features/circle-role.feature > tests/e2e/step_defs/test_roles.py
+uv run pytest-bdd generate ../docs/features/circle-role.feature > tests/e2e/step_defs/test_roles.py
 ```
 (Then you just open test_roles.py, rename the _ functions to something descriptive, and add your Playwright/Database logic!)
-Method 2: Test Failure Output (Best for Adding a Single Step)
+
+## Method 2: Test Failure Output (Best for Adding a Single Step)
 
 If you already have your tests running, but a Product Manager adds one new step to an existing scenario in your feature file, you don't need to regenerate the whole file.
 
@@ -232,6 +235,79 @@ E           raise NotImplementedError
 
 ```
 
+# Database stratgey for testing
+
+Unifying your testing strategy now, before you write dozens of tests, will save your team many hours of refactoring later.
+
+I see that your existing API tests currently use an in-memory SQLite database (sqlite+aiosqlite:///:memory:). It also overrides the FastAPI get_db dependency so your application uses this test database during API calls.
+
+To achieve your goals of consistency and reusability, we need to unify the API tests and the new BDD tests to use the exact same database engine and fixtures.
+
+Here is the strategy to align everything.
+
+
+1. The Database Strategy: Postgres vs. SQLite
+
+The Recommendation: Stop using SQLite for tests and use a dedicated Postgres test database for everything.
+
+While SQLite is fast, it does not perfectly match Postgres. Things like JSONB columns, specific asyncpg behaviors, or advanced SQLAlchemy features might work in tests but fail in production (or vice versa). Since you are using Docker, spinning up a real Postgres database specifically for tests is easy and ensures 100% parity with production.
+
+2. Updating compose.yml
+
+Yes, you should define a test database in your Compose file! Sharing your app_db with your tests is dangerous because the test suite will constantly delete and recreate tables, wiping out the data you use for manual development.
+
+Add this service to your compose.yml. Note the use of tmpfs—this runs the Postgres database entirely in your computer's RAM, making it nearly as fast as in-memory SQLite!
+YAML
+
+  # Add this right below your existing 'db' service
+  test_db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    # Use tmpfs to keep the DB in memory for blazing fast tests!
+    tmpfs:
+      - /var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: test_db
+    ports:
+      - "5434:5432" # Exposed on a different port so it doesn't clash with dev DB
+
+3. Handling Alembic
+
+For testing, you have two choices for creating your tables:
+
+    Alembic Upgrades: Run alembic upgrade head programmatically at the start of your tests. This is the most "pure" approach.
+
+    SQLAlchemy create_all: Let SQLAlchemy create the tables based on your models. This is what your current SQLite test does.
+
+Recommendation: Stick with Base.metadata.create_all for your test suite. It is significantly faster than running dozens of Alembic migration files every time you run pytest. We will use this in our unified configuration.
+
+4. The Unified /backend/tests/conftest.py
+
+To make your code reusable, we will move the database and client fixtures out of test_auth.py and into a single conftest.py file located at /backend/tests/conftest.py.
+
+Because it is at the root of the tests folder, both your API tests (/tests/unit) and your BDD tests (/tests/e2e) will share the exact same setup!
+
+
+
+
+
+# Playwright Code Generator
+
+With the Playwright Code Generator you do not have to guess the page.get_by_role(...) commands.
+If for example, if you are unsure how to select the "Settings" button in your React app, you can run the following command in your terminal:
+``` bash
+playwright codegen http://localhost:3000 
+```
+***This opens up a browser window on the dev container itself, not your own PC. To access this browser window, we go in via the VNC service configured on port 6080:***
+
+**http://localhost:6080**
+
+Once you are in via VNC, you can then navigate the app, click, perform actions like entering data in a field etc. These actions are then recorded as python code in a separate Playwright Inspector window (within the VNC session). 
+Now you can copy the exact Python code it generates to use in your step definitions.
+
+
 
 
 
@@ -245,3 +321,10 @@ E           raise NotImplementedError
 - Installed pytest-bdd package and dependencies via uv package manager
 - Installed VS Code extension "Cucumber (Gherkin) Full Support"
 - Added TEST_DATABASE_URL to .env file in ci-cd.yml #TODO: do we still need the DATABASE_URL parameter in CI?
+
+
+- Changed Makefile command test-e2e to run pytest playwright tests
+- Updated Playwright container version in Dockerfile
+- Configured backend/tests/e2e/step_defs/test_ui.py for testing docs/features/ui/feature
+- Added create_test_user fixture to conftest.py
+- TODO: remove playwright and related sependencies from npm
