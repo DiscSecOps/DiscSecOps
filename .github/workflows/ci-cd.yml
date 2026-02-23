@@ -133,6 +133,16 @@ jobs:
       - name: ⚛️ Frontend CI specific step > Run E2E Tests
         if: matrix.target == 'frontend'
         env:
-          # Tell frontend tests where to find the API we started above
           BASE_URL: http://127.0.0.1:8000
-        run: make test-e2e
+          # Ensure Playwright knows to look at localhost:3000
+          FRONTEND_URL: http://localhost:3000
+        run: |
+          # 1. Start via Makefile in the background
+          make run-frontend & 
+          
+          # 2. Wait for the port to be active (matches your 120s timeout)
+          # This ensures the React dev server is fully compiled
+          npx wait-on http://localhost:3000 --timeout 120000
+          
+          # 3. Run your BDD tests
+          make test-e2e

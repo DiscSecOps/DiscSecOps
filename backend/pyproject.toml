@@ -95,7 +95,9 @@ markers = [
     "smoke: Mark a test as a smoke test",
     "critical: Mark a test as critical path",
     "security: Mark a test as a security/RBAC test",
-    "complex: Mark tests with complex state management"
+    "complex: Mark tests with complex state management",
+    "ui: Mark tests related to the User Interface",
+    "validation: Mark tests related to form validation"
 ]
 python_files = ["test_*.py"]
 python_classes = ["Test*"]
