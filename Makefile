@@ -22,8 +22,13 @@ seed-database:
 
 install-playwright:
 	@echo "🎭 Installing Playwright Browsers..."
-# 	cd frontend && npx playwright install --with-deps	
-	cd backend && uv run playwright install --with-deps
+	cd backend && uv run python -m playwright install --with-deps chromium
+
+install-playwright-deps-only:
+# -- This is useful for CI when we have a cache hit for the browsers, --
+# -- but we still need to ensure the system dependencies (drivers/libs) are installed. --
+	@echo "🎭 Installing Playwright System Dependencies (without browsers)..."
+	cd backend && uv run python -m playwright install-deps chromium	
 
 test-backend:
 	@echo "🧪 Running Backend Tests..."
