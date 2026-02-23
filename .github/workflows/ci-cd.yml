@@ -34,7 +34,7 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd pg_isready
+          --health-cmd "pg_isready -U $$POSTGRES_USER"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -146,3 +146,12 @@ jobs:
           
           # 3. Run your BDD tests
           make test-e2e
+
+      - name: 🧹 Cleanup background processes
+        if: always() # Ensures this runs even if the tests fail!
+        run: |
+          echo "Shutting down background servers..."
+          pkill -f "npm" || true
+          pkill -f "node" || true
+          # If your backend is also running in the background, kill uvicorn/python:
+          pkill -f "uvicorn" || true          
