@@ -1,6 +1,7 @@
 // frontend/src/pages/RegisterPage.jsx
 import { useState } from 'react';
 import { useAuth } from '../contexts/useAuth.js';
+import { useNavigate } from 'react-router-dom';
 import './RegisterPage.css';
 
 function RegisterPage() {
@@ -8,16 +9,16 @@ function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [fullName, setFullName] = useState(''); 
   const [email, setEmail] = useState('');
   
   const { register, loading } = useAuth(); 
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
-  setSuccess('');
   
   // Validation
   if (password !== confirmPassword) {
@@ -62,15 +63,9 @@ if (fullName && (fullName.length < 2 || fullName.length > 100)) {
     const result = await register(userData);  // send the whole object to the register function
     console.log('Registration successful:', result);
     
-    setSuccess(`Account created for ${result.username || username}! You can now login.`);
-    
-    // Clear form
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
-    setFullName('');
-    setEmail('');
-    
+    const message = `Account created for ${result.username || username}! You can now login.`;
+
+    navigate('/login', { state: { success: message } });
   } catch (err) {
     setError(err.message || 'Registration failed');
     console.error('Registration error:', err);
@@ -168,7 +163,6 @@ if (fullName && (fullName.length < 2 || fullName.length > 100)) {
           </div>
           
           {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
           
           <button
             type="submit"

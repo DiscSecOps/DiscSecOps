@@ -1,6 +1,6 @@
 // frontend/src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth.js';
 import './LoginPage.css';
 
@@ -11,6 +11,10 @@ function LoginPage() {
   
   const { login, loading } = useAuth();
   const navigate = useNavigate();
+
+  // Display successful registration message if user was directed here from Register page
+  const location  = useLocation(); 
+  const success = location.state?.success || null;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -66,6 +70,7 @@ function LoginPage() {
             />
           </div>
           
+          {success && <div className="success-message">{success}</div>}
           {error && <div className="error-message">{error}</div>}
           
           <button 
