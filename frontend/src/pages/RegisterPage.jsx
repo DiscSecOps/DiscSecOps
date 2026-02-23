@@ -1,6 +1,7 @@
 // frontend/src/pages/RegisterPage.jsx
 import { useState } from 'react';
 import { useAuth } from '../contexts/useAuth.js';
+import { useNavigate } from 'react-router-dom';
 import './RegisterPage.css';
 
 function RegisterPage() {
@@ -8,16 +9,16 @@ function RegisterPage() {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
   const [fullName, setFullName] = useState(''); 
   const [email, setEmail] = useState('');
   
   const { register, loading } = useAuth(); 
 
+  const navigate = useNavigate();
+
   const handleSubmit = async (e) => {
   e.preventDefault();
   setError('');
-  setSuccess('');
   
   // Validation
   if (password !== confirmPassword) {
@@ -25,13 +26,18 @@ function RegisterPage() {
     return;
   }
   
-  if (password.length < 6) {
-    setError('Password must be at least 6 characters');
+  if (password.length < 8) {
+    setError('Password must be at least 8 characters');
+    return;
+  }
+
+  if (password && !/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@£$€&]).{8,}$/.test(password)) {
+    setError('Password must include at least one upper and lower case letter, a number and a special character')
     return;
   }
   
-  if (username.length < 3 || username.length > 20) {
-    setError('Username must be between 3 and 20 characters');
+  if (username.length < 3 || username.length > 50) {
+    setError('Username must be between 3 and 50 characters');
     return;
   }
 
@@ -40,8 +46,8 @@ function RegisterPage() {
   return;
 }
 
-if (fullName && fullName.length < 2) {
-  setError('Full name must be at least 2 characters if provided');
+if (fullName && (fullName.length < 2 || fullName.length > 100)) {
+  setError('Full name must be between 2-100 characters if provided');
   return;
 }
 
@@ -57,15 +63,9 @@ if (fullName && fullName.length < 2) {
     const result = await register(userData);  // send the whole object to the register function
     console.log('Registration successful:', result);
     
-    setSuccess(`Account created for ${result.username || username}! You can now login.`);
-    
-    // Clear form
-    setUsername('');
-    setPassword('');
-    setConfirmPassword('');
-    setFullName('');
-    setEmail('');
-    
+    const message = `Account created for ${result.username || username}! You can now login.`;
+
+    navigate('/login', { state: { success: message } });
   } catch (err) {
     setError(err.message || 'Registration failed');
     console.error('Registration error:', err);
@@ -92,9 +92,9 @@ if (fullName && fullName.length < 2) {
               required
               disabled={loading}
               minLength="3"
-              maxLength="20"
+              maxLength="50"
             />
-            <small className="form-hint">3-20 characters, letters,numbers and underscores only</small>
+            <small className="form-hint">3-50 characters, letters, numbers and underscores only</small>
           </div>
           
           {/* Full Name Field */}
@@ -108,6 +108,8 @@ if (fullName && fullName.length < 2) {
               onChange={(e) => setFullName(e.target.value)}
               placeholder="Your full name"
               disabled={loading}
+              minLength="2"
+              maxLength="100"
             />
           </div>
           
@@ -139,9 +141,9 @@ if (fullName && fullName.length < 2) {
               placeholder="Create a password"
               required
               disabled={loading}
-              minLength="6"
+              minLength="8"
             />
-            <small className="form-hint">At least 8 characters must include letters,numbers and special characters</small>
+            <small className="form-hint">At least 8 characters must include upper and lower case letters, numbers and special characters</small>
           </div>
           
           {/* Confirm Password Field */}
@@ -161,7 +163,6 @@ if (fullName && fullName.length < 2) {
           </div>
           
           {error && <div className="error-message">{error}</div>}
-          {success && <div className="success-message">{success}</div>}
           
           <button
             type="submit"

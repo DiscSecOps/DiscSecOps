@@ -49,9 +49,17 @@ Feature: User Registration
     Then I should see "Invalid email format" error
 
   @security
-  Scenario: Registration with weak password
+  Scenario: Registration with short password
     When I fill in:
       | username   | john_doe         |
       | password   | weak             |
     And I click the register button
     Then I should see "Password must be at least 8 characters" error
+  
+  @security
+  Scenario: Registration with weak password
+    When I fill in:
+      | username   | john_doe         |
+      | password   | weakpass             |
+    And I click the register button
+    Then I should see "Password must include at least one upper and lower case letter, a number and a special character"
