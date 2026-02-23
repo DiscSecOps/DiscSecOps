@@ -159,6 +159,24 @@ async def test_register_duplicate_username(client: AsyncClient) -> None:
 
 
 @pytest.mark.asyncio
+async def test_register_duplicate_email(client: AsyncClient) -> None:
+    """Test that duplicate email registration fails"""
+    user_data = {
+        "email": "duplicate@example.com",
+        "username": "duplicate",
+        "password": "SecurePass123!"
+    }
+
+    # First registration should succeed
+    response1 = await client.post("/api/v1/auth/register", json=user_data)
+    assert response1.status_code == 201
+
+    # Second registration with same username should fail
+    response2 = await client.post("/api/v1/auth/register", json=user_data)
+    assert response2.status_code == 400
+    assert "already taken" in response2.json()["detail"].lower()
+
+@pytest.mark.asyncio
 async def test_register_invalid_data(client: AsyncClient) -> None:
     """Test registration with invalid data"""
     # Missing password

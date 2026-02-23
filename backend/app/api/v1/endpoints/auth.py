@@ -15,7 +15,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from sqlalchemy import select
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
@@ -44,15 +44,27 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
 
     Returns:
     - 201: User created successfully
-    - 400: Username already registered
+    - 400: Username already taken
+    - 400: Email already taken
     """
     # Check if username already exists (ASYNC!)
-    result = await db.execute(select(User).where(User.username == user_data.username))
-    db_user = result.scalar_one_or_none()
+    username = await db.execute(select(User).where(User.username == user_data.username))
+    db_username = username.scalar_one_or_none()
 
-    if db_user:
+    if db_username:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
+        )
+
+    # Check if email already exists (ASYNC!)
+    email = await db.execute(select(User).where(
+            func.lower(User.email) == func.lower(user_data.email)
+        ))
+    db_email = email.scalar_one_or_none()
+
+    if db_email:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken"
         )
 
     # Hash password using Argon2
