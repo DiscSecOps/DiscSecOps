@@ -1,330 +1,148 @@
-```
+# 📖 Full-Stack BDD Testing Playbook
+
+This document defines the architecture and workflow for Behavior-Driven Development (BDD) using Pytest-BDD, Playwright, and FastAPI.
+
+## The Big Picture (How Everything Connects)
+
+Here is a mental model of how the entire BDD testing architecture fits together.
+
+Think of the process as a relay race with 4 main stages:
+
+### Stage 1: The Blueprint (Product & Docs)
+
+- **Where**: /docs/features/circle-role.feature
+- **What**: You write plain English rules.
+- **Purpose**: To define what the system should do in a way anyone (developers, managers, QA) can read.
+
+### Stage 2: The Translation (Step Definitions)
+
+- **Where**: /backend/tests/e2e/step_defs/test_roles.py
+- **What**: This is the Python file that links the English sentences to Python functions.
+- **Purpose**: It acts as a translator. When pytest reads Given I log in, this file says, "Ah, I have a Python function for that!"
+
+### Stage 3: The Helpers (Fixtures & Setup)
+
+- **Where**: /backend/tests/e2e/conftest.py
+- **What**: The invisible setup crew.
+- **Purpose**: Before your test even clicks a button, this file starts the Playwright browser and connects to your Postgres database. It hands the page (browser) and db_session (database) to your Stage 2 functions so they can do their jobs.
+
+### Stage 4: Execution (Running the Test)
+
+When you type pytest in your terminal, here is the exact chronological order of what happens:
+
+- Pytest starts up: It finds your conftest.py and gets the database and browser ready.
+- Reads the Feature: It opens /docs/features/circle-role.feature and reads the first line: Given I am logged in as alice.
+- Finds the Match: It searches /tests/e2e/step_defs/ and finds the Python function decorated with @given('I am logged in as alice').
+- Runs the Code: It executes that Python function. Inside that function, Playwright takes over, opens the React app, types "alice", and clicks Login.
+- Checks Assertions: It reads Then I should see "👑 Owner" badge. It runs the matching Python code: expect(page.get_by_text("👑 Owner")).to_be_visible().
+- Cleanup: Once the scenario finishes, conftest.py steps back in, closes the browser, and rolls back the database so the next test has a totally clean slate.
+
+## 🏗️ Project Architecture
+
+We maintain a strict separation between English specifications, backend logic, and frontend UI.
+```Plaintext
+
 project_root/
+│
 ├── docs/
-│   └── features/                 # Gherkin files live here (Source of Truth)
-├── frontend/
-│   ├── package.json
+│   └── features/                 # Gherkin .feature files (Source of Truth)
+│
+├── frontend/                     # React Frontend
 │   └── tests/
 │       └── unit/                 # Vitest JS unit tests stay here
-└── backend/
-    ├── pyproject.toml            # Pytest config lives here
-    ├── my_app/                   # FastAPI & backend code
+│
+└── backend/                      # FastAPI Backend
+    ├── pyproject.toml            # Pytest & Tooling config
     └── tests/
         ├── unit/                 # Backend pytest unit tests
-        ├── integration/          # Backend API tests
-        └── e2e/                  # MOVING HERE: Python Playwright + BDD tests
-            ├── conftest.py
-            └── step_defs/
-```
-
-# pyproject.toml Configuration for pytest   
-``` toml
-[tool.pytest.ini_options]
-# 1. Tell pytest to handle async tests automatically (for our DB fixtures)
-asyncio_mode = "auto"
-
-# 2. Tell pytest exactly where to look for test files
-# It will look in backend/tests/ (since pyproject.toml is in /backend)
-testpaths = [
-    "tests",
-]
-
-# 3. Tell pytest-bdd where the features folder is
-# Because pyproject.toml is in /backend, we go up one level (..) to the root, then into docs
-bdd_features_base_dir = "../docs/features"
-
-# Optional but recommended: add CLI flags you always want to run
-# e.g., -v for verbose, --strict-markers to avoid typo'd tags
-addopts = "-v --strict-markers"
-
-# Register our custom Gherkin tags so pytest doesn't throw warnings
-markers = [
-    "smoke: Mark a test as a smoke test",
-    "critical: Mark a test as critical path",
-    "security: Mark a test as a security/RBAC test",
-    "complex: Mark tests with complex state management"
-]
+        ├── integration/          # API-level tests (formerly test_auth.py)
+        └── e2e/                  # BDD / Playwright tests
+            ├── conftest.py       # Global fixtures (DB & Browser)
+            └── step_defs/        # Python implementations of Gherkin steps
 ```
 
 
-# conftest.py
-Here is the complete conftest.py tailored for your /backend/tests/e2e/ directory.
+## 🛠️ The Database Strategy
 
-This file acts as the "control center" for your E2E tests. It automatically handles the Playwright browser setup, configures the base URL for your React frontend, and sets up the async connection to your Postgres container so you can securely teleport data into the database before the browser even opens.
+To ensure 100% parity with production, we use Postgres for all tests instead of SQLite.
 
-``` python
-import os
-import pytest
-import pytest_asyncio
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
-from sqlalchemy.orm import sessionmaker
+ - Isolation: A dedicated test_db container runs on port 5434 to avoid wiping your development data.
+ - Performance: The test database uses tmpfs (RAM storage) for near-instant execution.
+ - Schema: We use Base.metadata.create_all for speed in tests, bypassing the need to run heavy Alembic migrations every time.
 
-# Import your FastAPI app's Base and Models (adjust paths to match your project)
-# from my_app.database import Base
-# from my_app.models import User
-# from my_app.core.security import get_password_hash
+## 🚀 Workflow: How to Write a Test
 
-# ==========================================
-# 1. PLAYWRIGHT CONFIGURATION
-# ==========================================
+### 1. Define Behavior
 
-@pytest.fixture(scope="session")
-def browser_context_args(browser_context_args):
-    """
-    Configures Playwright. 
-    Setting the base_url means your step definitions can just use:
-    page.goto("/login") instead of page.goto("http://localhost:3000/login")
-    """
-    return {
-        **browser_context_args,
-        "base_url": os.getenv("FRONTEND_URL", "http://localhost:3000"),
-        "viewport": {"width": 1280, "height": 720},
-    }
+Write your scenario in plain English in /docs/features/[feature-name].feature.
 
-# ==========================================
-# 2. ASYNC DATABASE CONFIGURATION
-# ==========================================
+### 2. Generate Python "Skeleton Code"
 
-# Point this to your local Docker Postgres container
-# Note the '+asyncpg' which is required for async SQLAlchemy
-DATABASE_URL = os.getenv(
-    "TEST_DATABASE_URL", 
-    "postgresql+asyncpg://postgres:postgres@localhost:5432/test_db"
-)
+From the /backend directory, run the uv generator to create your step definition skeleton:
 
-@pytest.fixture(scope="session")
-def event_loop():
-    """
-    Forces pytest to use a single async event loop for the whole test session.
-    This is required so our DB engine doesn't close prematurely.
-    """
-    import asyncio
-    loop = asyncio.get_event_loop_policy().new_event_loop()
-    yield loop
-    loop.close()
-
-@pytest_asyncio.fixture(scope="session")
-async def async_engine():
-    """Creates the SQLAlchemy async engine once per test run."""
-    engine = create_async_engine(DATABASE_URL, echo=False)
-    
-    # Optional: If you need pytest to build your tables on startup:
-    # async with engine.begin() as conn:
-    #     await conn.run_sync(Base.metadata.drop_all)
-    #     await conn.run_sync(Base.metadata.create_all)
-        
-    yield engine
-    await engine.dispose()
-
-@pytest_asyncio.fixture
-async def db_session(async_engine):
-    """
-    The Magic Fixture: Gives each test a clean database transaction,
-    then ROLLS IT BACK when the test finishes. No cleanup needed!
-    """
-    async with async_engine.connect() as connection:
-        transaction = await connection.begin()
-        
-        async_session_maker = sessionmaker(
-            connection, class_=AsyncSession, expire_on_commit=False
-        )
-        session = async_session_maker()
-
-        yield session  # This is where the test runs
-
-        # Test is over. Close session and rollback everything.
-        await session.close()
-        await transaction.rollback()
-
-# ==========================================
-# 3. HELPER FIXTURES (Data Injection)
-# ==========================================
-
-@pytest_asyncio.fixture
-async def create_test_user(db_session):
-    """
-    A factory fixture to instantly teleport a user into Postgres
-    before Playwright tries to log them in.
-    """
-    async def _create_user(username: str, plain_password: str, role: str = "User"):
-        # hashed_pw = get_password_hash(plain_password)
-        # new_user = User(
-        #     username=username, 
-        #     hashed_password=hashed_pw,
-        #     global_role=role
-        # )
-        # db_session.add(new_user)
-        # await db_session.commit()
-        # await db_session.refresh(new_user)
-        # return new_user
-        pass # Replace with actual SQLAlchemy model logic above
-        
-    return _create_user
-```    
-
-# Code generation
-
-pytest-bdd has a built-in code generator, and it is incredibly useful for speeding up your workflow. It analyzes your Gherkin .feature files and automatically writes the Python boilerplate (the @given, @when, @then decorators, and function signatures) for any steps that don't exist yet.
-
-Here are the two ways pytest-bdd handles this for you:
-
-## Method 1: The pytest-bdd generate Command (Best for New Files)
-
-If you just wrote a brand new feature file (like your circle-role.feature) and want to generate the entire Python skeleton in one go, you use the CLI tool.
-
-From inside your /backend directory, run this command:
-
-``` bash
+```Bash
+# Generate to terminal
 uv run pytest-bdd generate ../docs/features/[my-feature].feature
-``` 
-e.g.
+```
+#### OR generate directly to a new file
 ``` bash
-uv run pytest-bdd generate ../docs/features/circle-role.feature
+# generate directly to a new file
+uv run pytest-bdd generate ../docs/features/[my-feature].feature > tests/e2e/step_defs/test_[name].py
 ```
 
-What happens:
-It will output the complete Python skeleton directly to your terminal screen. It is smart enough to use parsers.parse for variables it detects in your strings!
+### 3. Write the implementation code
 
-The output will look exactly like this:
+The generated code simply generates the elements must exist in the step_def python file, but they are empty. The next job is to write the actual code to make the tests work.
 
-``` Python
-from pytest_bdd import given, when, then, parsers
+#### Tips for Playwright tests: Don't guess selectors. 
+Use the Playwright Generator via our VNC service:
 
-@given(parsers.parse('I am logged in as {username}'))
-def _(username):
-    raise NotImplementedError
+ - Run uv run playwright codegen http://localhost:3000 inside your dev container.
+ - Open http://localhost:6080 in your local browser to access the VNC session.
+ - Perform actions in the VNC browser; copy the generated Python code from the Inspector window.
 
-@when(parsers.parse('I view the circle settings'))
-def _():
-    raise NotImplementedErrors
 
-@then(parsers.parse('I should see "{badge_text}" badge'))
-def _(badge_text):
-    raise NotImplementedError
+## 🧪 Running Tests
+
+We use a unified conftest.py that provides global fixtures for both API and E2E tests.
+
+### Makefile commands
+``` plaintext
+Command                 Purpose
+
+make test-backend	    Runs fast unit and integration tests (ignores E2E).
+make test-e2e	        Runs BDD tests headlessly (Standard).
+make test-e2e-headed	Runs BDD tests visibly in the VNC window (Port 6080).
 ```
 
-Tip: You can route this output directly into a new Python file so you don't even have to copy-paste:
-``` bash
+## ⚙️ Configuration Reference
 
-uv run pytest-bdd generate ../docs/features/circle-role.feature > tests/e2e/step_defs/test_roles.py
-```
-(Then you just open test_roles.py, rename the _ functions to something descriptive, and add your Playwright/Database logic!)
+### Database Fixtures (conftest.py)
 
-## Method 2: Test Failure Output (Best for Adding a Single Step)
+Our db_session fixture uses a transactional rollback strategy:
 
-If you already have your tests running, but a Product Manager adds one new step to an existing scenario in your feature file, you don't need to regenerate the whole file.
+ - A transaction is opened before the test starts.
+ - The test (or Playwright) interacts with the DB.
+ - The transaction is rolled back automatically after the test, leaving the DB perfectly clean.
 
-Just run your standard test command:
-``` bash
+### Environment Variables
 
-pytest tests/e2e/step_defs/
-```
-What happens:
-Pytest will immediately fail the test and print a StepDefinitionNotFoundError. Right inside the error message, it will give you the exact code snippet you need to copy and paste to fix it:
+ - DATABASE_URL: Used by the FastAPI app in CI to serve the API.
+ -  TEST_DATABASE_URL: Used by Pytest to inject test data directly into Postgres.
 
-``` Plaintext
+ ## Simple example
 
-E       pytest_bdd.exceptions.StepDefinitionNotFoundError: Step definition is not found: 
-E       Given "I click the advanced settings button". 
-E       
-E       You can implement it with:
-E       
-E       @given(parsers.parse('I click the advanced settings button'))
-E       def _():
-E           raise NotImplementedError
-
-```
-
-# Database stratgey for testing
-
-Unifying your testing strategy now, before you write dozens of tests, will save your team many hours of refactoring later.
-
-I see that your existing API tests currently use an in-memory SQLite database (sqlite+aiosqlite:///:memory:). It also overrides the FastAPI get_db dependency so your application uses this test database during API calls.
-
-To achieve your goals of consistency and reusability, we need to unify the API tests and the new BDD tests to use the exact same database engine and fixtures.
-
-Here is the strategy to align everything.
+ The **ui.feature** file was used as an example, and the complete step def file for this test is **/backend/tests/e2e/step_defs/test_ui.py**
 
 
-1. The Database Strategy: Postgres vs. SQLite
+## ✅ Migration Status & Actions Taken
 
-The Recommendation: Stop using SQLite for tests and use a dedicated Postgres test database for everything.
-
-While SQLite is fast, it does not perfectly match Postgres. Things like JSONB columns, specific asyncpg behaviors, or advanced SQLAlchemy features might work in tests but fail in production (or vice versa). Since you are using Docker, spinning up a real Postgres database specifically for tests is easy and ensures 100% parity with production.
-
-2. Updating compose.yml
-
-Yes, you should define a test database in your Compose file! Sharing your app_db with your tests is dangerous because the test suite will constantly delete and recreate tables, wiping out the data you use for manual development.
-
-Add this service to your compose.yml. Note the use of tmpfs—this runs the Postgres database entirely in your computer's RAM, making it nearly as fast as in-memory SQLite!
-YAML
-
-  # Add this right below your existing 'db' service
-  test_db:
-    image: postgres:16-alpine
-    restart: unless-stopped
-    # Use tmpfs to keep the DB in memory for blazing fast tests!
-    tmpfs:
-      - /var/lib/postgresql/data
-    environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: test_db
-    ports:
-      - "5434:5432" # Exposed on a different port so it doesn't clash with dev DB
-
-3. Handling Alembic
-
-For testing, you have two choices for creating your tables:
-
-    Alembic Upgrades: Run alembic upgrade head programmatically at the start of your tests. This is the most "pure" approach.
-
-    SQLAlchemy create_all: Let SQLAlchemy create the tables based on your models. This is what your current SQLite test does.
-
-Recommendation: Stick with Base.metadata.create_all for your test suite. It is significantly faster than running dozens of Alembic migration files every time you run pytest. We will use this in our unified configuration.
-
-4. The Unified /backend/tests/conftest.py
-
-To make your code reusable, we will move the database and client fixtures out of test_auth.py and into a single conftest.py file located at /backend/tests/conftest.py.
-
-Because it is at the root of the tests folder, both your API tests (/tests/unit) and your BDD tests (/tests/e2e) will share the exact same setup!
-
-
-
-
-
-# Playwright Code Generator
-
-With the Playwright Code Generator you do not have to guess the page.get_by_role(...) commands.
-If for example, if you are unsure how to select the "Settings" button in your React app, you can run the following command in your terminal:
-``` bash
-playwright codegen http://localhost:3000 
-```
-***This opens up a browser window on the dev container itself, not your own PC. To access this browser window, we go in via the VNC service configured on port 6080:***
-
-**http://localhost:6080**
-
-Once you are in via VNC, you can then navigate the app, click, perform actions like entering data in a field etc. These actions are then recorded as python code in a separate Playwright Inspector window (within the VNC session). 
-Now you can copy the exact Python code it generates to use in your step definitions.
-
-
-
-
-
-# Actions taken
-- Added test_db container
-- Added backend/tests/conftest.py
-- Moved config from /backend/tests/test_auth.py to backend/tests/conftest.py so it can be shared
-- Created folder /backend/tests/e2e
-- Created folder /backend/tests/integration
-- Moved backend/tests/test_auth.py to /backend/tests/integration folder
-- Installed pytest-bdd package and dependencies via uv package manager
-- Installed VS Code extension "Cucumber (Gherkin) Full Support"
-- Added TEST_DATABASE_URL to .env file in ci-cd.yml #TODO: do we still need the DATABASE_URL parameter in CI?
-
-
-- Changed Makefile command test-e2e to run pytest playwright tests
-- Updated Playwright container version in Dockerfile
-- Configured backend/tests/e2e/step_defs/test_ui.py for testing docs/features/ui/feature
-- Added create_test_user fixture to conftest.py
-- TODO: remove playwright and related sependencies from npm
+    [x] Added test_db container with tmpfs optimization.
+    [x] Added TEST_DATABASE_URL to .env file in ci-cd.yml
+    [x] Installed pytest-bdd package and dependencies via uv package manager
+    [x] Installed VS Code extension "Cucumber (Gherkin) Full Support"
+    [x] Unified conftest.py created at /backend/tests/.
+    [x] Moved test_auth.py to /integration folder.
+    [x] Configured pytest-bdd markers and feature paths in pyproject.toml.
+    [x] Implemented Playwright browser caching in GitHub Actions.
+    [ ] TODO: Remove legacy Playwright/NPM dependencies from frontend/package.json.
