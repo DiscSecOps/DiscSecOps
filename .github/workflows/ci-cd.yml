@@ -122,6 +122,10 @@ jobs:
         if: matrix.target == 'frontend'
         run: make install-frontend
 
+      - name: ⚛️ Frontend CI specific step > Audit
+        if: matrix.target == 'frontend'
+        run: make audit-frontend
+
       - name: ⚛️ Frontend CI specific step > Lint
         if: matrix.target == 'frontend'
         run: make lint-frontend
