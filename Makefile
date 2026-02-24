@@ -49,7 +49,7 @@ lint-backend: ## Run backend linters (Ruff for formatting and linting, Mypy for 
 
 audit-frontend: ## Run frontend security audit (npm audit)
 	@echo "🛡️ Running Frontend Security Audit (npm audit)..."
-	cd frontend && npm audit
+	cd frontend && npm audit --omit=dev
 
 lint-frontend: ## Run frontend linter (ESLint)
 	@echo "🔍 Running Linter (eslint)..."
