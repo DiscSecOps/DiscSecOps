@@ -22,11 +22,17 @@ seed-database:
 
 install-playwright:
 	@echo "🎭 Installing Playwright Browsers..."
-	cd frontend && npx playwright install --with-deps	
+	cd backend && uv run python -m playwright install --with-deps chromium
+
+install-playwright-deps-only:
+# -- This is useful for CI when we have a cache hit for the browsers, --
+# -- but we still need to ensure the system dependencies (drivers/libs) are installed. --
+	@echo "🎭 Installing Playwright System Dependencies (without browsers)..."
+	cd backend && uv run python -m playwright install-deps chromium	
 
 test-backend:
 	@echo "🧪 Running Backend Tests..."
-	cd backend && uv run pytest
+	cd backend && uv run pytest tests/integration/
 
 lint-backend:
 	@echo "🔍 Running Linters (Ruff + Mypy)..."
@@ -56,17 +62,21 @@ test-frontend-unit:
 
 test-e2e:
 	@echo "🎭 Running E2E Tests..."
-	cd frontend && npm run test:e2e
+	cd backend && uv run pytest tests/e2e/step_defs/
 
+# test-e2e-ui:
+# 	@echo "📺 Running Headed Tests (Check Port 6080)..."
+# 	# We manually set DISPLAY to :1 (the default for desktop-lite)
+# 	cd frontend && DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 npm run test:e2e:ui
+# 📺 Opens the Playwright UI Test Runner (Interactive)
 test-e2e-ui:
-	@echo "📺 Running Headed Tests (Check Port 6080)..."
+	@echo "📺 Opening Playwright UI Runner, available on Port 6080..."
 	# We manually set DISPLAY to :1 (the default for desktop-lite)
-	cd frontend && DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 npm run test:e2e:ui
+	cd backend && DISPLAY=:1 LIBGL_ALWAYS_SOFTWARE=1 uv run pytest tests/e2e/step_defs/ --ui
 
 test-e2e-headed:
-	@echo "🎭 Running Headed Tests (Virtual Screen)..."
-	# We wrap the npm command inside xvfb-run
-	cd frontend && xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" npm run test:e2e:headed
+	@echo "🎭 Running Headed Tests in Virtual Screen..."
+	cd backend && xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" pytest tests/e2e/step_defs/ --headed --slowmo 500	
 
 # -- Execution --
 run-backend:
