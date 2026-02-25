@@ -1,13 +1,16 @@
 // frontend/src/components/layout/Navbar.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../contexts/useAuth.js';
+import { useAuth } from '../../hooks/useAuth';
+import { useDarkMode } from '../../hooks/useDarkMode'; 
 import './Navbar.css';
 
 function Navbar() {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [showDropdown, setShowDropdown] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useDarkMode(); 
+  const [searchQuery, setSearchQuery] = useState('');
   
   const handleLogout = async () => {
     if (window.confirm('Are you sure you want to logout?')) {
@@ -21,7 +24,14 @@ function Navbar() {
     }
   };
   
-  // If no user, show a minimal navbar
+  const handleSearch = (e) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    }
+  };
+  
+  // If no user, show minimal navbar for public pages
   if (!user) {
     return (
       <header className="navbar">
@@ -42,22 +52,35 @@ function Navbar() {
     );
   }
   
+  // Navbar for authenticated users
   return (
     <header className="navbar">
       <div className="navbar-left">
         <div className="navbar-logo" onClick={() => navigate('/user-dashboard')}>
           Social Circles
         </div>
-        <div className="navbar-search">
+        <form onSubmit={handleSearch} className="navbar-search">
           <input 
             type="text" 
             placeholder="Search circles, posts, people..." 
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
             className="search-input"
           />
-        </div>
+          <button type="submit" className="search-btn">🔍</button>
+        </form>
       </div>
       
       <div className="navbar-right">
+        {/* Dark Mode Toggle Button */}
+        <button 
+          className="navbar-icon" 
+          onClick={toggleDarkMode}
+          title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+        >
+          <span className="icon">{isDarkMode ? '☀️' : '🌙'}</span>
+        </button>
+
         <button className="navbar-icon" title="Notifications">
           <span className="icon">🔔</span>
           <span className="badge">3</span>
