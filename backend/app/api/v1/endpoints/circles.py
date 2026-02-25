@@ -43,6 +43,39 @@ async def get_my_circles(
 
         # Get owner info
         owner = await db.get(User, circle.owner_id)
+        owner_name = owner.username if owner else None
+
+        # Prepare members list with badges
+        members_list = []
+        for member in circle.members:
+            user_result = await db.get(User, member.user_id)
+            if not user_result:
+                continue
+
+            # Handle role conversion if needed
+            if isinstance(member.role, str):
+                role_enum = CircleRole(member.role)
+            else:
+                role_enum = member.role
+
+            # Get badge
+            badge_map = {
+                CircleRole.OWNER: "👑",
+                CircleRole.MODERATOR: "🛡️",
+                CircleRole.MEMBER: "👤"
+            }
+            badge = badge_map.get(role_enum, "👤")
+
+            members_list.append(
+                CircleMemberResponse(
+                    circle_id=member.circle_id,
+                    user_id=member.user_id,
+                    username=user_result.username,
+                    role=role_enum,  # Use enum, not string
+                    badge=badge,
+                    joined_at=member.joined_at
+                )
+            )
 
         result.append(
             CircleResponse(
@@ -50,22 +83,8 @@ async def get_my_circles(
                 name=circle.name,
                 description=circle.description,
                 owner_id=circle.owner_id,
-                owner_name=owner.username if owner else None,
-                members=[
-                    CircleMemberResponse(
-                        circle_id=m.circle_id,
-                        user_id=m.user_id,
-                        username=(await db.get(User, m.user_id)).username,
-                        role=m.role,
-                        badge={
-                            CircleRole.OWNER: "👑",
-                            CircleRole.MODERATOR: "🛡️",
-                            CircleRole.MEMBER: "👤"
-                        }.get(m.role, "👤"),
-                        joined_at=m.joined_at
-                    )
-                    for m in circle.members
-                ],
+                owner_name=owner_name,
+                members=members_list,
                 member_count=member_count,
                 created_at=circle.created_at
             )
@@ -116,18 +135,19 @@ async def create_circle(
 
     # Get owner username for response
     owner = await db.get(User, current_user.id)
+    owner_name = owner.username if owner else None
 
     return CircleResponse(
         id=new_circle.id,
         name=new_circle.name,
         description=new_circle.description,
         owner_id=new_circle.owner_id,
-        owner_name=owner.username,
+        owner_name=owner_name,
         members=[
             CircleMemberResponse(
                 circle_id=new_circle.id,
                 user_id=current_user.id,
-                username=owner.username,
+                username=owner_name or "",
                 role=CircleRole.OWNER,
                 badge="👑",
                 joined_at=owner_member.joined_at
@@ -180,18 +200,18 @@ async def get_circle(
         if not user_result:
             continue  # Skip if user not found (shouldn't happen)
 
+        # Handle role conversion if needed
+        if isinstance(member.role, str):
+            role_enum = CircleRole(member.role)
+        else:
+            role_enum = member.role
+
         # Badge map for roles
         badge_map = {
             CircleRole.OWNER: "👑",
             CircleRole.MODERATOR: "🛡️",
             CircleRole.MEMBER: "👤"
         }
-
-        # Get badge based on role
-        if isinstance(member.role, str):
-            role_enum = CircleRole(member.role)
-        else:
-            role_enum = member.role
         badge = badge_map.get(role_enum, "👤")
 
         member_responses.append(
@@ -199,7 +219,7 @@ async def get_circle(
                 circle_id=member.circle_id,
                 user_id=member.user_id,
                 username=user_result.username,
-                role=member.role,
+                role=role_enum,  # Use enum, not string
                 badge=badge,
                 joined_at=member.joined_at
             )
@@ -207,11 +227,7 @@ async def get_circle(
 
     # Get owner
     owner = await db.get(User, circle.owner_id)
-    if not owner:
-        # This shouldn't happen, but handle it for type safety
-        owner_name = None
-    else:
-        owner_name = owner.username
+    owner_name = owner.username if owner else None
 
     return CircleResponse(
         id=circle.id,
@@ -225,7 +241,7 @@ async def get_circle(
     )
 
 
-@router.put("/{circle_id}")
+@router.put("/{circle_id}", response_model=CircleResponse)
 async def update_circle(
     circle_id: int,
     circle_data: CircleCreate,

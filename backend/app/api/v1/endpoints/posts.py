@@ -98,6 +98,7 @@ async def create_post(
         title=new_post.title,
         content=new_post.content,
         author_id=new_post.author_id,
+        author_name=current_user.username,
         circle_id=new_post.circle_id,
         created_at=new_post.created_at,
         updated_at=new_post.updated_at
@@ -141,6 +142,7 @@ async def get_post(
         title=post.title,
         content=post.content,
         author_id=post.author_id,
+        author_name=current_user.username,
         circle_id=post.circle_id,
         created_at=post.created_at,
         updated_at=post.updated_at
