@@ -34,7 +34,6 @@ class User(Base):
         email: User's email (UNIQUE, optional/display only)
         full_name: User's full name
         hashed_password: Argon2 hashed password
-        role_id: ForeignKey to Role.id
         is_active: Whether user account is active
         created_at: Timestamp when user was created
         updated_at: Timestamp when user was last updated
