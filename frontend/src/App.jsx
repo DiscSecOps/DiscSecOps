@@ -23,41 +23,35 @@ function App() {
             </ProtectedRoute>
           } />
 
-              <Route path="/circles" element={
-                <ProtectedRoute>
-                  <div>My Circles Page (TODO)</div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/explore" element={
-                <ProtectedRoute>
-                  <div>Explore Page (TODO)</div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/create-post" element={
-                <ProtectedRoute>
-                  <div>Create Post Page (TODO)</div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/create-circle" element={
-                <ProtectedRoute>
-                  <div>Create Circle Page (TODO)</div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/settings" element={
-                <ProtectedRoute>
-                  <div>Settings Page (TODO)</div>
-                </ProtectedRoute>
-              } />
-              
-              <Route path="/help" element={
-                <ProtectedRoute>
-                  <div>Help & Support Page (TODO)</div>
-                </ProtectedRoute>
-              } />
+          <Route path="/circles" element={
+            <ProtectedRoute>
+              <div>My Circles Page (TODO)</div>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/circles/:circleId" element={
+            <ProtectedRoute>
+              <div>Single Circle Page (TODO)</div>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/explore" element={
+            <ProtectedRoute>
+              <div>Explore Page (TODO)</div>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/settings" element={
+            <ProtectedRoute>
+              <div>Settings Page (TODO)</div>
+            </ProtectedRoute>
+          } />
+          
+          <Route path="/help" element={
+            <ProtectedRoute>
+              <div>Help & Support Page (TODO)</div>
+            </ProtectedRoute>
+          } />
         </Routes>
       </Router>
     </AuthProvider>

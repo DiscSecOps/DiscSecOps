@@ -1,4 +1,4 @@
-// frontend/src/components/layout/Sidebar.jsx
+// frontend/src/components/layout/UserSidebar.jsx
 import { useNavigate, useLocation } from 'react-router-dom';
 import './UserSidebar.css';
 
@@ -6,25 +6,12 @@ function UserSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Determine active item based on current path
-  const getActiveItem = () => {
-    if (location.pathname === '/user-dashboard') return 'Home';
-    if (location.pathname.includes('/circles')) return 'My Circles';
-    if (location.pathname.includes('/explore')) return 'Explore';
-    if (location.pathname.includes('/create-post')) return 'Create Post';
-    if (location.pathname.includes('/create-circle')) return 'Create Circle';
-    if (location.pathname.includes('/settings')) return 'Settings';
-    return 'Home';
-  };
-  
-  const activeItem = getActiveItem();
-  
   const menuItems = [
     { icon: '🏠', label: 'Home', path: '/user-dashboard' },
     { icon: '👥', label: 'My Circles', path: '/circles' },
     { icon: '🔍', label: 'Explore', path: '/explore' },
-    { icon: '✏️', label: 'Create Post', path: '/create-post' },
-    { icon: '➕', label: 'Create Circle', path: '/create-circle' },
+    { icon: '✏️', label: 'Create Post', path: '/user-dashboard' }, // redirect to dashboard (modal)
+    { icon: '➕', label: 'Create Circle', path: '/user-dashboard' }, // redirect to dashboard (modal)
   ];
   
   const secondaryItems = [
@@ -32,8 +19,26 @@ function UserSidebar() {
     { icon: '❓', label: 'Help & Support', path: '/help' },
   ];
 
-  const handleItemClick = (path) => {
-    navigate(path);
+  const handleItemClick = (path, label) => {
+    if (label === 'Create Post') {
+      // TODO: Trigger create post modal
+      console.log('Open create post modal');
+      // U can also set some state here to indicate which modal to open if you want to reuse the same modal component
+    } else if (label === 'Create Circle') {
+      // TODO: Trigger create circle modal
+      console.log('Open create circle modal');
+    } else {
+      navigate(path);
+    }
+  };
+
+  const isActive = (path) => {
+    if (path === '/user-dashboard' && location.pathname === '/user-dashboard') return true;
+    if (path === '/circles' && location.pathname.includes('/circles')) return true;
+    if (path === '/explore' && location.pathname.includes('/explore')) return true;
+    if (path === '/settings' && location.pathname.includes('/settings')) return true;
+    if (path === '/help' && location.pathname.includes('/help')) return true;
+    return false;
   };
   
   return (
@@ -46,8 +51,8 @@ function UserSidebar() {
         {menuItems.map((item, index) => (
           <button 
             key={index}
-            className={`sidebar-item ${activeItem === item.label ? 'active' : ''}`}
-            onClick={() => handleItemClick(item.path)}
+            className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`}
+            onClick={() => handleItemClick(item.path, item.label)}
             title={item.label}
           >
             <span className="sidebar-icon">{item.icon}</span>
@@ -60,8 +65,8 @@ function UserSidebar() {
         {secondaryItems.map((item, index) => (
           <button 
             key={index} 
-            className={`sidebar-item ${activeItem === item.label ? 'active' : ''}`}
-            onClick={() => handleItemClick(item.path)}
+            className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`}
+            onClick={() => navigate(item.path)}
             title={item.label}
           >
             <span className="sidebar-icon">{item.icon}</span>
