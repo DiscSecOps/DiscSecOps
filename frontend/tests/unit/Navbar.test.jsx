@@ -2,6 +2,7 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Navbar from '../../src/components/layout/Navbar';
 import { useAuth } from '../../src/contexts/useAuth';
+import { MemoryRouter } from 'react-router-dom';
 
 // Mock useAuth
 vi.mock('../../src/contexts/useAuth');
@@ -17,13 +18,21 @@ describe('Navbar Component', () => {
     vi.restoreAllMocks();
   });
 
+  const openUserDropDown = () => {
+    fireEvent.click(screen.getByText('▼'));
+  };
+
   it('renders full navbar when user is authenticated', () => {
     vi.mocked(useAuth).mockReturnValue({
       user: { username: 'john123' },
       logout: mockLogout,
     });
 
-    render(<Navbar />);
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    );
 
     // Logo
     expect(screen.getByText('Social Circles')).toBeInTheDocument();
@@ -38,6 +47,8 @@ describe('Navbar Component', () => {
     expect(
       screen.getByPlaceholderText(/search circles/i)
     ).toBeInTheDocument();
+    
+    openUserDropDown();
 
     // Dropdown options
     expect(screen.getByText('Profile')).toBeInTheDocument();
@@ -54,7 +65,13 @@ describe('Navbar Component', () => {
     // Mock confirm to return true
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    render(<Navbar />);
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    );
+
+    openUserDropDown();
 
     fireEvent.click(screen.getByText('Logout'));
 
@@ -72,7 +89,13 @@ describe('Navbar Component', () => {
     // Mock confirm to return false
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-    render(<Navbar />);
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    );
+
+    openUserDropDown();
 
     fireEvent.click(screen.getByText('Logout'));
 
@@ -90,7 +113,13 @@ describe('Navbar Component', () => {
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-    render(<Navbar />);
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    );
+
+    openUserDropDown();
 
     fireEvent.click(screen.getByText('Logout'));
 
