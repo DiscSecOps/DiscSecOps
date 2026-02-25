@@ -220,20 +220,20 @@ async def get_circle_posts(
         )
 
     # Get posts
-    result = await db.execute(
+    posts_result = await db.execute(
         select(Post)
         .where(Post.circle_id == circle_id)
         .order_by(desc(Post.created_at))
         .offset(offset)
         .limit(limit)
     )
-    posts = result.scalars().all()
+    posts = posts_result.scalars().all()
 
     # Get author names
-    result = []
+    response_posts = []
     for post in posts:
         author = await db.get(User, post.author_id)
-        result.append(
+        response_posts.append(
             PostResponse(
                 id=post.id,
                 title=post.title,
@@ -246,4 +246,4 @@ async def get_circle_posts(
             )
         )
 
-    return result
+    return response_posts
