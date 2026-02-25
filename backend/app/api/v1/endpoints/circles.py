@@ -188,7 +188,11 @@ async def get_circle(
         }
 
         # Get badge based on role
-        badge = badge_map.get(member.role, "👤")
+        if isinstance(member.role, str):
+            role_enum = CircleRole(member.role)
+        else:
+            role_enum = member.role
+        badge = badge_map.get(role_enum, "👤")
 
         member_responses.append(
             CircleMemberResponse(

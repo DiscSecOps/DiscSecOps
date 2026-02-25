@@ -4,6 +4,7 @@ Request and response models for Posts and Circles
 """
 from datetime import datetime
 from enum import StrEnum
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -55,7 +56,7 @@ class CircleMemberResponse(BaseModel):
     class Config:
         from_attributes = True
 
-    def model_post_init(self, __context) -> None:
+    def model_post_init(self, __context: Any) -> None:
         """Calculate badge after initialization"""
         badge_map = {
             CircleRole.OWNER: "👑",

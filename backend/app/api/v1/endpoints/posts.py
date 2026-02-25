@@ -47,6 +47,7 @@ async def get_feed(
             title=post.title,
             content=post.content,
             author_id=post.author_id,
+            author_name=current_user.username,
             circle_id=post.circle_id,
             created_at=post.created_at,
             updated_at=post.updated_at

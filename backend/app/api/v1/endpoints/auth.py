@@ -89,6 +89,7 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     return SessionResponse(
         success=True,
         username=new_user.username,
+         session_token=None,  # No session token on registration - user must login separately
         user=UserResponse.model_validate(new_user)
     )
 
