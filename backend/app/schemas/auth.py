@@ -25,6 +25,7 @@ class UserCreate(BaseModel):
     password: str = Field(..., min_length=6, description="Password (min 6 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
 
+
 class UserLogin(BaseModel):
     """
     Schema for user login request from frontend
@@ -52,7 +53,6 @@ class UserResponse(BaseModel):
     username: str
     email: EmailStr
     full_name: str | None
-    role_id: int | None
     is_active: bool
     created_at: datetime
     updated_at: datetime | None
@@ -89,8 +89,8 @@ class SessionResponse(BaseModel):
     """
     success: bool = Field(default=True)
     username: str
-    session_token: str | None = None  # Only if using session-based auth
-    user: UserResponse | None = None
+    session_token: str | None = Field(None, description="Only if using session-based auth")
+    user: UserResponse | None = Field(None, description="User data if requested")
 
 
 class TokenData(BaseModel):

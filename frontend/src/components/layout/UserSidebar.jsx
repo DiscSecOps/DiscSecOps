@@ -6,7 +6,7 @@ function UserSidebar() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Determină item-ul activ bazat pe URL
+  // Determine active item based on current path
   const getActiveItem = () => {
     if (location.pathname === '/user-dashboard') return 'Home';
     if (location.pathname.includes('/circles')) return 'My Circles';

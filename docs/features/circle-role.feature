@@ -6,10 +6,10 @@ Feature: Circle Roles
 
   Background:
     Given the following users exist:
-      | username | global_role |
-      | alice    | User        |
-      | bob      | User        |
-      | charlie  | User        |
+      | username | 
+      | alice    | 
+      | bob      | 
+      | charlie  | 
     And alice creates a circle called "Book Club"
 
   @documentation
