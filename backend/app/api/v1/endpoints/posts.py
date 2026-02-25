@@ -7,7 +7,6 @@ from app.core.db import get_db
 from app.db.models import CircleMember, Post, User
 from app.schemas.social import PostCreate, PostResponse
 
-
 router = APIRouter(prefix="/posts", tags=["Posts"])
 
 

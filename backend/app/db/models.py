@@ -3,7 +3,6 @@ User model for authentication (Async SQLAlchemy 2.0)
 """
 
 from datetime import datetime
-from typing import list
 
 from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
