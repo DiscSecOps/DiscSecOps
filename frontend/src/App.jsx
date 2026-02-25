@@ -2,16 +2,23 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
-import UserDashboardPage from './pages/UserDashboardPage.jsx'; 
-import ProtectedRoute from './routes/ProtectedRoute.jsx'; 
-import AuthProvider from './contexts/AuthProvider'; 
+import UserDashboardPage from './pages/UserDashboardPage.jsx';
+import CirclePage from './pages/CirclePage.jsx';
+//import ExplorePage from './pages/ExplorePage.jsx';
+//import SettingsPage from './pages/SettingsPage.jsx';
+//import HelpPage from './pages/HelpPage.jsx';
+import ProtectedRoute from './routes/ProtectedRoute.jsx';
+import AuthProvider from './contexts/AuthProvider';
+import { DarkModeProvider } from './contexts/DarkModeProvider'; 
 import './App.css';
 
 function App() {
   return (
     <AuthProvider>
+      <DarkModeProvider>
       <Router>
         <Routes>
+          {/* Public routes */}
           <Route path="/" element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -23,37 +30,35 @@ function App() {
             </ProtectedRoute>
           } />
 
-          <Route path="/circles" element={
-            <ProtectedRoute>
-              <div>My Circles Page (TODO)</div>
-            </ProtectedRoute>
-          } />
-          
           <Route path="/circles/:circleId" element={
             <ProtectedRoute>
-              <div>Single Circle Page (TODO)</div>
+              <CirclePage />
             </ProtectedRoute>
           } />
           
+           {/* Commented out until pages are created */}
+            {/* 
           <Route path="/explore" element={
             <ProtectedRoute>
-              <div>Explore Page (TODO)</div>
+              <ExplorePage />
             </ProtectedRoute>
           } />
           
           <Route path="/settings" element={
             <ProtectedRoute>
-              <div>Settings Page (TODO)</div>
+              <SettingsPage />
             </ProtectedRoute>
           } />
           
           <Route path="/help" element={
             <ProtectedRoute>
-              <div>Help & Support Page (TODO)</div>
+              <HelpPage />
             </ProtectedRoute>
           } />
+            */}
         </Routes>
       </Router>
+      </DarkModeProvider>
     </AuthProvider>
   );
 }

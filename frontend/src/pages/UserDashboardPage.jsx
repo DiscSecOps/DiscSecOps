@@ -149,7 +149,9 @@ function UserDashboardPage() {
       <Navbar user={user} onLogout={logout} />
       
       <div className="dashboard-content">
-        <UserSidebar />
+        <UserSidebar 
+            onCreateCircle={() => setIsCreateCircleModalOpen(true)}
+            onCreatePost={() => setShowCreatePost(true)}/>
         
         <main className="dashboard-main">
           <div className="welcome-section">

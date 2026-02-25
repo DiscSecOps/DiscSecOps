@@ -192,3 +192,58 @@ async def delete_post(
 
     await db.delete(post)
     await db.commit()
+
+@router.get("/circle/{circle_id}", response_model=list[PostResponse])
+async def get_circle_posts(
+    circle_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session),
+    limit: int = 50,
+    offset: int = 0
+) -> list[PostResponse]:
+    """
+    Get posts from a specific circle
+    User must be a member of the circle
+    """
+    # Check if user is a member
+    membership = await db.execute(
+        select(CircleMember)
+        .where(
+            CircleMember.circle_id == circle_id,
+            CircleMember.user_id == current_user.id
+        )
+    )
+    if not membership.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a member of this circle"
+        )
+
+    # Get posts
+    posts_result = await db.execute(
+        select(Post)
+        .where(Post.circle_id == circle_id)
+        .order_by(desc(Post.created_at))
+        .offset(offset)
+        .limit(limit)
+    )
+    posts = posts_result.scalars().all()
+
+    # Get author names
+    response_posts = []
+    for post in posts:
+        author = await db.get(User, post.author_id)
+        response_posts.append(
+            PostResponse(
+                id=post.id,
+                title=post.title,
+                content=post.content,
+                author_id=post.author_id,
+                author_name=author.username if author else None,
+                circle_id=post.circle_id,
+                created_at=post.created_at,
+                updated_at=post.updated_at
+            )
+        )
+
+    return response_posts
