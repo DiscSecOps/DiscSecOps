@@ -1,0 +1,192 @@
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.v1.endpoints.auth import get_current_user_from_session
+from app.core.db import get_db
+from app.db.models import CircleMember, Post, User
+from app.schemas.social import PostCreate, PostResponse
+
+
+router = APIRouter(prefix="/posts", tags=["Posts"])
+
+
+@router.get("/feed", response_model=list[PostResponse])
+async def get_feed(
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session),
+    limit: int = 20,
+    offset: int = 0
+) -> list[PostResponse]:
+    """
+    Get recent posts from user's circles (dashboard feed)
+    Returns posts from circles where user is a member
+    """
+    # 1. Get all circles where user is a member
+    member_circles = await db.execute(
+        select(CircleMember.circle_id).where(CircleMember.user_id == current_user.id)
+    )
+    circle_ids = [row[0] for row in member_circles.fetchall()]
+
+    if not circle_ids:
+        return []  # User has no circles, return empty feed
+
+    # 2. Get posts from those circles
+    posts_result = await db.execute(
+        select(Post)
+        .where(Post.circle_id.in_(circle_ids))
+        .order_by(desc(Post.created_at))
+        .offset(offset)
+        .limit(limit)
+    )
+    posts = posts_result.scalars().all()
+
+    # 3. Convert to response model
+    return [
+        PostResponse(
+            id=post.id,
+            title=post.title,
+            content=post.content,
+            author_id=post.author_id,
+            circle_id=post.circle_id,
+            created_at=post.created_at,
+            updated_at=post.updated_at
+        )
+        for post in posts
+    ]
+
+
+@router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
+async def create_post(
+    post_data: PostCreate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session)
+) -> PostResponse:
+    """
+    Create a new post (in a circle or public)
+    """
+    # Check if user has permission to post in this circle
+    if post_data.circle_id:
+        # Verify user is member of the circle
+        membership = await db.execute(
+            select(CircleMember)
+            .where(
+                CircleMember.circle_id == post_data.circle_id,
+                CircleMember.user_id == current_user.id
+            )
+        )
+        if not membership.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this circle"
+            )
+
+    # Create post
+    new_post = Post(
+        title=post_data.title,
+        content=post_data.content,
+        author_id=current_user.id,
+        circle_id=post_data.circle_id
+    )
+
+    db.add(new_post)
+    await db.commit()
+    await db.refresh(new_post)
+
+    return PostResponse(
+        id=new_post.id,
+        title=new_post.title,
+        content=new_post.content,
+        author_id=new_post.author_id,
+        circle_id=new_post.circle_id,
+        created_at=new_post.created_at,
+        updated_at=new_post.updated_at
+    )
+
+
+@router.get("/{post_id}", response_model=PostResponse)
+async def get_post(
+    post_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session)
+) -> PostResponse:
+    """
+    Get a specific post by ID
+    """
+    post = await db.get(Post, post_id)
+
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+
+    # Check if post is in a circle - verify user is member
+    if post.circle_id:
+        membership = await db.execute(
+            select(CircleMember)
+            .where(
+                CircleMember.circle_id == post.circle_id,
+                CircleMember.user_id == current_user.id
+            )
+        )
+        if not membership.scalar_one_or_none():
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You don't have access to this post"
+            )
+
+    return PostResponse(
+        id=post.id,
+        title=post.title,
+        content=post.content,
+        author_id=post.author_id,
+        circle_id=post.circle_id,
+        created_at=post.created_at,
+        updated_at=post.updated_at
+    )
+
+
+@router.delete("/{post_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_post(
+    post_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session)
+) -> None:
+    """
+    Delete a post (author, moderator, or owner only)
+    """
+    post = await db.get(Post, post_id)
+
+    if not post:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Post not found"
+        )
+
+    # Check permissions
+    can_delete = False
+
+    if post.author_id == current_user.id:
+        can_delete = True  # Author can delete
+    elif post.circle_id:
+        # Check if user is moderator or owner of the circle
+        membership = await db.execute(
+            select(CircleMember)
+            .where(
+                CircleMember.circle_id == post.circle_id,
+                CircleMember.user_id == current_user.id
+            )
+        )
+        member = membership.scalar_one_or_none()
+        if member and member.role in ["owner", "moderator"]:
+            can_delete = True
+
+    if not can_delete:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You don't have permission to delete this post"
+        )
+
+    await db.delete(post)
+    await db.commit()
