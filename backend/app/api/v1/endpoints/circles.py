@@ -177,30 +177,44 @@ async def get_circle(
     member_responses = []
     for member in circle.members:
         user_result = await db.get(User, member.user_id)
+        if not user_result:
+            continue  # Skip if user not found (shouldn't happen)
+
+        # Badge map for roles
+        badge_map = {
+            CircleRole.OWNER: "👑",
+            CircleRole.MODERATOR: "🛡️",
+            CircleRole.MEMBER: "👤"
+        }
+
+        # Get badge based on role
+        badge = badge_map.get(member.role, "👤")
+
         member_responses.append(
             CircleMemberResponse(
                 circle_id=member.circle_id,
                 user_id=member.user_id,
                 username=user_result.username,
                 role=member.role,
-                badge={
-                    CircleRole.OWNER: "👑",
-                    CircleRole.MODERATOR: "🛡️",
-                    CircleRole.MEMBER: "👤"
-                }.get(member.role, "👤"),
+                badge=badge,
                 joined_at=member.joined_at
             )
         )
 
     # Get owner
     owner = await db.get(User, circle.owner_id)
+    if not owner:
+        # This shouldn't happen, but handle it for type safety
+        owner_name = None
+    else:
+        owner_name = owner.username
 
     return CircleResponse(
         id=circle.id,
         name=circle.name,
         description=circle.description,
         owner_id=circle.owner_id,
-        owner_name=owner.username,
+        owner_name=owner_name,
         members=member_responses,
         member_count=len(circle.members),
         created_at=circle.created_at
