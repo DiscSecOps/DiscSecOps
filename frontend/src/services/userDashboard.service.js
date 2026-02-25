@@ -1,24 +1,37 @@
 // frontend/src/services/userDashboard.service.js
 import axios from 'axios';
 import { API_BASE_URL } from '../config/index';
-/*
-// Use environment variable for API URL (DevSecOps best practice)
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000/api/v1';
-*/
+import { circleService } from './circle.service';
+import { postService } from './post.service';
 
 export const userDashboardService = {
   async getUserDashboardData() {
     try {
-      // Use the /auth/me endpoint to get current user info (and any other dashboard data you want to include)
-      const response = await axios.get(`${API_BASE_URL}/auth/me`, {
-        withCredentials: true
-      });
+      // 3 parallel API calls to fetch user info, circles with badges, and recent feed posts
+      const [userResponse, circlesResponse, feedResponse] = await Promise.all([
+        // 1. User info (exists)
+        axios.get(`${API_BASE_URL}/auth/me`, {
+          withCredentials: true
+        }),
+        
+        // 2. User's circles with badges (new)
+        circleService.getMyCircles(),
+        
+        // 3. Recent feed posts (new)
+        postService.getFeed(10) // limit 10 posts
+      ]);
       
-      // Return the user data and any additional dashboard-specific data you want to include
+      // Structure the dashboard data
       return {
-        user: response.data,
-        // you cand add more dashboard-specific data here in the future, e.g. stats, notifications, etc.
+        user: userResponse.data,
+        circles: circlesResponse, // array of circles with badges
+        posts: feedResponse, // array of recent posts
+        // Summarize counts for dashboard overview
+        circlesCount: circlesResponse?.length || 0,
+        postsCount: feedResponse?.length || 0,
+        notificationsCount: 0, // Add notification count logic if needed
       };
+      
     } catch (error) {
       console.error('User Dashboard service error:', error);
       throw error;
