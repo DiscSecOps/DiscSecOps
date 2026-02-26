@@ -83,7 +83,7 @@ class CircleMemberResponse(BaseModel):
             CircleRole.MODERATOR: "🛡️",
             CircleRole.MEMBER: "👤"
         }
-        self.badge = badge_map.get(self.role, "👤")
+        object.__setattr__(self, 'badge', badge_map.get(self.role, "👤"))
 
 
 class CircleResponse(CircleBase):
