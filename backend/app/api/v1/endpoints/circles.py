@@ -3,7 +3,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import selectinload
 
-from app.api.v1.endpoints.auth import get_current_user_from_session
+from app.api.v1.endpoints.auth import get_current_user_endpoint, get_current_user_from_session
 from app.core.db import get_db
 from app.db.models import Circle, CircleMember, User
 from app.schemas.social import (
@@ -304,3 +304,53 @@ async def delete_circle(
     # Delete circle (cascade will delete members and posts)
     await db.delete(circle)
     await db.commit()
+
+@router.put("/{circle_id}/name", response_model=CircleResponse)
+async def update_circle_name(
+    circle_id: int,
+    request: dict,  # {"name": "New Circle Name"}
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_endpoint)
+) -> CircleResponse:
+    """
+    Update circle name (owner only)
+    """
+    # 1. Check if circle exists
+    circle = await db.get(Circle, circle_id)
+    if not circle:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Circle not found"
+        )
+
+    # 2. Check if current user is owner
+    if circle.owner_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only the circle owner can change the name"
+        )
+
+    # 3. Check if new name is already taken
+    new_name = request.get("name")
+    if not new_name or len(new_name) < 3:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Name must be at least 3 characters"
+        )
+
+    existing = await db.execute(
+        select(Circle).where(Circle.name == new_name, Circle.id != circle_id)
+    )
+    if existing.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="A circle with this name already exists"
+        )
+
+    # 4. Update name
+    circle.name = new_name
+    await db.commit()
+    await db.refresh(circle)
+
+    # 5. Return updated circle
+    return await get_circle(circle_id, db, current_user)
