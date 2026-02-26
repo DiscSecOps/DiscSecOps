@@ -1,132 +1,328 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+// tests/unit/Navbar.test.jsx
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import Navbar from '../../src/components/layout/Navbar';
-import { useAuth } from '../../src/contexts/useAuth';
-import { MemoryRouter } from 'react-router-dom';
+import { BrowserRouter } from 'react-router-dom';
+import Navbar from '../../src/components/layout/Navbar';  
 
-// Mock useAuth
-vi.mock('../../src/contexts/useAuth');
+// Mock for useAuth (contexts/useAuth.js)
+vi.mock('../../src/contexts/useAuth', () => ({
+  useAuth: vi.fn()
+}));
+
+// Mock for useDarkMode (hooks/useDarkMode.js)
+vi.mock('../../src/hooks/useDarkMode', () => ({
+  useDarkMode: vi.fn()
+}));
+
+vi.mock('react-router-dom', async () => {
+  const actual = await vi.importActual('react-router-dom');
+  return {
+    ...actual,
+    useNavigate: vi.fn()
+  };
+});
+
+// Import the mocked hooks after mocking
+import { useAuth } from '../../src/contexts/useAuth';  
+import { useDarkMode } from '../../src/hooks/useDarkMode';
+import { useNavigate } from 'react-router-dom';
 
 describe('Navbar Component', () => {
+  const mockNavigate = vi.fn();
   const mockLogout = vi.fn();
+  const mockToggleDarkMode = vi.fn();
 
   beforeEach(() => {
     vi.clearAllMocks();
+    
+    // Setup default mocks
+    useNavigate.mockReturnValue(mockNavigate);
+    useDarkMode.mockReturnValue({
+      isDarkMode: false,
+      toggleDarkMode: mockToggleDarkMode
+    });
   });
 
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
+  const renderNavbar = (authState = { user: null }) => {
+    useAuth.mockReturnValue({
+      user: authState.user,
+      logout: mockLogout
+    });
 
-  const openUserDropDown = () => {
-    fireEvent.click(screen.getByText('▼'));
+    return render(
+      <BrowserRouter>
+        <Navbar />
+      </BrowserRouter>
+    );
   };
 
-  it('renders full navbar when user is authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: mockLogout,
+  
+  describe('Unauthenticated User', () => {
+    it('renders minimal navbar with login and register buttons when user is not authenticated', () => {
+      renderNavbar({ user: null });
+
+      expect(screen.getByText('Social Circles')).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /login/i })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
+      expect(screen.queryByPlaceholderText(/search circles/i)).not.toBeInTheDocument();
     });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
-
-    // Logo
-    expect(screen.getByText('Social Circles')).toBeInTheDocument();
-
-    // Username display
-    expect(screen.getByText('@john123')).toBeInTheDocument();
-
-    // Avatar initial
-    expect(screen.getByText('J')).toBeInTheDocument();
-
-    // Search input
-    expect(
-      screen.getByPlaceholderText(/search circles/i)
-    ).toBeInTheDocument();
-    
-    openUserDropDown();
-
-    // Dropdown options
-    expect(screen.getByText('Profile')).toBeInTheDocument();
-    expect(screen.getByText('Settings')).toBeInTheDocument();
-    expect(screen.getByText('Logout')).toBeInTheDocument();
-  });
-
-  it('calls logout when user confirms logout', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: mockLogout,
+    it('navigates to login page when login button is clicked', () => {
+      renderNavbar({ user: null });
+      
+      const loginButton = screen.getByRole('button', { name: /login/i });
+      fireEvent.click(loginButton);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/login');
     });
 
-    // Mock confirm to return true
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
+    it('navigates to register page when register button is clicked', () => {
+      renderNavbar({ user: null });
+      
+      const registerButton = screen.getByRole('button', { name: /register/i });
+      fireEvent.click(registerButton);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/register');
+    });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
-
-    openUserDropDown();
-
-    fireEvent.click(screen.getByText('Logout'));
-
-    await waitFor(() => {
-      expect(mockLogout).toHaveBeenCalled();
+    it('navigates to home page when logo is clicked', () => {
+      renderNavbar({ user: null });
+      
+      const logo = screen.getByText('Social Circles');
+      fireEvent.click(logo);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/');
     });
   });
 
-  it('does not call logout when user cancels confirmation', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: mockLogout,
+  describe('Authenticated User', () => {
+    const mockUser = {
+      username: 'testuser',
+      email: 'test@example.com'
+    };
+
+    beforeEach(() => {
+      renderNavbar({ user: mockUser });
     });
 
-    // Mock confirm to return false
-    vi.spyOn(window, 'confirm').mockReturnValue(false);
+    it('renders navbar with user information and authenticated elements', () => {
+      expect(screen.getByText('@testuser')).toBeInTheDocument();
+      expect(screen.getByText('T')).toBeInTheDocument();
+      expect(screen.getByPlaceholderText(/search circles, posts, people/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/switch to dark mode/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/notifications/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/messages/i)).toBeInTheDocument();
+      expect(screen.getByText('3')).toBeInTheDocument();
+    });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
+    it('navigates to user dashboard when logo is clicked', () => {
+      const logo = screen.getByText('Social Circles');
+      fireEvent.click(logo);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/user-dashboard');
+    });
 
-    openUserDropDown();
+    it('handles search form submission', () => {
+      const searchInput = screen.getByPlaceholderText(/search circles, posts, people/i);
+      const searchButton = screen.getByRole('button', { name: '🔍' });
+      
+      fireEvent.change(searchInput, { target: { value: 'test search' } });
+      expect(searchInput.value).toBe('test search');
+      
+      fireEvent.click(searchButton);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/search?q=test%20search');
+    });
 
-    fireEvent.click(screen.getByText('Logout'));
+    it('does not navigate on empty search submission', () => {
+      const searchButton = screen.getByRole('button', { name: '🔍' });
+      
+      fireEvent.click(searchButton);
+      
+      expect(mockNavigate).not.toHaveBeenCalled();
+    });
 
-    expect(mockLogout).not.toHaveBeenCalled();
+    it('toggles dark mode when dark mode button is clicked', () => {
+      const darkModeButton = screen.getByTitle(/switch to dark mode/i);
+      fireEvent.click(darkModeButton);
+      
+      expect(mockToggleDarkMode).toHaveBeenCalledTimes(1);
+    });
+
+    it('shows different dark mode icon based on state', () => {
+      expect(screen.getByText('🌙')).toBeInTheDocument();
+      
+      // Re-render with dark mode on
+      useDarkMode.mockReturnValue({
+        isDarkMode: true,
+        toggleDarkMode: mockToggleDarkMode
+      });
+      
+      renderNavbar({ user: mockUser });
+      expect(screen.getByText('☀️')).toBeInTheDocument();
+      expect(screen.getByTitle(/switch to light mode/i)).toBeInTheDocument();
+    });
   });
 
-  it('shows alert if logout fails', async () => {
-    const failingLogout = vi.fn().mockRejectedValue(new Error('fail'));
+  describe('User Dropdown Menu', () => {
+    const mockUser = {
+      username: 'testuser'
+    };
 
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: failingLogout,
+    it('opens dropdown when user section is clicked', () => {
+      renderNavbar({ user: mockUser });
+      
+      expect(screen.queryByText('Profile')).not.toBeInTheDocument();
+      
+      const userSection = screen.getByText('@testuser').closest('.navbar-user');
+      fireEvent.click(userSection);
+      
+      expect(screen.getByText('Profile')).toBeInTheDocument();
+      expect(screen.getByText('Settings')).toBeInTheDocument();
+      expect(screen.getByText('Logout')).toBeInTheDocument();
+      expect(screen.getByText('▲')).toBeInTheDocument();
     });
 
-    vi.spyOn(window, 'confirm').mockReturnValue(true);
-    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+    it('closes dropdown when clicked again', () => {
+      renderNavbar({ user: mockUser });
+      
+      const userSection = screen.getByText('@testuser').closest('.navbar-user');
+      
+      fireEvent.click(userSection);
+      expect(screen.getByText('Profile')).toBeInTheDocument();
+      
+      fireEvent.click(userSection);
+      expect(screen.queryByText('Profile')).not.toBeInTheDocument();
+    });
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
+    it('navigates to profile page when Profile is clicked', () => {
+      renderNavbar({ user: mockUser });
+      
+      const userSection = screen.getByText('@testuser').closest('.navbar-user');
+      fireEvent.click(userSection);
+      
+      const profileButton = screen.getByText('Profile');
+      fireEvent.click(profileButton);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/profile');
+      expect(screen.queryByText('Profile')).not.toBeInTheDocument();
+    });
 
-    openUserDropDown();
+    it('navigates to settings page when Settings is clicked', () => {
+      renderNavbar({ user: mockUser });
+      
+      const userSection = screen.getByText('@testuser').closest('.navbar-user');
+      fireEvent.click(userSection);
+      
+      const settingsButton = screen.getByText('Settings');
+      fireEvent.click(settingsButton);
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/settings');
+    });
 
-    fireEvent.click(screen.getByText('Logout'));
+    describe('Logout Functionality', () => {
+      beforeEach(() => {
+        vi.spyOn(window, 'confirm').mockImplementation(() => true);
+      });
 
-    await waitFor(() => {
-      expect(alertSpy).toHaveBeenCalledWith(
-        'Logout failed. Please try again.'
-      );
+      it('handles successful logout', async () => {
+        mockLogout.mockResolvedValueOnce();
+        
+        renderNavbar({ user: mockUser });
+        
+        const userSection = screen.getByText('@testuser').closest('.navbar-user');
+        fireEvent.click(userSection);
+        
+        const logoutButton = screen.getByText('Logout');
+        fireEvent.click(logoutButton);
+        
+        expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to logout?');
+        
+        await waitFor(() => {
+          expect(mockLogout).toHaveBeenCalledTimes(1);
+          expect(mockNavigate).toHaveBeenCalledWith('/login');
+        });
+      });
+
+      it('handles logout failure', async () => {
+        const consoleErrorSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
+        const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
+        
+        mockLogout.mockRejectedValueOnce(new Error('Logout failed'));
+        
+        renderNavbar({ user: mockUser });
+        
+        const userSection = screen.getByText('@testuser').closest('.navbar-user');
+        fireEvent.click(userSection);
+        
+        const logoutButton = screen.getByText('Logout');
+        fireEvent.click(logoutButton);
+        
+        await waitFor(() => {
+          expect(mockLogout).toHaveBeenCalledTimes(1);
+          expect(consoleErrorSpy).toHaveBeenCalled();
+          expect(alertSpy).toHaveBeenCalledWith('Logout failed. Please try again.');
+          expect(mockNavigate).not.toHaveBeenCalled();
+        });
+        
+        consoleErrorSpy.mockRestore();
+        alertSpy.mockRestore();
+      });
+
+      it('cancels logout when confirm is false', () => {
+        vi.spyOn(window, 'confirm').mockImplementation(() => false);
+        
+        renderNavbar({ user: mockUser });
+        
+        const userSection = screen.getByText('@testuser').closest('.navbar-user');
+        fireEvent.click(userSection);
+        
+        const logoutButton = screen.getByText('Logout');
+        fireEvent.click(logoutButton);
+        
+        expect(window.confirm).toHaveBeenCalledWith('Are you sure you want to logout?');
+        expect(mockLogout).not.toHaveBeenCalled();
+        expect(mockNavigate).not.toHaveBeenCalled();
+      });
+    });
+  });
+
+  describe('Accessibility and Edge Cases', () => {
+    it('handles user with no username', () => {
+      const userWithNoName = {
+        email: 'test@example.com'
+      };
+      
+      renderNavbar({ user: userWithNoName });
+      
+      expect(screen.getByText('U')).toBeInTheDocument();
+    });
+
+    it('handles keyboard navigation for search', () => {
+      renderNavbar({ user: { username: 'testuser' } });
+      
+      const searchInput = screen.getByPlaceholderText(/search circles/i);
+      
+      fireEvent.change(searchInput, { target: { value: 'keyboard search' } });
+      fireEvent.submit(searchInput.closest('form'));
+      
+      expect(mockNavigate).toHaveBeenCalledWith('/search?q=keyboard%20search');
+    });
+
+     it('has proper ARIA labels and semantic structure', () => {
+      renderNavbar({ user: { username: 'testuser' } });
+      
+      // În loc de getByRole, folosim querySelector sau alte metode
+      const header = document.querySelector('header.navbar');
+      expect(header).toBeInTheDocument();
+      
+      const searchForm = document.querySelector('form.navbar-search');
+      expect(searchForm).toBeInTheDocument();
+      
+      expect(screen.getByTitle(/notifications/i)).toBeInTheDocument();
+      expect(screen.getByTitle(/messages/i)).toBeInTheDocument();
+      
+      expect(screen.getByRole('banner')).toBeInTheDocument();
     });
   });
 });
