@@ -1,7 +1,7 @@
 // frontend/src/components/layout/Navbar.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../../hooks/useAuth';
+import { useAuth } from '../../contexts/useAuth';
 import { useDarkMode } from '../../hooks/useDarkMode'; 
 import './Navbar.css';
 
