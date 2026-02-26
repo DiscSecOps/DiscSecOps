@@ -4,7 +4,7 @@
 .PHONY: install install-backend migrate-backend install-frontend seed-database install-playwright install-playwright-deps-only
 
 # Installation (Handles both stacks)
-install: install-backend install-frontend## Install both backend and frontend dependencies
+install: install-backend install-frontend ## Install both backend and frontend dependencies
 	 
 install-backend: ## Install backend dependencies and run database migrations
 	@echo "🚀 Installing Backend dependencies..."

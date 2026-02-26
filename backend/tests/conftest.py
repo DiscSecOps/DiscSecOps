@@ -162,7 +162,7 @@ def create_test_user():
 @pytest.fixture(scope="session", autouse=True)
 def setup_test_database_schema():
     """
-    Runs once per test session. 
+    Runs once per test session.
     Guarantees that all tables exist in the test database before any tests run.
     """
     async def _init_db():
