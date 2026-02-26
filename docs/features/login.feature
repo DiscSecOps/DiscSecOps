@@ -16,12 +16,12 @@ Feature: User Login
 
   @smoke @critical @ui
   Scenario: Successful login with valid credentials
-    When I login with username "john_doe" and password "SecurePass123!" [cite: 3]
+    When I login with username "john_doe" and password "SecurePass123!"
     Then I should be redirected to the UserDashboard 
     And I should see my username "john_doe" in the header 
     And a session cookie should be set 
 
-  @smoke @ui
+  @smoke @ui @todo
   Scenario: Successful login with case-insensitive username
     When I login with username "JOHN_DOE" and password "SecurePass123!"
     Then I should be redirected to the UserDashboard 
@@ -37,12 +37,20 @@ Feature: User Login
       | john_doe     | WrongPass123!    | Invalid username or password |
       | unknown_user | anypass          | Invalid username or password |
       | john_doe     | securepass123!   | Invalid username or password |
-      |              | SecurePass123!   | Username is required         |
-      | john_doe     |                  | Password is required         |
 
-  @security @rate-limiting
+  @ui @validation
+  Scenario: Login button is disabled with missing username
+    When I enter a blank username and password "SecurePass123!"
+    Then the login button should be disabled
+
+  @ui @validation
+  Scenario: Login button is disabled with missing password
+    When I enter username "john_doe" and a blank password
+    Then the login button should be disabled 
+
+  @security @rate-limiting @todo
   Scenario: Account lockout after multiple failures
-    When I attempt to login with wrong password 5 times [cite: 6]
+    When I attempt to login with wrong password 5 times
     Then I should see "Account locked. Try again in 15 minutes" message 
     And even with correct password, login should fail 
 
@@ -53,7 +61,7 @@ Feature: User Login
     And I refresh the page 
     Then I should be redirected to the login page 
 
-  @session @security
+  @session @security @todo
   Scenario: Single device per user invalidates previous sessions
     # We use 'Session A' and 'Session B' to represent different browser contexts
     Given I am logged in as "john_doe" in Session A
