@@ -72,19 +72,37 @@ class CircleMemberResponse(BaseModel):
     joined_at: datetime
 
     model_config = ConfigDict(
-            from_attributes=True,
-            arbitrary_types_allowed=True # Allow badge to be set in post-init
-            )
+        from_attributes=True,
+        arbitrary_types_allowed=True
+    )
 
-    def model_post_init(self, __context: Any) -> None:
-        """Calculate badge after initialization"""
+    def __init__(self, **data: Any) -> None:
+        # Extract fields needed for badge calculation
+        circle_id = data.get('circle_id')
+        user_id = data.get('user_id')
+        username = data.get('username')
+        role = data.get('role')
+        joined_at = data.get('joined_at')
+
+        # Build init data for BaseModel initialization
+        init_data = {
+            'circle_id': circle_id,
+            'user_id': user_id,
+            'username': username,
+            'role': role,
+            'joined_at': joined_at
+        }
+
+        # Initialize BaseModel
+        super().__init__(**init_data)
+
+        # Calculate badge based on role
         badge_map = {
             CircleRole.OWNER: "👑",
             CircleRole.MODERATOR: "🛡️",
             CircleRole.MEMBER: "👤"
         }
-        object.__setattr__(self, 'badge', badge_map.get(self.role, "👤"))
-
+        self.badge = badge_map.get(self.role, "👤")
 
 class CircleResponse(CircleBase):
     """Schema for circle data in API responses"""
