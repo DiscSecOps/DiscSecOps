@@ -5,7 +5,8 @@ including async database setup and a test client for FastAPI.
 """
 import asyncio
 import os
-from collections.abc import AsyncGenerator, Generator
+from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
+from typing import Any
 
 import nest_asyncio
 import pytest
@@ -137,7 +138,7 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     app.dependency_overrides.clear()
 
 @pytest.fixture
-def create_test_user():
+def create_test_user_synchronous():
     """
     Bulletproof Synchronous Factory.
     No teardown needed because `clean_database_before_test` handles it!
@@ -161,6 +162,30 @@ def create_test_user():
         asyncio.run(_insert())
 
     # We just yield the function. No try/finally block needed anymore!
+    yield _create_user
+
+@pytest_asyncio.fixture
+async def create_test_user(
+    db_session: AsyncSession
+) -> AsyncGenerator[Callable[[str, str], Coroutine[Any, Any, User]], None]:
+    """
+    Async factory to create a user.
+    Takes username and password, returns User object.
+    """
+    async def _create_user(username: str, plain_password: str) -> User:
+        hashed_pw = get_password_hash(plain_password)
+        new_user = User(
+            username=username,
+            email=f"{username}@test.com",
+            hashed_password=hashed_pw,
+            full_name=f"Test User {username}",
+            is_active=True
+        )
+        db_session.add(new_user)
+        await db_session.commit()
+        await db_session.refresh(new_user)
+        return new_user
+
     yield _create_user
 
 @pytest.fixture(scope="session", autouse=True)

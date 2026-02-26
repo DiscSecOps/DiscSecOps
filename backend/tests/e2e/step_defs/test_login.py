@@ -22,23 +22,10 @@ def multi_sessions():
 # GIVEN STEPS (Setup)
 # ==========================================
 
-# @given(parsers.parse('a user exists with username "{username}" and password "{password}"'))
-# async def _(create_test_user, username, password):
-#     """Uses the async DB fixture from conftest.py to teleport the user into Postgres."""
-#     await create_test_user(username=username, plain_password=password)
-# ✅ This forces the async fixture to run inside our synchronous step
-# @given(parsers.parse('a user exists with username "{username}" and password "{password}"'))
-# def _(create_test_user, username, password):
-#     print(f"\n--- ATTEMPTING TO INSERT {username} ---")
-#     loop = asyncio.get_event_loop()
-#     loop.run_until_complete(
-#         create_test_user(username=username, plain_password=password)
-#     )
-#     print(f"--- SUCCESSFULLY INSERTED {username} ---")
 @given(parsers.parse('a user exists with username "{username}" and password "{password}"'))
-def _(create_test_user, username, password):
+def _(create_test_user_synchronous, username, password):
     print(f"\n--- ATTEMPTING TO INSERT {username} ---")
-    create_test_user(username=username, plain_password=password)
+    create_test_user_synchronous(username=username, plain_password=password)
     print(f"--- SUCCESSFULLY INSERTED {username} ---")
 
 @given(parsers.parse('I am logged in as "{username}"'))
