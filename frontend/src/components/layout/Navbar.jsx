@@ -90,7 +90,7 @@ function Navbar() {
           <span className="icon">✉️</span>
         </button>
 
-        <div className="navbar-user" onClick={() => setShowDropdown(!showDropdown)}>
+        <div className="navbar-user" onClick={() => setShowDropdown(!showDropdown)} data-testid="navbar-user">
           <div className="user-avatar">
             {user.username?.charAt(0).toUpperCase() || 'U'}
           </div>

@@ -1,11 +1,22 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import Navbar from '../../src/components/layout/Navbar';
-import { useAuth } from '../../src/contexts/useAuth';
 import { MemoryRouter } from 'react-router-dom';
+import AuthContext from '../../src/contexts/AuthContext';
+import DarkModeContext from '../../src/contexts/DarkModeContext';
 
-// Mock useAuth
-vi.mock('../../src/contexts/useAuth');
+// Helper method for wrapping Navbar in necessary providers
+const renderWithProviders = (ui, { user = null, logout = vi.fn(), isDarkMode = true } = {}) => {
+  return render(
+        <AuthContext.Provider value={{user, logout}}>
+          <DarkModeContext.Provider value={{isDarkMode}}>
+            <MemoryRouter>
+                {ui}
+            </MemoryRouter>
+          </DarkModeContext.Provider>
+        </AuthContext.Provider>
+    );
+};
 
 describe('Navbar Component', () => {
   const mockLogout = vi.fn();
@@ -19,20 +30,14 @@ describe('Navbar Component', () => {
   });
 
   const openUserDropDown = () => {
-    fireEvent.click(screen.getByText('▼'));
+    fireEvent.click(screen.getByTestId('navbar-user'));
   };
 
   it('renders full navbar when user is authenticated', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
+    renderWithProviders(<Navbar />, {
+      user:  {username: 'john123' },
       logout: mockLogout,
     });
-
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
 
     // Logo
     expect(screen.getByText('Social Circles')).toBeInTheDocument();
@@ -57,19 +62,13 @@ describe('Navbar Component', () => {
   });
 
   it('calls logout when user confirms logout', async () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: mockLogout,
-    });
-
     // Mock confirm to return true
     vi.spyOn(window, 'confirm').mockReturnValue(true);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Navbar />, {
+      user:  {username: 'john123' },
+      logout: mockLogout,
+    });
 
     openUserDropDown();
 
@@ -81,19 +80,13 @@ describe('Navbar Component', () => {
   });
 
   it('does not call logout when user cancels confirmation', () => {
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: mockLogout,
-    });
-
     // Mock confirm to return false
     vi.spyOn(window, 'confirm').mockReturnValue(false);
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Navbar />, {
+      user:  {username: 'john123' },
+      logout: mockLogout,
+    });
 
     openUserDropDown();
 
@@ -104,20 +97,14 @@ describe('Navbar Component', () => {
 
   it('shows alert if logout fails', async () => {
     const failingLogout = vi.fn().mockRejectedValue(new Error('fail'));
-
-    vi.mocked(useAuth).mockReturnValue({
-      user: { username: 'john123' },
-      logout: failingLogout,
-    });
-
+    
     vi.spyOn(window, 'confirm').mockReturnValue(true);
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {});
 
-    render(
-      <MemoryRouter>
-        <Navbar />
-      </MemoryRouter>
-    );
+    renderWithProviders(<Navbar />, {
+      user:  {username: 'john123' },
+      logout: failingLogout,
+    });
 
     openUserDropDown();
 
