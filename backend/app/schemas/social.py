@@ -71,7 +71,10 @@ class CircleMemberResponse(BaseModel):
     badge: str | None = Field(None, description="👑, 🛡️, 👤 - calculated from role")
     joined_at: datetime
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+            from_attributes=True,
+            arbitrary_types_allowed=True # Allow badge to be set in post-init
+            )
 
     def model_post_init(self, __context: Any) -> None:
         """Calculate badge after initialization"""
