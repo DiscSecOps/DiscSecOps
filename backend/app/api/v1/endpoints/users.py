@@ -1,0 +1,65 @@
+# app/api/v1/endpoints/users.py
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from app.api.v1.endpoints.auth import get_current_user_from_session
+from app.core.db import get_db
+from app.db.models import CircleMember, User
+from app.schemas.social import UserSearchResponse
+
+router = APIRouter(prefix="/users", tags=["Users"])
+
+# Endpoint to search for users to add to a circle
+@router.get("/search", response_model=list[UserSearchResponse])
+async def search_users(
+    query: str,
+    circle_id: int,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session)
+) -> list[UserSearchResponse]:
+    # 1. Verify current user has permission
+    permission_check = await db.execute(
+        select(CircleMember)
+        .where(
+            CircleMember.circle_id == circle_id,
+            CircleMember.user_id == current_user.id,
+            CircleMember.role.in_(["owner", "moderator"])
+        )
+    )
+    if not permission_check.scalar_one_or_none():
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Only circle owners and moderators can search for new members"
+        )
+
+    # 2. If query is empty, return empty list
+    if not query or query.strip() == "":
+        return []
+
+    # 3. Get users already in the circle
+    existing_members = await db.execute(
+        select(CircleMember.user_id).where(CircleMember.circle_id == circle_id)
+    )
+    existing_ids = [row[0] for row in existing_members.fetchall()]
+
+    # 4. Search users
+    stmt = select(User).where(
+        User.id != current_user.id,
+        User.id.not_in(existing_ids) if existing_ids else True,
+        User.username.ilike(f"%{query}%")
+    ).limit(20)
+
+    result = await db.execute(stmt)
+    users = result.scalars().all()
+
+    # 5. Return results
+    return [
+        UserSearchResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            is_already_member=False
+        )
+        for user in users
+    ]

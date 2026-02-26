@@ -1,60 +1,74 @@
 """
 Social feature schemas
-Request and response models for Posts and Circles
+Request and response models for Posts, Circles, and Circle Members
 """
 from datetime import datetime
 from enum import StrEnum
 from typing import Any
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 
+# ======================================================
+# POST SCHEMAS
+# ======================================================
 
 class PostBase(BaseModel):
+    """Base schema for posts with common fields"""
     title: str = Field(..., min_length=1, max_length=100)
     content: str = Field(..., min_length=1)
 
 
 class PostCreate(PostBase):
-    circle_id: int | None = Field(None, description="Optional Circle ID if posting to a circle")
+    """Schema for creating a new post"""
+    circle_id: int | None = Field( None,
+                                  description="Optional Circle ID if posting to a circle")
 
 
 class PostResponse(PostBase):
+    """Schema for post data in API responses"""
     id: int
     author_id: int
-    author_name: str | None = Field(None, description="Username of author") # Optional for frontend
+    author_name: str | None = Field(None,
+                                    description="Username of author")
     circle_id: int | None
     created_at: datetime
     updated_at: datetime | None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
+
+# ======================================================
+# CIRCLE SCHEMAS
+# ======================================================
 
 class CircleBase(BaseModel):
+    """Base schema for circles with common fields"""
     name: str = Field(..., min_length=3, max_length=50)
     description: str | None = Field(None, max_length=255)
 
 
 class CircleCreate(CircleBase):
+    """Schema for creating a new circle"""
     pass
 
 
 class CircleRole(StrEnum):
+    """Enum for circle member roles"""
     OWNER = "owner"
     MODERATOR = "moderator"
     MEMBER = "member"
 
 
 class CircleMemberResponse(BaseModel):
+    """Schema for circle member data in API responses"""
     circle_id: int
     user_id: int
-    username: str | None = Field(None, description="Username of member")  # Pentru afișare
+    username: str | None = Field(None, description="Username of member")
     role: CircleRole
     badge: str | None = Field(None, description="👑, 🛡️, 👤 - calculated from role")
     joined_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
     def model_post_init(self, __context: Any) -> None:
         """Calculate badge after initialization"""
@@ -67,6 +81,7 @@ class CircleMemberResponse(BaseModel):
 
 
 class CircleResponse(CircleBase):
+    """Schema for circle data in API responses"""
     id: int
     owner_id: int
     owner_name: str | None = Field(None, description="Username of owner")
@@ -74,10 +89,62 @@ class CircleResponse(CircleBase):
     member_count: int | None = Field(None, description="Total number of members")
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-# Pentru request-uri de update role (admin/mod only)
+# ======================================================
+# CIRCLE MEMBER MANAGEMENT SCHEMAS
+# ======================================================
+
 class CircleMemberUpdate(BaseModel):
+    """Schema for updating a member's role (owner/moderator only)"""
     role: CircleRole
+
+
+class UserSearchResponse(BaseModel):
+    """Schema for user search results when adding members to a circle"""
+    id: int
+    username: str
+    email: str
+    is_already_member: bool = Field(False,
+                                    description="Whether user is already in the circle")
+
+
+class AddMemberRequest(BaseModel):
+    """Request schema for adding a new member to a circle"""
+    user_id: int
+
+
+class UpdateRoleRequest(BaseModel):
+    """Request schema for updating a member's role"""
+    role: CircleRole  # Can be 'moderator' or 'member' (owner cannot be assigned)
+
+
+class MemberActionResponse(BaseModel):
+    """Response schema for member management actions (add/remove/update)"""
+    success: bool
+    message: str
+    member: CircleMemberResponse | None = None
+
+
+# ======================================================
+# ADDITIONAL CIRCLE SCHEMAS (for future features)
+# ======================================================
+
+class CirclePrivacyUpdate(BaseModel):
+    """Schema for updating circle privacy settings (owner only)"""
+    is_private: bool
+
+
+class CircleJoinRequest(BaseModel):
+    """Schema for requesting to join a private circle"""
+    message: str | None = Field(None, max_length=200)
+
+
+class CircleJoinResponse(BaseModel):
+    """Schema for circle join request response"""
+    request_id: int
+    user_id: int
+    username: str
+    status: str  # 'pending', 'approved', 'rejected'
+    created_at: datetime

@@ -3,9 +3,10 @@ Authentication schemas
 Request and response models for registration, login, and user data
 Updated to match frontend expectations: username-based login!
 """
+import re
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 
 class UserCreate(BaseModel):
@@ -22,8 +23,22 @@ class UserCreate(BaseModel):
     """
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     email: EmailStr = Field(..., description="User email (unique)")
-    password: str = Field(..., min_length=6, description="Password (min 6 characters)")
+    password: str = Field(..., min_length=8, max_length=50, description="Password (min 8 characters)")
     full_name: str | None = Field(None, max_length=100, description="User's full name")
+
+    @field_validator('password')
+    @classmethod
+    def validate_password(cls, v: str) -> str:
+        """Validate password complexity"""
+        if not re.search(r'[A-Z]', v):
+            raise ValueError('Password must contain at least one uppercase letter')
+        if not re.search(r'[a-z]', v):
+            raise ValueError('Password must contain at least one lowercase letter')
+        if not re.search(r'[0-9]', v):
+            raise ValueError('Password must contain at least one number')
+        if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
+            raise ValueError('Password must contain at least one special character')
+        return v
 
 
 class UserLogin(BaseModel):

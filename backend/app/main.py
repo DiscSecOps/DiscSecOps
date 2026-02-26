@@ -9,7 +9,7 @@ from typing import Any
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import auth, circles, posts
+from app.api.v1.endpoints import auth, circle_members, circles, posts, users
 from app.core.config import settings
 from app.core.db import engine
 
@@ -46,11 +46,11 @@ app.add_middleware(
 # Frontend expects: http://localhost:8000/api/v1/auth/login
 #                 http://localhost:8000/api/v1/circles/my
 #                 http://localhost:8000/api/v1/posts/feed
-app.include_router(auth.router, prefix=settings.API_V1_STR)        # /api/v1/auth
-app.include_router(circles.router, prefix=settings.API_V1_STR)     # /api/v1/circles
-app.include_router(posts.router, prefix=settings.API_V1_STR)       # /api/v1/posts
-# app.include_router(circle_members.router, prefix=settings.API_V1_STR)  # /api/v1/circles/..
-
+app.include_router(auth.router, prefix=settings.API_V1_STR)           # /api/v1/auth
+app.include_router(circles.router, prefix=settings.API_V1_STR)        # /api/v1/circles
+app.include_router(posts.router, prefix=settings.API_V1_STR)          # /api/v1/posts
+app.include_router(users.router, prefix=settings.API_V1_STR)          # /api/v1/users
+app.include_router(circle_members.router, prefix=settings.API_V1_STR) # /api/v1/circles
 
 @app.get("/")
 async def root() -> dict[str, Any]:

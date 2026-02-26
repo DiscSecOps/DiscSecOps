@@ -1,4 +1,8 @@
-
+# backend/tests/conftest.py
+"""
+Shared fixtures for both API and E2E tests, 
+including async database setup and a test client for FastAPI.
+"""
 import asyncio
 import os
 from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
@@ -117,17 +121,19 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 @pytest_asyncio.fixture
 async def create_test_user(
     db_session: AsyncSession
-) -> AsyncGenerator[Callable[[str, str, str], Coroutine[Any, Any, User]], None]:
+) -> AsyncGenerator[Callable[[str, str], Coroutine[Any, Any, User]], None]:
     """
     Async factory to create a user.
-    The nested function must be awaited in your step definitions.
+    Takes username and password, returns User object.
     """
-    async def _create_user(username: str, plain_password: str, role: str = "User") -> User:
+    async def _create_user(username: str, plain_password: str) -> User:
         hashed_pw = get_password_hash(plain_password)
         new_user = User(
             username=username,
+            email=f"{username}@test.com",
             hashed_password=hashed_pw,
-            global_role=role
+            full_name=f"Test User {username}",
+            is_active=True
         )
         db_session.add(new_user)
         await db_session.commit()
