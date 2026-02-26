@@ -45,10 +45,12 @@ async def search_users(
 
     # 4. Search users
     stmt = select(User).where(
-        User.id != current_user.id,
-        User.id.not_in(existing_ids) if existing_ids else True,
-        User.username.ilike(f"%{query}%")
-    ).limit(20)
+    User.id != current_user.id,
+    User.username.ilike(f"%{query}%")).limit(20)
+
+    # Exclude existing members if any
+    if existing_ids:
+        stmt = stmt.where(User.id.not_in(existing_ids))
 
     result = await db.execute(stmt)
     users = result.scalars().all()

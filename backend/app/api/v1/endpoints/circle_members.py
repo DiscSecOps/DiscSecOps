@@ -95,7 +95,7 @@ async def add_member(
         circle_id=new_member.circle_id,
         user_id=new_member.user_id,
         username=user_to_add.username,
-        role=new_member.role,
+        role=CircleRole(new_member.role),
         joined_at=new_member.joined_at
     )
 
@@ -186,7 +186,15 @@ async def remove_member(
         )
 
     # 6. Remove member
-    username = (await db.get(User, user_id)).username
+    user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
+
+    username = user.username
+
     await db.delete(member)
     await db.commit()
 
@@ -259,6 +267,11 @@ async def update_member_role(
 
     # 5. Get username for response
     user = await db.get(User, user_id)
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found"
+        )
 
     member_response = CircleMemberResponse(
         circle_id=member.circle_id,

@@ -64,7 +64,6 @@ class CircleRole(StrEnum):
 
 
 class CircleMemberResponse(BaseModel):
-    """Schema for circle member data in API responses"""
     circle_id: int
     user_id: int
     username: str | None = Field(None, description="Username of member")
