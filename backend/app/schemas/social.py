@@ -51,6 +51,10 @@ class CircleCreate(CircleBase):
     """Schema for creating a new circle"""
     pass
 
+class UpdateCircleNameRequest(BaseModel):
+    """Request schema for updating circle name"""
+    name: str = Field(..., min_length=3, max_length=50)
+
 
 class CircleRole(StrEnum):
     """Enum for circle member roles"""

@@ -1,6 +1,6 @@
 # backend/tests/conftest.py
 """
-Shared fixtures for both API and E2E tests, 
+Shared fixtures for both API and E2E tests,
 including async database setup and a test client for FastAPI.
 """
 import asyncio

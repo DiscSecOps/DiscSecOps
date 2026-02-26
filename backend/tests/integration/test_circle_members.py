@@ -5,15 +5,14 @@ Comprehensive tests for circle_members covering all CRUD operations and role-bas
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
-from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Circle, CircleMember, User
 from app.schemas.social import CircleRole
 
-
 # ======================================================
-# FIXTURES (date de test)
+# FIXTURES (test data setup)
 # ======================================================
 
 @pytest_asyncio.fixture
