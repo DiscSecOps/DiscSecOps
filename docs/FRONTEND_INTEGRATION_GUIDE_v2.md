@@ -70,7 +70,6 @@ Response: {
     "username": "johndoe",
     "email": "john@example.com",
     "full_name": "John Doe",
-    "role": "user",
     "is_active": true,
     "created_at": "2026-02-04T23:33:02.359849Z",
     "updated_at": null
@@ -125,7 +124,6 @@ http://localhost:8000/api
     "username": "johndoe",
     "email": "user@example.com",
     "full_name": "John Doe",
-    "role_id": null,
     "is_active": true,
     "created_at": "2026-02-22T12:38:14.074713Z",
     "updated_at": null
@@ -169,7 +167,6 @@ http://localhost:8000/api
     "username": "johndoe",
     "email": "user@example.com",
     "full_name": "John Doe",
-    "role_id": null,
     "is_active": true,
     "created_at": "2026-02-22T12:38:14.074713Z",
     "updated_at": null
@@ -810,7 +807,6 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,  -- No longer nullable
     hashed_password VARCHAR(255) NOT NULL,
     full_name VARCHAR(100),
-    role_id INTEGER NOT NULL,             -- Foreign Key for new Roles table
     is_active BOOLEAN DEFAULT true NOT NULL,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE

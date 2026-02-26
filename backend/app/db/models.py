@@ -1,10 +1,11 @@
 """
 User model for authentication (Async SQLAlchemy 2.0)
 """
+
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, String
-from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
+from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column, relationship
 from sqlalchemy.sql import func
 
 
@@ -33,48 +34,28 @@ class User(Base):
         email: User's email (UNIQUE, optional/display only)
         full_name: User's full name
         hashed_password: Argon2 hashed password
-        role_id: ForeignKey to Role.id
         is_active: Whether user account is active
         created_at: Timestamp when user was created
         updated_at: Timestamp when user was last updated
     """
     __tablename__ = "users"
 
-    # Primary key
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-
-    # Authentication - USERNAME is primary login
-    username: Mapped[str] = mapped_column(
-        String(50), unique=True, index=True, nullable=False
-    )
-    email: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
+    username: Mapped[str] = mapped_column(String(50), unique=True, nullable=False)
+    email: Mapped[str] = mapped_column(String(255), unique=True, nullable=False)
     hashed_password: Mapped[str] = mapped_column(String(255), nullable=False)
-
-    # User information
-    full_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
-
-    # Role-based access control
-    role_id: Mapped[int | None] = mapped_column(nullable=True)  # ForeignKey to Role.id
-
-    # Legacy role field (optional, can be removed later or mapped to role_id)
-    # role: Mapped[str] = mapped_column(String(20), default="user", nullable=False)
-
-    # Status flags
-    is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
-
-    # Timestamps
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    full_name: Mapped[str | None] = mapped_column(String(100))
+    is_active: Mapped[bool] = mapped_column(Boolean, default=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), onupdate=func.now(), nullable=True
     )
 
-    def __repr__(self) -> str:
-        return f"<User(id={self.id}, username={self.username}, role={self.role_id})>"
-
+    # Relationships
+    owned_circles: Mapped[list["Circle"]] = relationship(back_populates="owner",
+                                                         foreign_keys="Circle.owner_id")
+    circle_memberships: Mapped[list["CircleMember"]] = relationship(back_populates="user")
+    posts: Mapped[list["Post"]] = relationship(back_populates="author")
 
 class Circle(Base):
     """
@@ -83,12 +64,15 @@ class Circle(Base):
     __tablename__ = "circles"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    name: Mapped[str] = mapped_column(String(50), unique=True, index=True, nullable=False)
-    description: Mapped[str | None] = mapped_column(String(255), nullable=True)
-    owner_id: Mapped[int] = mapped_column(nullable=False)  # ForeignKey to User.id
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    name: Mapped[str] = mapped_column(String(50), nullable=False)
+    description: Mapped[str | None] = mapped_column(String(255))
+    owner_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # relationships
+    owner: Mapped["User"] = relationship(back_populates="owned_circles", foreign_keys=[owner_id])
+    members: Mapped[list["CircleMember"]] = relationship(back_populates="circle")
+    posts: Mapped[list["Post"]] = relationship(back_populates="circle")
 
 
 class CircleMember(Base):
@@ -97,13 +81,14 @@ class CircleMember(Base):
     """
     __tablename__ = "circle_members"
 
-    circle_id: Mapped[int] = mapped_column(primary_key=True)  # ForeignKey to Circle.id
-    user_id: Mapped[int] = mapped_column(primary_key=True)    # ForeignKey to User.id
-    is_admin: Mapped[bool] = mapped_column(Boolean, default=False)
-    is_moderator: Mapped[bool] = mapped_column(Boolean, default=False)
-    joined_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
+    circle_id: Mapped[int] = mapped_column(ForeignKey("circles.id"), primary_key=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), primary_key=True)
+    role: Mapped[str] = mapped_column(String(20), default="member")  # "owner","moderator","member"
+    joined_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    circle: Mapped["Circle"] = relationship(back_populates="members")
+    user: Mapped["User"] = relationship(back_populates="circle_memberships")
 
 
 class Post(Base):
@@ -115,20 +100,15 @@ class Post(Base):
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
     title: Mapped[str] = mapped_column(String(100), nullable=False)
     content: Mapped[str] = mapped_column(String, nullable=False)
-    author_id: Mapped[int] = mapped_column(nullable=False, index=True)  # ForeignKey to User.id
-    circle_id: Mapped[int | None] = mapped_column(
-        nullable=True, index=True
-    )  # ForeignKey to Circle.id (optional)
-    created_at: Mapped[datetime] = mapped_column(
-        DateTime(timezone=True), server_default=func.now(), nullable=False
-    )
-    updated_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), onupdate=func.now(), nullable=True
-    )
+    author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    circle_id: Mapped[int | None] = mapped_column(ForeignKey("circles.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True),
+                                                        onupdate=func.now())
 
-    def __repr__(self) -> str:
-        return f"<Post(id={self.id}, title={self.title}, author_id={self.author_id})>"
-
+    # Relationships
+    author: Mapped["User"] = relationship(back_populates="posts")
+    circle: Mapped["Circle | None"] = relationship(back_populates="posts")
 
 # Session model for session-based authentication (alternative to JWT)
 class UserSession(Base):

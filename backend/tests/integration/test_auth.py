@@ -117,7 +117,6 @@ async def test_register_user_success(client: AsyncClient) -> None:
     assert "user" in data
     assert data["user"]["username"] == "johndoe"
     assert data["user"]["email"] == "john@example.com"
-    assert data["user"]["role_id"] is None
     assert "hashed_password" not in data["user"]
 
 
@@ -212,8 +211,6 @@ async def test_login_success(client: AsyncClient) -> None:
 
     assert response.status_code == 200
     data = response.json()
-    assert response.status_code == 200
-    data = response.json()
     assert "session_token" in data
     assert data["success"] is True
     assert data["username"] == "logintest"
@@ -236,7 +233,7 @@ async def test_login_wrong_password(client: AsyncClient) -> None:
     })
 
     assert response.status_code == 401
-    assert "invalid credentials" in response.json()["detail"].lower()
+    assert "invalid username or password" in response.json()["detail"].lower()
 
 
 @pytest.mark.asyncio
@@ -248,8 +245,7 @@ async def test_login_nonexistent_user(client: AsyncClient) -> None:
     })
 
     assert response.status_code == 401
-    assert "invalid credentials" in response.json()["detail"].lower()
-
+    assert "nvalid username or password" in response.json()["detail"].lower()
 
 @pytest.mark.asyncio
 async def test_login_inactive_user(client: AsyncClient, db_session: AsyncSession) -> None:

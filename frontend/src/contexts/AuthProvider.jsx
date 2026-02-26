@@ -1,6 +1,6 @@
 // frontend/src/contexts/AuthProvider.jsx
 import { useState, useEffect } from 'react';
-import AuthContext from './AuthContext';  // Assuming you have an AuthContext defined in the same directory
+import AuthContext from './AuthContext';  
 import { authService } from '../services/auth.service';
 
 //AuthProvider component to manage authentication state and actions

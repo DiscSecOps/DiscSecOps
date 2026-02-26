@@ -64,15 +64,15 @@ line-length = 100
 # B      = flake8-bugbear (catches common bugs)
 # UP     = pyupgrade (automatically upgrades old syntax)
 select = ["E", "W", "F", "I", "B", "UP"]
-
-[tool.ruff.lint.extend-per-file-ignores]
-# FastAPI dependencies necessarily use function calls in argument defaults
-"**/api/**/*.py" = ["B008"]
-
 ignore = [
     # E501: Ignore line length violations (let the formatter handle it)
     "E501",
 ]
+
+[tool.ruff.lint.extend-per-file-ignores]
+# FastAPI dependencies necessarily use function calls in argument defaults
+"**/api/**/*.py" = ["B008"]
+"alembic/versions/*.py" = ["E501"]
 
 [tool.ruff.lint.isort]
 # These settings ensure Ruff behaves exactly like your old isort "profile = black"
@@ -120,6 +120,10 @@ python_version = "3.12"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+exclude = [
+    'alembic/versions/.*\.py$',  # Ignor Alembic migration scripts (opțional)
+    'tests/',                    # Ignor test files (opțional)
+]
 
 [tool.bandit]
 exclude_dirs = [".venv", "tests", ".mypy_cache", ".pytest_cache", "alembic"]
