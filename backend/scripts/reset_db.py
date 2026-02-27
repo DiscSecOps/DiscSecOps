@@ -9,7 +9,7 @@ from app.core.db import engine
 from app.db.models import Base
 
 
-async def reset_database():
+async def reset_database() -> None:
     """Drop all tables and recreate them"""
     print("🔄 Resetting database...")
     async with engine.begin() as conn:
