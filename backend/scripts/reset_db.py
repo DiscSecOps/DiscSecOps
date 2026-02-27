@@ -8,6 +8,7 @@ sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 from app.core.db import engine
 from app.db.models import Base
 
+
 async def reset_database():
     """Drop all tables and recreate them"""
     print("🔄 Resetting database...")
