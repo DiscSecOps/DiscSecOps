@@ -57,8 +57,8 @@ project_root/
         ├── unit/                 # Backend pytest unit tests
         ├── integration/          # API-level tests (formerly test_auth.py)
         └── e2e/                  # BDD / Playwright tests
-            ├── conftest.py       # Global fixtures (DB & Browser)
-            └── step_defs/        # Python implementations of Gherkin steps
+        │   └── step_defs/        # Python implementations of Gherkin steps
+        ├── conftest.py       # Global fixtures (DB & Browser)
 ```
 
 
@@ -104,16 +104,46 @@ Use the Playwright Generator via our VNC service:
 
 ## 🧪 Running Tests
 
-We use a unified conftest.py that provides global fixtures for both API and E2E tests.
+We use a unified conftest.py that provides global fixtures for integration, API and E2E tests.
 
 ### Makefile commands
 ``` plaintext
 Command                 Purpose
 
+make run-backend-test   Start FastAPI server connected to TEST database (used for E2E tests)
 make test-backend	    Runs fast unit and integration tests (ignores E2E).
 make test-e2e	        Runs BDD tests headlessly (Standard).
 make test-e2e-headed	Runs BDD tests visibly in the VNC window (Port 6080).
 ```
+
+#### Running integration tests
+
+Simply run the make test-backend command from the project root
+``` bash
+make test-backend
+```
+
+#### Running e2e tests non-headed
+
+Run the following commands:
+``` bash
+make run-backend-test
+make run-frontend
+make test-e2e
+```
+
+#### Running e2e tests Headed (i.e. visible in the browser)
+
+Run the following commands:
+``` bash
+make run-backend-test
+make run-frontend
+make test-e2e
+```
+Now, open the VNC session in your browser to connect to the headed session running on the dev container:
+
+http://localhost:6080/
+
 
 ## ⚙️ Configuration Reference
 

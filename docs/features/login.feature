@@ -5,53 +5,66 @@ Feature: User Login
   So that I can access my circles and content
 
   Business Rules:
-    - Valid username and password required
-    - After 5 failed attempts, account locked for 15 minutes
-    - Session lasts 24 hours
-    - One device per user
+    - Valid username and password required 
+    - After 5 failed attempts, account locked for 15 minutes 
+    - Session lasts 24 hours 
+    - One device per user 
 
-  @smoke @critical
-  Scenario: Successful login with valid credentials
-    Given a user exists with:
-      | username | john_doe        |
-      | password | SecurePass123!  |
-    When I login with username "john_doe" and password "SecurePass123!"
-    Then I should be redirected to the UserDashboard
-    And I should see my username "john_doe" in the header
-    And a session cookie should be set
-
-  @security
-  Scenario: Login with wrong password
-    Given a user exists with:
-      | username | john_doe        |
-      | password | SecurePass123!  |
-    When I login with username "john_doe" and password "WrongPass123!"
-    Then I should see "Invalid username or password" error
-    And I should remain on the login page
-
-  @security
-  Scenario: Login with non-existent user
-    When I login with username "unknown_user" and password "anypass"
-    Then I should see "Invalid username or password" error
-    And I should remain on the login page
-
-  @security @rate-limiting
-  Scenario: Account lockout after multiple failures
+  Background:
+    # This runs before every scenario to ensure our baseline user exists
     Given a user exists with username "john_doe" and password "SecurePass123!"
+
+  @smoke @critical @ui
+  Scenario: Successful login with valid credentials
+    When I login with username "john_doe" and password "SecurePass123!"
+    Then I should be redirected to the UserDashboard 
+    And I should see my username "john_doe" in the header 
+    And a session cookie should be set 
+
+  @smoke @ui @todo
+  Scenario: Successful login with case-insensitive username
+    When I login with username "JOHN_DOE" and password "SecurePass123!"
+    Then I should be redirected to the UserDashboard 
+
+  @security @validation
+  Scenario Outline: Login failures with invalid or missing credentials
+    When I login with username "<username>" and password "<password>"
+    Then I should see "<error_message>" error
+    And I should remain on the login page 
+
+    Examples:
+      | username     | password         | error_message                |
+      | john_doe     | WrongPass123!    | Invalid username or password |
+      | unknown_user | anypass          | Invalid username or password |
+      | john_doe     | securepass123!   | Invalid username or password |
+
+  @ui @validation
+  Scenario: Login button is disabled with missing username
+    When I enter a blank username and password "SecurePass123!"
+    Then the login button should be disabled
+
+  @ui @validation
+  Scenario: Login button is disabled with missing password
+    When I enter username "john_doe" and a blank password
+    Then the login button should be disabled 
+
+  @security @rate-limiting @todo
+  Scenario: Account lockout after multiple failures
     When I attempt to login with wrong password 5 times
-    Then I should see "Account locked. Try again in 15 minutes" message
-    And even with correct password, login should fail
+    Then I should see "Account locked. Try again in 15 minutes" message 
+    And even with correct password, login should fail 
 
-  @session
-  Scenario: Session persists for 24 hours
-    Given I am logged in as "john_doe"
-    When I wait for 24 hours
-    And I refresh the page
-    Then I should be redirected to the login page
+  @session @security
+  Scenario: Session expires after 24 hours
+    Given I am logged in as "john_doe" 
+    When my session is manually expired in the backend
+    And I refresh the page 
+    Then I should be redirected to the login page 
 
-  @session
-  Scenario: Single device per user
-    Given I am logged in as "john_doe" on Chrome
-    When I login as "john_doe" on Firefox
-    Then the Chrome session should be invalidated
-    And Chrome should be redirected to login page on next action
+  @session @security @todo
+  Scenario: Single device per user invalidates previous sessions
+    # We use 'Session A' and 'Session B' to represent different browser contexts
+    Given I am logged in as "john_doe" in Session A
+    When I login as "john_doe" in Session B
+    Then Session A should be invalidated
+    And Session A should be redirected to the login page on its next action
