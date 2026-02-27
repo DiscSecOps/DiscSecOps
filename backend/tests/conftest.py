@@ -103,20 +103,27 @@ async def db_session(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, 
     """
     async with async_engine.connect() as connection:
         transaction = await connection.begin()
+
+        # ✅ Added join_transaction_mode="create_savepoint"
+        # This safely turns all .commit() calls into nested savepoints!
         async_session_maker = async_sessionmaker(
-            connection, class_=AsyncSession, expire_on_commit=False
+            connection,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint"
         )
         session = async_session_maker()
 
-    try:
-        yield session  # This is where the test runs
-    finally:
-        # Test is over. Safely close session and rollback, even if the test crashed!
         try:
-            await session.close()
-            await transaction.rollback()
-        except Exception as teardown_err:
-            print(f"Failed to cleanly rollback DB: {teardown_err}")
+            # ✅ PROPERLY INDENTED: The test runs WHILE the connection is open!
+            yield session
+        finally:
+            # Test is over. Safely close session and rollback, even if the test crashed!
+            try:
+                await session.close()
+                await transaction.rollback()
+            except Exception as teardown_err:
+                print(f"Failed to cleanly rollback DB: {teardown_err}")
 
 # ==========================================
 # 3. FASTAPI TEST CLIENT (For API Tests)
@@ -205,31 +212,30 @@ def setup_test_database_schema():
     asyncio.run(_init_db())
 
 @pytest.fixture(autouse=True)
-def clean_database_before_test():
+def clean_database_before_test(request):
     """
-    Automatically wipes all database tables before every test.
-    Using 'autouse=True' means no test can ever inherit dirty data.
+    Automatically wipes all database tables before E2E tests ONLY.
+    Integration tests use the db_session transaction rollback instead.
     """
+    # ✅ Check if the test is inside the 'e2e' folder.
+    # If it isn't, skip the truncate and just run the test!
+    print(f"\n[DEBUG] Running test: {request.node.name} at {request.node.path}")
+    if "e2e" not in str(request.node.path):
+        yield
+        return
+
     async def _truncate():
-        # Create a short-lived engine just for this operation
         engine = create_async_engine(TEST_DATABASE_URL)
-
         async with engine.begin() as conn:
-            # Dynamically grab every table name defined in your SQLAlchemy models
             tables = [table.name for table in Base.metadata.sorted_tables]
-
             if tables:
                 table_string = ", ".join(tables)
-                # RESTART IDENTITY: Resets the ID counters back to 1
-                # CASCADE: Safely handles foreign key dependencies
                 await conn.execute(text(f"TRUNCATE TABLE {table_string} RESTART IDENTITY CASCADE;"))
-
         await engine.dispose()
 
-    # Run the async cleanup synchronously to protect the Playwright thread
     asyncio.run(_truncate())
 
-    yield # The actual Playwright test runs here!
+    yield # The Playwright test runs here
 
 # ==========================================
 # PYTEST MAGIC HOOK
