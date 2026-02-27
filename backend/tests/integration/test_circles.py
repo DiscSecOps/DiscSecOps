@@ -8,7 +8,7 @@ from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.db.models import Circle, CircleMember, User
-from app.schemas.social import CircleRole, CircleCreate
+from app.schemas.social import CircleRole
 
 
 @pytest_asyncio.fixture
@@ -148,9 +148,8 @@ async def test_create_circle(client: AsyncClient, test_owner: User):
         "name": "New Test Circle",
         "description": "Created via test"
     }
-    response = await client.post("/api/v1/circles/", json=payload, cookies={
-        "session_token": test_owner.session_token
-    })
+    client.cookies.set("session_token", test_owner.session_token)
+    response = await client.post("/api/v1/circles/", json=payload)
     # Assert status_code 201 and validate returned circle data
     result = response.json()
     assert response.status_code == 201
@@ -167,9 +166,7 @@ async def test_create_circle(client: AsyncClient, test_owner: User):
     assert result["member_count"] == 1
 
     # Test creating duplicate name returns 400
-    response2 = await client.post("/api/v1/circles/", json=payload, cookies={
-        "session_token": test_owner.session_token
-    })
+    response2 = await client.post("/api/v1/circles/", json=payload)
     assert response2.status_code == 400
 
 
@@ -219,27 +216,29 @@ async def test_update_circle(client: AsyncClient, test_owner: User, test_non_own
     assert response.status_code == 404
 
 
-# @pytest.mark.asyncio
-# async def test_delete_circle(client: AsyncClient, test_owner: User, test_non_owner: User, test_circle: Circle):
-#     """
-#     DELETE /circles/{circle_id}
-#     - Only owner can delete circle
-#     - Should return 403 if non-owner tries
-#     - Should return 404 if circle does not exist
-#     """
-#     # Test delete as non-owner (expect 403)
-#     client.cookies.set("session_token", test_non_owner.session_token)
-#     response = await client.delete(f"/api/v1/circles/{test_circle.id}")
-#     assert response.status_code == 403
+@pytest.mark.xfail(reason="Delete endpoint not implemented in frontend yet")
+@pytest.mark.asyncio
+async def test_delete_circle(client: AsyncClient, test_owner: User, test_non_owner: User, test_circle: Circle):
+    # This will run, but failure won’t break CI
+    """
+    DELETE /circles/{circle_id}
+    - Only owner can delete circle
+    - Should return 403 if non-owner tries
+    - Should return 404 if circle does not exist
+    """
+    # Test delete as non-owner (expect 403)
+    client.cookies.set("session_token", test_non_owner.session_token)
+    response = await client.delete(f"/api/v1/circles/{test_circle.id}")
+    assert response.status_code == 403
 
-#     # Test delete as owner (expect 204)
-#     client.cookies.set("session_token", test_owner.session_token)
-#     response = await client.delete(f"/api/v1/circles/{test_circle.id}")
-#     assert response.status_code == 204
+    # Test delete as owner (expect 204)
+    client.cookies.set("session_token", test_owner.session_token)
+    response = await client.delete(f"/api/v1/circles/{test_circle.id}")
+    assert response.status_code == 204
 
-#     # Test delete non-existent circle (expect 404)
-#     response = await client.put(f"/api/v1/circles/{test_circle.id}")
-#     assert response.status_code == 404
+    # Test delete non-existent circle (expect 404)
+    response = await client.put(f"/api/v1/circles/{test_circle.id}")
+    assert response.status_code == 404
 
 
 @pytest.mark.asyncio

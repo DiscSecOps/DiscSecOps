@@ -7,8 +7,8 @@ import pytest_asyncio
 from httpx import AsyncClient
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.db.models import Post, Circle, CircleMember, User
-from app.schemas.social import CircleRole, PostCreate
+from app.db.models import Circle, CircleMember, Post, User
+from app.schemas.social import CircleRole
 
 
 @pytest_asyncio.fixture
