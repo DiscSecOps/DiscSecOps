@@ -4,9 +4,8 @@
 .PHONY: install install-backend migrate-backend install-frontend seed-database install-playwright install-playwright-deps-only
 
 # Installation (Handles both stacks)
-install: ## Install both backend and frontend dependencies
-	install-backend install-frontend
-
+install: install-backend install-frontend ## Install both backend and frontend dependencies
+	 
 install-backend: ## Install backend dependencies and run database migrations
 	@echo "🚀 Installing Backend dependencies..."
 	cd backend && uv sync
@@ -79,7 +78,8 @@ test-e2e-ui: ## Run headed end-to-end tests with Playwright UI Runner (available
 
 test-e2e-headed: ## Run headed end-to-end tests with Playwright in a virtual screen (using xvfb-run)
 	@echo "🎭 Running Headed Tests in Virtual Screen..."
-	cd backend && xvfb-run --auto-servernum --server-args="-screen 0 1280x960x24" pytest tests/e2e/step_defs/ --headed --slowmo 500	
+# 	cd backend && xvfb-run --auto-servernum --server-args="-screen 1 1280x960x24" uv run pytest tests/e2e/step_defs/ --headed --slowmo 1500	
+	cd backend && DISPLAY=:1 uv run pytest tests/e2e/step_defs --headed --slowmo 1500	
 
 
 # -- Execution --
@@ -89,6 +89,14 @@ run-backend: ## Start FastAPI server (accessible outside container)
 	@echo "🐍 Starting FastAPI Backend..."
 	# --host 0.0.0.0 is crucial for Docker/DevContainers so you can access it from Windows	
 	cd backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+
+# 1. Load the .env file so the Makefile can see TEST_DATABASE_URL
+-include ./backend/.env
+export
+
+run-test-backend: ## Start FastAPI server connected to TEST database (used for E2E tests)
+	# 2. Assign the value of TEST_DATABASE_URL to the DATABASE_URL env var so FastAPI uses the test database when it starts up
+	cd backend && DATABASE_URL="$(TEST_DATABASE_URL)" uv run uvicorn app.main:app --port 8000 --reload
 
 run-backend-for-ci: ## Start FastAPI server for CI (runs in background)
 	@echo "🐍 Starting FastAPI Backend for CI..."

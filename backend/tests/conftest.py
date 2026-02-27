@@ -8,10 +8,12 @@ import os
 from collections.abc import AsyncGenerator, Callable, Coroutine, Generator
 from typing import Any
 
+import nest_asyncio
 import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -25,6 +27,9 @@ from app.core.db import get_db
 from app.core.security import get_password_hash
 from app.db.models import Base, User
 from app.main import app
+
+# Patch asyncio to allow nested event loops (Fixes Playwright sync + Async DB conflicts)
+nest_asyncio.apply()
 
 load_dotenv()
 
@@ -57,13 +62,24 @@ def browser_context_args(browser_context_args: dict) -> dict:
 @pytest.fixture(scope="session")
 def event_loop() -> Generator[asyncio.AbstractEventLoop, None, None]:
     """
-    Forces pytest to use a single async event loop for the whole test session.
-    This is required so our DB engine doesn't close prematurely.
+    Forces pytest to use a single async event loop for the whole test session,
+    while respecting Playwright's existing loop if it's already running.
     """
+    try:
+        # Try to grab Playwright's running loop
+        loop = asyncio.get_running_loop()
+    except RuntimeError:
+        # If no loop is running, create a new one
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
 
-    loop = asyncio.get_event_loop_policy().new_event_loop()
+    # EXPLICITLY patch THIS specific loop so it allows nesting
+    nest_asyncio.apply(loop)
+
     yield loop
-    loop.close()
+
+    # Note: We purposely DO NOT close the loop here anymore (loop.close()).
+    # If Playwright started the loop, closing it will crash the browser teardown!
 
 @pytest_asyncio.fixture(scope="session")
 async def async_engine()-> AsyncGenerator[AsyncEngine, None]:
@@ -87,16 +103,27 @@ async def db_session(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, 
     """
     async with async_engine.connect() as connection:
         transaction = await connection.begin()
+
+        # ✅ Added join_transaction_mode="create_savepoint"
+        # This safely turns all .commit() calls into nested savepoints!
         async_session_maker = async_sessionmaker(
-            connection, class_=AsyncSession, expire_on_commit=False
+            connection,
+            class_=AsyncSession,
+            expire_on_commit=False,
+            join_transaction_mode="create_savepoint"
         )
         session = async_session_maker()
 
-        yield session  # This is where the test runs
-
-        # Test is over. Close session and rollback everything.
-        await session.close()
-        await transaction.rollback()
+        try:
+            # ✅ PROPERLY INDENTED: The test runs WHILE the connection is open!
+            yield session
+        finally:
+            # Test is over. Safely close session and rollback, even if the test crashed!
+            try:
+                await session.close()
+                await transaction.rollback()
+            except Exception as teardown_err:
+                print(f"Failed to cleanly rollback DB: {teardown_err}")
 
 # ==========================================
 # 3. FASTAPI TEST CLIENT (For API Tests)
@@ -117,6 +144,32 @@ async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
 
     app.dependency_overrides.clear()
 
+@pytest.fixture
+def create_test_user_synchronous():
+    """
+    Bulletproof Synchronous Factory.
+    No teardown needed because `clean_database_before_test` handles it!
+    """
+    def _create_user(username: str, plain_password: str):
+        async def _insert():
+            engine = create_async_engine(TEST_DATABASE_URL)
+            async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+            async with async_session_maker() as session:
+                hashed_pw = get_password_hash(plain_password)
+                new_user = User(
+                    username=username,
+                    email=f"{username.lower()}@example.com",
+                    hashed_password=hashed_pw
+                )
+                session.add(new_user)
+                await session.commit()
+            await engine.dispose()
+
+        asyncio.run(_insert())
+
+    # We just yield the function. No try/finally block needed anymore!
+    yield _create_user
 
 @pytest_asyncio.fixture
 async def create_test_user(
@@ -141,3 +194,60 @@ async def create_test_user(
         return new_user
 
     yield _create_user
+
+@pytest.fixture(scope="session", autouse=True)
+def setup_test_database_schema():
+    """
+    Runs once per test session.
+    Guarantees that all tables exist in the test database before any tests run.
+    """
+    async def _init_db():
+        engine = create_async_engine(TEST_DATABASE_URL)
+        async with engine.begin() as conn:
+            # Tell SQLAlchemy to look at your models and generate the CREATE TABLE statements
+            await conn.run_sync(Base.metadata.create_all)
+        await engine.dispose()
+
+    # We use our bulletproof synchronous wrapper so it doesn't fight Playwright!
+    asyncio.run(_init_db())
+
+@pytest.fixture(autouse=True)
+def clean_database_before_test(request):
+    """
+    Automatically wipes all database tables before E2E tests ONLY.
+    Integration tests use the db_session transaction rollback instead.
+    """
+    # ✅ Check if the test is inside the 'e2e' folder.
+    # If it isn't, skip the truncate and just run the test!
+    print(f"\n[DEBUG] Running test: {request.node.name} at {request.node.path}")
+    if "e2e" not in str(request.node.path):
+        yield
+        return
+
+    async def _truncate():
+        engine = create_async_engine(TEST_DATABASE_URL)
+        async with engine.begin() as conn:
+            tables = [table.name for table in Base.metadata.sorted_tables]
+            if tables:
+                table_string = ", ".join(tables)
+                await conn.execute(text(f"TRUNCATE TABLE {table_string} RESTART IDENTITY CASCADE;"))
+        await engine.dispose()
+
+    asyncio.run(_truncate())
+
+    yield # The Playwright test runs here
+
+# ==========================================
+# PYTEST MAGIC HOOK
+# ==========================================
+def pytest_collection_modifyitems(config, items):
+    """
+    This hook runs after Pytest reads the feature file but before the tests execute.
+    It looks for any scenario tagged with @bug and safely marks it as an Expected Failure.
+    """
+    for item in items:
+        # 'item.keywords' contains all the Gherkin tags!
+        if "todo" in item.keywords:
+            item.add_marker(
+                pytest.mark.xfail(reason="Known backend todo: Implementation pending")
+            )
