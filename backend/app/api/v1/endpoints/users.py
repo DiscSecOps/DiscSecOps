@@ -7,10 +7,49 @@ from app.api.v1.endpoints.auth import get_current_user_from_session
 from app.core.db import get_db
 from app.db.models import CircleMember, User
 from app.schemas.social import UserSearchResponse
+from app.schemas.auth import UserResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
-# Endpoint to search for users to add to a circle
+# ======================================================
+# GET ALL USERS (with pagination)
+# ======================================================
+@router.get("/", response_model=list[UserResponse])
+async def get_all_users(
+    skip: int = 0,
+    limit: int = 100,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user_from_session)
+) -> list[UserResponse]:
+    """
+    Get all users with pagination
+    - Excludes the current user from the list
+    - Authenticated users only
+    """
+    result = await db.execute(
+        select(User)
+        .where(User.id != current_user.id)  # excludem userul curent
+        .offset(skip)
+        .limit(limit)
+    )
+    users = result.scalars().all()
+
+    return [
+        UserResponse(
+            id=user.id,
+            username=user.username,
+            email=user.email,
+            full_name=user.full_name,
+            is_active=user.is_active,
+            created_at=user.created_at,
+            updated_at=user.updated_at,
+        )
+        for user in users
+    ]
+
+# ======================================================
+# SEARCH USERS (to add to circle)
+# ======================================================
 @router.get("/search", response_model=list[UserSearchResponse])
 async def search_users(
     query: str,

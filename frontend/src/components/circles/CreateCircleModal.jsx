@@ -1,6 +1,7 @@
 // frontend/src/components/layout/CreateCircleModal.jsx
 import { useState } from 'react';
 import { circleService } from '../../services/circle.service';
+import './CreateCircleModal.css';
 
 const CreateCircleModal = ({ isOpen, onClose, onCircleCreated }) => {
   console.log('📦 CreateCircleModal rendering - isOpen:', isOpen);
@@ -12,7 +13,7 @@ const CreateCircleModal = ({ isOpen, onClose, onCircleCreated }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Dacă modalul nu e deschis, nu returnăm nimic
+  // If the modal is not open, don't render anything
   if (!isOpen) {
     console.log('🚫 Modal not open - returning null');
     return null;
