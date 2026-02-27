@@ -18,7 +18,7 @@ export const postService = {
   // Get posts from a specific circle
   getCirclePosts: async (circleId, limit = 50, offset = 0) => {
     try {
-      // Notă: va trebui să implementăm acest endpoint în backend
+      // Note: The backend API should support pagination for circle posts to handle large circles efficiently.
       const response = await api.get(`${BASE_URL}/circle/${circleId}?limit=${limit}&offset=${offset}`);
       return response.data;
     } catch (error) {

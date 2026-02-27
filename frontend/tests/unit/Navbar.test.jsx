@@ -1,4 +1,4 @@
-// tests/unit/Navbar.test.jsx
+//frontend/ tests/unit/Navbar.test.jsx
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
@@ -312,7 +312,7 @@ describe('Navbar Component', () => {
      it('has proper ARIA labels and semantic structure', () => {
       renderNavbar({ user: { username: 'testuser' } });
       
-      // În loc de getByRole, folosim querySelector sau alte metode
+      
       const header = document.querySelector('header.navbar');
       expect(header).toBeInTheDocument();
       

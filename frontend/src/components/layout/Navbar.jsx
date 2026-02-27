@@ -27,9 +27,10 @@ function Navbar() {
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-    }
-  };
+    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+    setSearchQuery('');
+  }
+};
   
   // If no user, show minimal navbar for public pages
   if (!user) {

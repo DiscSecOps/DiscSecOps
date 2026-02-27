@@ -4,13 +4,15 @@ import LoginPage from './pages/LoginPage.jsx';
 import RegisterPage from './pages/RegisterPage.jsx';
 import UserDashboardPage from './pages/UserDashboardPage.jsx';
 import CirclePage from './pages/CirclePage.jsx';
-//import ExplorePage from './pages/ExplorePage.jsx';
+import SearchPage from './pages/SearchPage.jsx';
 //import SettingsPage from './pages/SettingsPage.jsx';
 //import HelpPage from './pages/HelpPage.jsx';
 import ProtectedRoute from './routes/ProtectedRoute.jsx';
 import AuthProvider from './contexts/AuthProvider';
 import { DarkModeProvider } from './contexts/DarkModeProvider'; 
+import Layout from './components/layout/Layout.jsx';
 import './App.css';
+
 
 function App() {
   return (
@@ -26,24 +28,31 @@ function App() {
           {/* Protected routes */}
           <Route path="/user-dashboard" element={
             <ProtectedRoute>
-              <UserDashboardPage />
+               <Layout>
+                  <UserDashboardPage />
+              </Layout>
             </ProtectedRoute>
           } />
 
           <Route path="/circles/:circleId" element={
             <ProtectedRoute>
-              <CirclePage />
+              <Layout>
+                <CirclePage />
+              </Layout>
             </ProtectedRoute>
           } />
           
-           {/* Commented out until pages are created */}
-            {/* 
+           
           <Route path="/explore" element={
             <ProtectedRoute>
-              <ExplorePage />
+              <Layout>
+                <SearchPage />
+              </Layout>
             </ProtectedRoute>
           } />
           
+          {/* Commented out until pages are created */}
+            {/* 
           <Route path="/settings" element={
             <ProtectedRoute>
               <SettingsPage />

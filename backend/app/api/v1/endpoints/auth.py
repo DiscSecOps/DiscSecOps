@@ -298,30 +298,3 @@ async def logout(
     }
 
 
-# TODO: Move to separate admin endpoints file later
-@router.get("/users", response_model=list[UserResponse])
-async def get_users(
-    skip: int = 0,
-    limit: int = 100,
-    db: AsyncSession = Depends(get_db),
-) -> list[UserResponse]:
-    """
-    Retrieve users (admin only - add permission check later)
-    """
-    result = await db.execute(
-        select(User).offset(skip).limit(limit)
-    )
-    users = result.scalars().all()
-
-    return [
-        UserResponse(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            full_name=user.full_name,
-            is_active=user.is_active,
-            created_at=user.created_at,
-            updated_at=user.updated_at,
-        )
-        for user in users
-    ]
