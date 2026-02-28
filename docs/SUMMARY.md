@@ -179,3 +179,6 @@ Into:
 ✅ Maintainable: Clean code with proper typing
 
 The backend now perfectly matches the frontend feature requirements, with proper role-based access control at the circle level. 🚀
+
+http://localhost:8000/docs
+http://localhost:8000/redoc

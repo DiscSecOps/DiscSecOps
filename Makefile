@@ -12,17 +12,28 @@ install-backend: ## Install backend dependencies and run database migrations
 	@echo "🔄 Running Backend Migrations..."
 	cd backend && uv run alembic upgrade head
 
+# -- Database Commands --
+.PHONY: migrate-backend seed-database db-reset db-refresh
+
 migrate-backend: ## Run backend database migrations (without installing dependencies)
 	@echo "🔄 Running Backend Migrations..."
 	cd backend && uv run alembic upgrade head	
 
-install-frontend: ## Install frontend dependencies
-	@echo "🚀 Installing Frontend dependencies..."
-	cd frontend && npm install
-
 seed-database: ## Seed the backend database with test data
 	@echo "🌱 Seeding Backend Database..."
 	cd backend && uv run python scripts/create_test_users.py
+
+db-reset: ## Reset database (drop all tables and recreate)
+	@echo "🔄 Resetting database..."
+	cd backend && uv run python scripts/reset_db.py
+	@echo "✅ Database reset complete"
+
+db-refresh: db-reset migrate-backend seed-database ## Full refresh: reset + migrate + seed
+	@echo "🔄 Database refreshed successfully"	
+
+install-frontend: ## Install frontend dependencies
+	@echo "🚀 Installing Frontend dependencies..."
+	cd frontend && npm install
 
 install-playwright: ## Install Playwright browsers (for E2E tests), used in CI
 	@echo "🎭 Installing Playwright Browsers..."
