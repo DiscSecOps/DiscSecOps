@@ -106,7 +106,7 @@ jobs:
           make lint-backend
           make security-backend
 
-      - name: 🐍 Backend CI specific step > Run Unit Tests
+      - name: 🐍 Backend CI specific step > Run Unit and Integration Tests
         if: matrix.target == 'backend'
         # env:
           # DATABASE_URL: postgresql+asyncpg://user:password@127.0.0.1:5432/app_db
