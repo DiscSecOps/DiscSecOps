@@ -79,7 +79,7 @@ def _(page: Page, datatable):
             has=page.get_by_role("heading", name=expected["circle_name"])
         )
 
-        # HARD ASSERTION: We keep this standard. If the card itself is missing, 
+        # HARD ASSERTION: We keep this standard. If the card itself is missing,
         # there's no point checking the text inside it, so we let it fail fast.
         expect(circle_card).to_be_visible()
 
