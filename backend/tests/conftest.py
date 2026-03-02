@@ -13,7 +13,7 @@ import pytest
 import pytest_asyncio
 from dotenv import load_dotenv
 from httpx import ASGITransport, AsyncClient
-from sqlalchemy import text
+from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
     AsyncSession,
@@ -25,7 +25,7 @@ from sqlalchemy.pool import NullPool
 # Import your app components
 from app.core.db import get_db
 from app.core.security import get_password_hash
-from app.db.models import Base, User
+from app.db.models import Base, Circle, CircleMember, Post, User
 from app.main import app
 
 # Patch asyncio to allow nested event loops (Fixes Playwright sync + Async DB conflicts)
@@ -237,6 +237,71 @@ def clean_database_before_test(request):
 
     yield # The Playwright test runs here
 
+@pytest.fixture
+def setup_user_circles_synchronous():
+    """Seeds the database with circles and assigns the correct roles."""
+    def _setup(username: str, circles_data: list[dict]):
+        async def _insert():
+            engine = create_async_engine(TEST_DATABASE_URL)
+            async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+            async with async_session_maker() as session:
+                # 1. Get the primary test user
+                user_res = await session.execute(select(User).where(User.username == username))
+                user = user_res.scalar_one()
+
+                # 2. Get or create a dummy admin for circles the test user doesn't own
+                admin_res = await session.execute(select(User).where(User.username == "circle_admin"))
+                admin = admin_res.scalar_one_or_none()
+                if not admin:
+                    admin = User(username="circle_admin", email="admin@system.com", hashed_password="xxx")
+                    session.add(admin)
+                    await session.flush()
+
+                # 3. Create the circles and membership records
+                for row in circles_data:
+                    role = row["role"].lower()
+
+                    # If the user isn't the owner, the dummy admin owns it
+                    circle_owner_id = user.id if role == "owner" else admin.id
+
+                    circle = Circle(
+                        name=row["circle_name"],
+                        description=f"Automated test circle for {row['circle_name']}",
+                        owner_id=circle_owner_id
+                    )
+                    session.add(circle)
+                    await session.flush()
+
+                    member = CircleMember(circle_id=circle.id, user_id=user.id, role=role)
+                    session.add(member)
+
+                await session.commit()
+            await engine.dispose()
+
+        asyncio.run(_insert())
+    yield _setup
+
+@pytest.fixture
+def create_circle_post_synchronous():
+    """Creates a post inside a specific circle."""
+    def _create_post(circle_name: str, author_username: str, title: str, content: str):
+        async def _insert():
+            engine = create_async_engine(TEST_DATABASE_URL)
+            async_session_maker = async_sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+
+            async with async_session_maker() as session:
+                user = (await session.execute(select(User).where(User.username == author_username))).scalar_one()
+                circle = (await session.execute(select(Circle).where(Circle.name == circle_name))).scalar_one()
+
+                post = Post(title=title, content=content, author_id=user.id, circle_id=circle.id)
+                session.add(post)
+                await session.commit()
+            await engine.dispose()
+
+        asyncio.run(_insert())
+    yield _create_post
+
 # ==========================================
 # PYTEST MAGIC HOOK
 # ==========================================
@@ -250,4 +315,8 @@ def pytest_collection_modifyitems(config, items):
         if "todo" in item.keywords:
             item.add_marker(
                 pytest.mark.xfail(reason="Known backend todo: Implementation pending")
+            )
+        if "bug" in item.keywords:
+            item.add_marker(
+                pytest.mark.xfail(reason="Known backend bug: Fix pending")
             )
