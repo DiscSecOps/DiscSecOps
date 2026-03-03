@@ -2,6 +2,8 @@
 """
 Integration tests for Circle endpoints.
 """
+from datetime import datetime
+
 import pytest
 import pytest_asyncio
 from httpx import AsyncClient
@@ -281,3 +283,25 @@ async def test_update_circle_name(client: AsyncClient, test_owner: User, test_no
     payload5 = { "name": "Renamed Circle" }
     response = await client.put(f"/api/v1/circles/{test_circle.id}/name", json=payload5)
     assert response.status_code == 403
+
+
+@pytest.mark.asyncio
+async def test_get_all_circles(
+    client: AsyncClient,
+    test_owner: User,
+    test_circle: Circle,
+    test_circle2: Circle
+    ):
+    """GET /circles/ - should return all circles"""
+    client.cookies.set("session_token", test_owner.session_token)
+
+    response = await client.get("/api/v1/circles/", params={"skip": 0, "limit": 10})
+    assert response.status_code == 200
+
+    data = response.json()
+    assert isinstance(data, list)
+    assert len(data) >= 2  # at least the two test circles
+
+    circle_ids = [c["id"] for c in data]
+    assert test_circle.id in circle_ids
+    assert test_circle2.id in circle_ids

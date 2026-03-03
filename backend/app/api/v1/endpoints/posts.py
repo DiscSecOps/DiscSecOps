@@ -247,3 +247,34 @@ async def get_circle_posts(
         )
 
     return response_posts
+
+@router.get("/", response_model=list[PostResponse])
+async def get_all_posts(
+        skip: int = 0,
+        limit: int = 25,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user_from_session)
+) -> list[PostResponse]:
+    """
+    Get all posts with pagination
+    """
+    result = await db.execute(
+        select(Post)
+        .offset(skip)
+        .limit(limit)
+    )
+    posts = result.scalars().all()
+
+    return [
+        PostResponse(
+            title=post.title,
+            content=post.content,
+            id=post.id,
+            author_id=post.author_id,
+            author_name=None,
+            circle_id=post.circle_id,
+            created_at=post.created_at,
+            updated_at=post.updated_at
+        )
+        for post in posts
+    ]

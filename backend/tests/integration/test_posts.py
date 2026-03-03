@@ -74,7 +74,6 @@ async def test_circle_with_members(db_session: AsyncSession, test_author: User, 
     await db_session.refresh(circle)
     return circle
 
-
 @pytest.mark.asyncio
 async def test_get_feed_empty(client: AsyncClient, test_author: User):
     """GET /posts/feed returns empty list if user has no circles"""
@@ -211,3 +210,23 @@ async def test_get_circle_posts(client: AsyncClient, test_author: User, test_non
     # Access as non-member
     response = await client.get(f"/api/v1/posts/circle/{test_circle_with_members.id}")
     assert response.status_code == 403
+
+@pytest.mark.asyncio
+async def test_get_all_posts(client: AsyncClient, test_author: User, test_circle_with_members: Circle, db_session: AsyncSession):
+    """GET /posts returns with pagination"""
+    posts = [
+        Post(title=f"Circle Post {i}", content="Content", author_id=test_author.id, circle_id=test_circle_with_members.id)
+        for i in range(3)
+    ]
+    db_session.add_all(posts)
+    await db_session.commit()
+
+    response = await client.get("/api/v1/posts/", params={'skip':0,'limit':100})
+    assert response.status_code == 200
+    results = response.json()
+    assert len(results) >= 2
+
+    post_ids = [p["id"] for p in results]
+    # Assert posts is in the response and id:s are correct
+    assert posts[0].id in post_ids
+    assert posts[1].id in post_ids

@@ -354,3 +354,33 @@ async def update_circle_name(
 
     # 5. Return updated circle
     return await get_circle(circle_id, db, current_user)
+
+@router.get("/", response_model=list[CircleResponse])
+async def get_all_circles(
+        skip: int = 0,
+        limit: int = 25,
+        db: AsyncSession = Depends(get_db),
+        current_user: User = Depends(get_current_user_from_session)
+) -> list[CircleResponse]:
+    """
+    Get all circles users with pagination
+    """
+    result = await db.execute(
+        select(Circle)
+        .offset(skip)
+        .limit(limit)
+    )
+    circles = result.scalars().all()
+
+    return [
+        CircleResponse(
+            id=circle.id,
+            name=circle.name,
+            owner_id=circle.owner_id,
+            owner_name=None,
+            members=None,
+            member_count=None,
+            created_at=circle.created_at
+        )
+        for circle in circles
+    ]

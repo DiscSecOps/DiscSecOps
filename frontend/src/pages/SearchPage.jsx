@@ -18,10 +18,11 @@ function SearchPage() {
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState('users');
 
+  // TODO: Implement pagination logic:
   const performSearch = useCallback(async () => {
     setLoading(true);
     try {
-      const data = await searchService.search(query);
+      const data = await searchService.search(query, 0, 100);
       setResults(data);
     } catch (error) {
       console.error('Search failed:', error);
@@ -31,11 +32,11 @@ function SearchPage() {
   }, [query]);
 
   useEffect(() => {
-    if (query) {
+  //   if (query) {
       performSearch();
-    } else {
-    loadAllUsers();
-  }
+  //   } else {
+  //   loadAllUsers();
+  // }
 }, [query, performSearch]);
 
   const loadAllUsers = async () => {
