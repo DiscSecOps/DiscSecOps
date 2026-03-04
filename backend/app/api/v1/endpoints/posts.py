@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.api.v1.endpoints.auth import get_current_user_from_session
 from app.core.db import get_db
-from app.db.models import CircleMember, Post, User
+from app.db.models import Circle, CircleMember, Post, User
 from app.schemas.social import PostCreate, PostResponse
 
 router = APIRouter(prefix="/posts", tags=["Posts"])
@@ -30,30 +30,36 @@ async def get_feed(
     if not circle_ids:
         return []  # User has no circles, return empty feed
 
-    # 2. Get posts from those circles
+    # 2. Get posts from those circles with author AND circle info
     posts_result = await db.execute(
-        select(Post)
+        select(Post, User.username, Circle.name)
+        .join(User, Post.author_id == User.id)
+        .join(Circle, Post.circle_id == Circle.id, isouter=True)
         .where(Post.circle_id.in_(circle_ids))
         .order_by(desc(Post.created_at))
         .offset(offset)
         .limit(limit)
     )
-    posts = posts_result.scalars().all()
 
-    # 3. Convert to response model
-    return [
-        PostResponse(
-            id=post.id,
-            title=post.title,
-            content=post.content,
-            author_id=post.author_id,
-            author_name=current_user.username,
-            circle_id=post.circle_id,
-            created_at=post.created_at,
-            updated_at=post.updated_at
+    # 3. Convert to response model with REAL author names and circle names
+    feed_posts = []
+
+    for post, author_name, circle_name in posts_result:
+        feed_posts.append(
+            PostResponse(
+                id=post.id,
+                title=post.title,
+                content=post.content,
+                author_id=post.author_id,
+                author_name=author_name,
+                circle_id=post.circle_id,
+                circle_name=circle_name,
+                created_at=post.created_at,
+                updated_at=post.updated_at
+            )
         )
-        for post in posts
-    ]
+
+    return feed_posts
 
 
 @router.post("/", response_model=PostResponse, status_code=status.HTTP_201_CREATED)
@@ -65,6 +71,8 @@ async def create_post(
     """
     Create a new post (in a circle or public)
     """
+    circle_name = None  # Initialize circle_name to None
+
     # Check if user has permission to post in this circle
     if post_data.circle_id:
         # Verify user is member of the circle
@@ -80,6 +88,9 @@ async def create_post(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="You are not a member of this circle"
             )
+
+        circle = await db.get(Circle, post_data.circle_id)
+        circle_name = circle.name if circle else None
 
     # Create post
     new_post = Post(
@@ -100,6 +111,7 @@ async def create_post(
         author_id=new_post.author_id,
         author_name=current_user.username,
         circle_id=new_post.circle_id,
+        circle_name=circle_name,
         created_at=new_post.created_at,
         updated_at=new_post.updated_at
     )
@@ -114,13 +126,22 @@ async def get_post(
     """
     Get a specific post by ID
     """
-    post = await db.get(Post, post_id)
 
-    if not post:
+    result = await db.execute(
+        select(Post, User.username, Circle.name)
+        .join(User, Post.author_id == User.id)
+        .join(Circle, Post.circle_id == Circle.id, isouter=True)
+        .where(Post.id == post_id)
+    )
+
+    row = result.first()
+    if not row:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Post not found"
         )
+
+    post, author_name, circle_name = row
 
     # Check if post is in a circle - verify user is member
     if post.circle_id:
@@ -142,8 +163,9 @@ async def get_post(
         title=post.title,
         content=post.content,
         author_id=post.author_id,
-        author_name=current_user.username,
+        author_name=author_name,
         circle_id=post.circle_id,
+        circle_name=circle_name,
         created_at=post.created_at,
         updated_at=post.updated_at
     )
@@ -193,6 +215,7 @@ async def delete_post(
     await db.delete(post)
     await db.commit()
 
+
 @router.get("/circle/{circle_id}", response_model=list[PostResponse])
 async def get_circle_posts(
     circle_id: int,
@@ -219,34 +242,37 @@ async def get_circle_posts(
             detail="You are not a member of this circle"
         )
 
-    # Get posts
+    # Get the circle name (ia o singură dată)
+    circle = await db.get(Circle, circle_id)
+
+    # Get posts with author info
     posts_result = await db.execute(
-        select(Post)
+        select(Post, User.username)
+        .join(User, Post.author_id == User.id)
         .where(Post.circle_id == circle_id)
         .order_by(desc(Post.created_at))
         .offset(offset)
         .limit(limit)
     )
-    posts = posts_result.scalars().all()
 
-    # Get author names
-    response_posts = []
-    for post in posts:
-        author = await db.get(User, post.author_id)
-        response_posts.append(
+    # Convert to response model with REAL author names and circle name
+    circle_posts = []
+    for post, author_name in posts_result:
+        circle_posts.append(
             PostResponse(
                 id=post.id,
                 title=post.title,
                 content=post.content,
                 author_id=post.author_id,
-                author_name=author.username if author else None,
+                author_name=author_name,
                 circle_id=post.circle_id,
+                circle_name=circle.name if circle else None,
                 created_at=post.created_at,
                 updated_at=post.updated_at
             )
         )
 
-    return response_posts
+    return circle_posts
 
 @router.get("/", response_model=list[PostResponse])
 async def get_all_posts(
