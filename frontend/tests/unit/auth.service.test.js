@@ -1,14 +1,17 @@
 // frontend/tests/unit/auth.service.test.js
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
-import { authService } from '../../src/services/auth.service.js';
+import { TEST_USERS } from '../helpers/test-constants';
+import { mockConfig } from '../helpers/mock-config';
 
-// Mock for config
-vi.mock('../../src/config', () => ({
-  API_BASE_URL: 'http://mocked-for-tests.local'
-}));
-
+// Mock axios
 vi.mock('axios');
+
+// Mock config using helper
+mockConfig();
+
+// Import authService AFTER mocks
+import { authService } from '../../src/services/auth.service.js';
 
 describe('Auth Service', () => {
   beforeEach(() => {
@@ -23,20 +26,23 @@ describe('Auth Service', () => {
       const mockResponse = {
         data: {
           success: true,
-          user: { username: 'testuser', id: 1 }
+          user: { username: TEST_USERS.validUser.username, id: 1 }
         }
       };
       
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.login({ 
-        username: 'testuser', 
-        password: 'pass123' 
+        username: TEST_USERS.validUser.username, 
+        password: TEST_USERS.validUser.password
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/login',
-        { username: 'testuser', password: 'pass123' },
+        { 
+          username: TEST_USERS.validUser.username, 
+          password: TEST_USERS.validUser.password 
+        },
         { withCredentials: true }
       );
       
@@ -53,8 +59,8 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.login({ 
-        username: 'wrong', 
-        password: 'pass' 
+        username: TEST_USERS.validUser.username, 
+        password: TEST_USERS.wrongPassword.password
       })).rejects.toThrow('Invalid credentials');
     });
 
@@ -68,8 +74,8 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.login({ 
-        username: 'wrong', 
-        password: 'pass' 
+        username: TEST_USERS.invalidUser.username, 
+        password: TEST_USERS.invalidUser.password
       })).rejects.toThrow('Login failed');
     });
 
@@ -82,8 +88,8 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.login({ 
-        username: 'wrong', 
-        password: 'pass' 
+        username: TEST_USERS.validUser.username, 
+        password: TEST_USERS.validUser.password
       })).rejects.toThrow('Login failed');
     });
   });
@@ -96,25 +102,25 @@ describe('Auth Service', () => {
       const mockResponse = {
         data: {
           success: true,
-          username: 'newuser'
+          username: TEST_USERS.newUser.username
         }
       };
       
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.register({ 
-        username: 'newuser', 
-        password: 'pass123',
-        email: 'test@example.com'
+        username: TEST_USERS.newUser.username, 
+        password: TEST_USERS.newUser.password,
+        email: TEST_USERS.newUser.email
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/register',
         { 
-          username: 'newuser', 
-          password: 'pass123', 
+          username: TEST_USERS.newUser.username, 
+          password: TEST_USERS.newUser.password, 
           full_name: '', 
-          email: 'test@example.com' 
+          email: TEST_USERS.newUser.email 
         }
       );
       
@@ -125,28 +131,28 @@ describe('Auth Service', () => {
       const mockResponse = {
         data: {
           success: true,
-          username: 'newuser',
-          email: 'test@example.com',
-          full_name: 'Test User'
+          username: TEST_USERS.newUser.username,
+          email: TEST_USERS.newUser.email,
+          full_name: TEST_USERS.newUser.fullName
         }
       };
       
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.register({ 
-        username: 'newuser', 
-        password: 'pass123',
-        full_name: 'Test User',
-        email: 'test@example.com'
+        username: TEST_USERS.newUser.username, 
+        password: TEST_USERS.newUser.password,
+        full_name: TEST_USERS.newUser.fullName,
+        email: TEST_USERS.newUser.email
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/register',
         { 
-          username: 'newuser', 
-          password: 'pass123', 
-          full_name: 'Test User', 
-          email: 'test@example.com' 
+          username: TEST_USERS.newUser.username, 
+          password: TEST_USERS.newUser.password, 
+          full_name: TEST_USERS.newUser.fullName, 
+          email: TEST_USERS.newUser.email 
         }
       );
       
@@ -163,8 +169,9 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.register({ 
-        username: 'existing', 
-        password: 'pass123' 
+        username: TEST_USERS.validUser.username, 
+        password: TEST_USERS.validUser.password,
+        email: TEST_USERS.newUser.email
       })).rejects.toThrow('Username already exists');
     });
 
@@ -178,9 +185,9 @@ describe('Auth Service', () => {
         axios.post.mockRejectedValue(errorResponse);
 
         await expect(authService.register({
-          username: 'newuser',
-          password: 'pass123',
-          email: 'existing@email.com'
+          username: TEST_USERS.newUser.username,
+          password: TEST_USERS.newUser.password,
+          email: TEST_USERS.validUser.email
         })).rejects.toThrow('Email already exists');
     });
   });
@@ -227,95 +234,91 @@ describe('Auth Service', () => {
   // CHECK AUTH TESTS
   // ============================================
   describe('checkAuth', () => {
-  it('should return authenticated with user data', async () => {
-    const mockUser = {
-      id: 1,
-      username: 'testuser',
-      email: 'test@example.com',
-      full_name: 'Test User',
-      role: 'user',
-      is_active: true
-    };
-    
-    // Backend returs user
-    const mockResponse = {
-      data: mockUser
-    };
-    
-    axios.get.mockResolvedValue(mockResponse);
+    it('should return authenticated with user data', async () => {
+      const mockUser = {
+        id: 1,
+        username: TEST_USERS.validUser.username,
+        email: TEST_USERS.validUser.email,
+        full_name: TEST_USERS.validUser.fullName,
+        role: 'user',
+        is_active: true
+      };
+      
+      const mockResponse = {
+        data: mockUser
+      };
+      
+      axios.get.mockResolvedValue(mockResponse);
 
-    const result = await authService.checkAuth();
-    
-    // Verify endpoint and options
-    expect(axios.get).toHaveBeenCalledWith(
-      'http://mocked-for-tests.local/auth/me',  
-      { withCredentials: true }
-    );
-    
-    // Verify that we return authenticated true with user data
-    expect(result).toEqual({
-      authenticated: true,
-      user: mockUser
+      const result = await authService.checkAuth();
+      
+      expect(axios.get).toHaveBeenCalledWith(
+        'http://mocked-for-tests.local/auth/me',  
+        { withCredentials: true }
+      );
+      
+      expect(result).toEqual({
+        authenticated: true,
+        user: mockUser
+      });
+    });
+
+    it('should return authenticated true without user data', async () => {
+      const mockResponse = {
+        data: {}  
+      };
+      
+      axios.get.mockResolvedValue(mockResponse);
+
+      const result = await authService.checkAuth();
+      
+      expect(result).toEqual({ 
+        authenticated: true, 
+        user: {} 
+      });
+    });
+
+    it('should return unauthenticated for 401 status', async () => {
+      const errorResponse = {
+        response: { status: 401 }
+      };
+      
+      axios.get.mockRejectedValue(errorResponse);
+
+      const result = await authService.checkAuth();
+      
+      expect(result).toEqual({ authenticated: false, user: null });
+    });
+
+    it('should return unauthenticated for 403 status', async () => {
+      const errorResponse = {
+        response: { status: 403 }
+      };
+      
+      axios.get.mockRejectedValue(errorResponse);
+
+      const result = await authService.checkAuth();
+      
+      expect(result).toEqual({ authenticated: false, user: null });
+    });
+
+    it('should return unauthenticated for network errors', async () => {
+      const errorResponse = {
+        message: 'Network Error',
+        response: undefined
+      };
+      
+      axios.get.mockRejectedValue(errorResponse);
+      const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+      const result = await authService.checkAuth();
+      
+      expect(result).toEqual({ authenticated: false, user: null });
+      expect(consoleSpy).toHaveBeenCalled();
+      
+      consoleSpy.mockRestore();
     });
   });
-
-  it('should return authenticated true without user data', async () => {
-
-    const mockResponse = {
-      data: {}  
-    };
-    
-    axios.get.mockResolvedValue(mockResponse);
-
-    const result = await authService.checkAuth();
-    
-    expect(result).toEqual({ 
-      authenticated: true, 
-      user: {} 
-    });
-  });
-
-  it('should return unauthenticated for 401 status', async () => {
-    const errorResponse = {
-      response: { status: 401 }
-    };
-    
-    axios.get.mockRejectedValue(errorResponse);
-
-    const result = await authService.checkAuth();
-    
-    expect(result).toEqual({ authenticated: false, user: null });
-  });
-
-  it('should return unauthenticated for 403 status', async () => {
-    const errorResponse = {
-      response: { status: 403 }
-    };
-    
-    axios.get.mockRejectedValue(errorResponse);
-
-    const result = await authService.checkAuth();
-    
-    expect(result).toEqual({ authenticated: false, user: null });
-  });
-
-  it('should return unauthenticated for network errors', async () => {
-    const errorResponse = {
-      message: 'Network Error',
-      response: undefined
-    };
-    
-    axios.get.mockRejectedValue(errorResponse);
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
-
-    const result = await authService.checkAuth();
-    
-    expect(result).toEqual({ authenticated: false, user: null });
-    expect(consoleSpy).toHaveBeenCalled();
-    
-    consoleSpy.mockRestore();
-  });
-});
 
   // ============================================
   // PASSWORD RESET TESTS
@@ -332,12 +335,12 @@ describe('Auth Service', () => {
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.requestPasswordReset({ 
-        email: 'test@example.com' 
+        email: TEST_USERS.validUser.email 
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/reset-password',
-        { email: 'test@example.com' }
+        { email: TEST_USERS.validUser.email }
       );
       
       expect(result).toEqual(mockResponse.data);
@@ -353,7 +356,7 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.requestPasswordReset({ 
-        email: 'notfound@example.com' 
+        email: 'notfound@example.com'
       })).rejects.toThrow('Email not found');
     });
   });
@@ -371,12 +374,12 @@ describe('Auth Service', () => {
 
       const result = await authService.resetPassword({ 
         token: 'abc123', 
-        new_password: 'newPass123' 
+        new_password: TEST_USERS.newUser.password
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/reset-password/confirm',
-        { token: 'abc123', new_password: 'newPass123' }
+        { token: 'abc123', new_password: TEST_USERS.newUser.password }
       );
       
       expect(result).toEqual(mockResponse.data);
@@ -393,7 +396,7 @@ describe('Auth Service', () => {
 
       await expect(authService.resetPassword({ 
         token: 'invalid', 
-        new_password: 'newPass123' 
+        new_password: TEST_USERS.newUser.password
       })).rejects.toThrow('Invalid or expired token');
     });
   });
@@ -451,12 +454,12 @@ describe('Auth Service', () => {
       axios.post.mockResolvedValue(mockResponse);
 
       const result = await authService.resendVerificationEmail({ 
-        email: 'test@example.com' 
+        email: TEST_USERS.validUser.email
       });
       
       expect(axios.post).toHaveBeenCalledWith(
         'http://mocked-for-tests.local/auth/resend-verification',
-        { email: 'test@example.com' }
+        { email: TEST_USERS.validUser.email }
       );
       
       expect(result).toEqual(mockResponse.data);
@@ -472,7 +475,7 @@ describe('Auth Service', () => {
       axios.post.mockRejectedValue(errorResponse);
 
       await expect(authService.resendVerificationEmail({ 
-        email: 'verified@example.com' 
+        email: TEST_USERS.validUser.email
       })).rejects.toThrow('Email already verified');
     });
   });

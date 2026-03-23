@@ -43,7 +43,7 @@ function App() {
           } />
           
            
-          <Route path="/explore" element={
+          <Route path="/search" element={
             <ProtectedRoute>
               <Layout>
                 <SearchPage />

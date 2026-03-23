@@ -28,7 +28,7 @@ function UserSidebar() {
   
   const menuItems = [
     { icon: '🏠', label: 'Dashboard', path: '/user-dashboard' },
-    { icon: '🔍', label: 'Explore', path: '/explore' },
+    { icon: '🔍', label: 'Search', path: '/search' },
     { icon: '⚙️', label: 'Settings', path: '/settings' },
     { icon: '❓', label: 'Help', path: '/help' },
   ];

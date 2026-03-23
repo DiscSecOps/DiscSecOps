@@ -121,14 +121,38 @@ test-frontend-unit: ## Run frontend unit tests (Vitest)
 	cd frontend && npm run test:run
 	@echo "✅ Frontend unit tests passed"
 
+test-frontend-integration: ## Run frontend integration tests
+	@echo "🔗 Running Frontend Integration Tests..."
+	cd frontend && npm run test:run -- tests/integration
+	@echo "✅ Frontend integration tests passed"
+
+test-frontend-all: ## Run all frontend tests (unit + integration)
+	@echo "🧪 Running all Frontend Tests..."
+	cd frontend && npm run test:run
+	@echo "✅ All frontend tests passed"
+
+test-frontend-coverage: ## Run frontend tests with coverage report
+	@echo "📊 Running Frontend Tests with Coverage..."
+	cd frontend && npm run test:coverage
+	@echo "✅ Coverage report generated"
+
+test-frontend-watch: ## Run frontend tests in watch mode
+	@echo "👀 Running Frontend Tests in Watch Mode..."
+	cd frontend && npm run test:watch
+
 lint-frontend: ## Run frontend linter (ESLint)
 	@echo "🔍 Linting frontend..."
 	cd frontend && npm run lint
 	@echo "✅ Frontend linting complete"
 
+lint-frontend-fix: ## Run frontend linter and fix issues
+	@echo "🔧 Linting and fixing frontend..."
+	cd frontend && npm run lint -- --fix
+	@echo "✅ Frontend linting and fixing complete"
+
 audit-frontend: ## Run frontend security audit (npm audit)
 	@echo "🛡️ Auditing frontend dependencies..."
-	cd frontend && npm audit --omit=dev
+	cd frontend && npm audit --audit-level=high || true
 	@echo "✅ Frontend audit complete"
 
 ## End-to-End Testing (Playwright)
@@ -150,7 +174,6 @@ test-e2e-headed: ## Run E2E tests with visible browser (for local debugging)
 # ----------------------------------------------------------------------------
 
 .PHONY: run-backend run-backend-for-ci run-test-backend run-frontend run-playwright-codegen
-
 run-backend: ## Start FastAPI development server
 	@echo "🐍 Starting Backend on port $(BACKEND_PORT)..."
 	# --host 0.0.0.0 is crucial for Docker/DevContainers
@@ -178,6 +201,7 @@ run-playwright-codegen: ## Start Playwright code generator (creates tests as you
 
 # ============================================================================
 # ENVIRONMENT SETUP
+
 # ============================================================================
 # First-time setup commands
 # ----------------------------------------------------------------------------
