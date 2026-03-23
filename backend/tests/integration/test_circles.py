@@ -2,7 +2,6 @@
 """
 Integration tests for Circle endpoints.
 """
-from datetime import datetime
 
 import pytest
 import pytest_asyncio
