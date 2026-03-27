@@ -2,13 +2,14 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import axios from 'axios';
 import { TEST_USERS } from '../helpers/test-constants';
-import { mockConfig } from '../helpers/mock-config';
 
 // Mock axios
 vi.mock('axios');
 
-// Mock config using helper
-mockConfig();
+// Mock config 
+vi.mock('../../src/config', () => ({
+  API_BASE_URL: 'http://mocked-for-tests.local'
+}));
 
 // Import authService AFTER mocks
 import { authService } from '../../src/services/auth.service.js';

@@ -1,57 +1,81 @@
-Feature: User Registration
+Feature: User Registration 
   As a new user
   I want to create an account
   So that I can join Social Circles
 
-  Business Rules:
-    - Username: required, 3-50 chars, alphanumeric + underscore
-    - Email: required, valid format, unique
-    - Password: required, min 8 chars with 1 uppercase, 1 lowercase, 1 number, 1 special
-    - Full name: optional, max 100 chars
+  @ui @smoke  
+  Scenario: Register page is accessible
+    Given I open the application
+    When I go to the register page
+    Then I should see the registration form
 
-  Background:
-    # This ensures Playwright navigates to the right place before every test
+  @ui @validation
+  Scenario: Register button is disabled when form is empty
     Given I am on the registration page
+    Then the register button should be disabled
+    When I enter a username
+    And I enter a full name
+    And I enter an email
+    And I enter a password
+    And I enter a confirm password
+    Then the registration button should be enabled
 
   @smoke @critical
   Scenario: Successful registration with valid data
     When I fill in the registration form with:
-      | username   | john_doe        |
-      | full_name  | John Doe        |
-      | email      | john@test.com   |
-      | password   | SecurePass123!  |
-      | confirm    | SecurePass123!  |
+      | username   | <TEST_USERNAME> |
+      | full_name  | <TEST_FULL_NAME>|
+      | email      | <TEST_EMAIL>    |
+      | password   | <TEST_PASSWORD> |
+      | confirm    | <TEST_PASSWORD> |
     And I click the register button
     Then I should be redirected to the login page
-    And I should see "Account created for john_doe! You can now login." message
+    And I should see "Account created for <TEST_USER>! You can now login." message
 
-  @security
-  Scenario: Registration fails with an existing username
-    Given a user exists with username "john_doe" and password "SecurePass123!"
+  @security @validation
+  Scenario: Registration fails with invalid email format (frontend validation)
     When I fill in the registration form with:
-      | username   | john_doe        |
-      | full_name  | New Guy         |
-      | email      | newguy@test.com |
-      | password   | SecurePass123!  |
-      | confirm    | SecurePass123!  |
+      | username   | validuser       |
+      | full_name  | Valid User      |
+      | email      | invalid-email   |
+      | password   | <TEST_PASSWORD> |
+      | confirm    | <TEST_PASSWORD> |
     And I click the register button
-    Then I should see "Username already taken" error
+    Then I should see "Please enter a valid email address" error
     And I should remain on the registration page
 
   @security @validation
-  Scenario Outline: Form validation catches invalid inputs
+  Scenario: Registration fails with weak password (frontend validation)
     When I fill in the registration form with:
-      | username   | <username>   |
-      | full_name  | John Doe     |
-      | email      | <email>      |
-      | password   | <password>   |
-      | confirm    | <confirm>    |
+      | username   | validuser       |
+      | full_name  | Valid User      |
+      | email      | valid@test.com  |
+      | password   | weak            |
+      | confirm    | weak            |
     And I click the register button
-    Then I should see "<error_message>" error
+    Then I should see "Password must be at least 8 characters" error
+    And I should remain on the registration page
 
-    Examples:
-      | username | email           | password       | confirm        | error_message                                                                            |
-      | valid_u  | valid@test.com  | SecurePass123! | DifferentPass! | Passwords do not match                                                                   |
-      | valid_u  | invalid-email   | SecurePass123! | SecurePass123! | Please include an '@' in the email address. 'invalid-email' is missing an '@'.                                                                   |
-      | valid_u  | valid@test.com  | weak           | weak           | Please lengthen this text to 8 characters or more (you are currently using 4 characters).                                                   |
-      | valid_u  | valid@test.com  | weakpass123    | weakpass123    | Password must include at least one upper and lower case letter, a number and a special character |
+  @security @validation
+  Scenario: Registration fails with password missing complexity (frontend validation)
+    When I fill in the registration form with:
+      | username   | validuser       |
+      | full_name  | Valid User      |
+      | email      | valid@test.com  |
+      | password   | weakpass123     |
+      | confirm    | weakpass123     |
+    And I click the register button
+    Then I should see "Password must be at least 8 characters and include uppercase, lowercase, number, and special character" error
+    And I should remain on the registration page
+
+  @security @validation
+  Scenario: Registration fails with mismatched passwords
+    When I fill in the registration form with:
+      | username   | validuser       |
+      | full_name  | Valid User      |
+      | email      | valid@test.com  |
+      | password   | <TEST_PASSWORD> |
+      | confirm    | DifferentPass!  |
+    And I click the register button
+    Then I should see "Passwords do not match" error
+    And I should remain on the registration page

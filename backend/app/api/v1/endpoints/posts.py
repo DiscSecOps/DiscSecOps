@@ -15,7 +15,7 @@ async def get_feed(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_session),
     limit: int = 20,
-    offset: int = 0
+    offset: int = 0,
 ) -> list[PostResponse]:
     """
     Get recent posts from user's circles (dashboard feed)
@@ -55,7 +55,7 @@ async def get_feed(
                 circle_id=post.circle_id,
                 circle_name=circle_name,
                 created_at=post.created_at,
-                updated_at=post.updated_at
+                updated_at=post.updated_at,
             )
         )
 
@@ -66,7 +66,7 @@ async def get_feed(
 async def create_post(
     post_data: PostCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> PostResponse:
     """
     Create a new post (in a circle or public)
@@ -77,16 +77,14 @@ async def create_post(
     if post_data.circle_id:
         # Verify user is member of the circle
         membership = await db.execute(
-            select(CircleMember)
-            .where(
+            select(CircleMember).where(
                 CircleMember.circle_id == post_data.circle_id,
-                CircleMember.user_id == current_user.id
+                CircleMember.user_id == current_user.id,
             )
         )
         if not membership.scalar_one_or_none():
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You are not a member of this circle"
+                status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this circle"
             )
 
         circle = await db.get(Circle, post_data.circle_id)
@@ -97,7 +95,7 @@ async def create_post(
         title=post_data.title,
         content=post_data.content,
         author_id=current_user.id,
-        circle_id=post_data.circle_id
+        circle_id=post_data.circle_id,
     )
 
     db.add(new_post)
@@ -113,7 +111,7 @@ async def create_post(
         circle_id=new_post.circle_id,
         circle_name=circle_name,
         created_at=new_post.created_at,
-        updated_at=new_post.updated_at
+        updated_at=new_post.updated_at,
     )
 
 
@@ -121,7 +119,7 @@ async def create_post(
 async def get_post(
     post_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> PostResponse:
     """
     Get a specific post by ID
@@ -136,26 +134,20 @@ async def get_post(
 
     row = result.first()
     if not row:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
     post, author_name, circle_name = row
 
     # Check if post is in a circle - verify user is member
     if post.circle_id:
         membership = await db.execute(
-            select(CircleMember)
-            .where(
-                CircleMember.circle_id == post.circle_id,
-                CircleMember.user_id == current_user.id
+            select(CircleMember).where(
+                CircleMember.circle_id == post.circle_id, CircleMember.user_id == current_user.id
             )
         )
         if not membership.scalar_one_or_none():
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="You don't have access to this post"
+                status_code=status.HTTP_403_FORBIDDEN, detail="You don't have access to this post"
             )
 
     return PostResponse(
@@ -167,7 +159,7 @@ async def get_post(
         circle_id=post.circle_id,
         circle_name=circle_name,
         created_at=post.created_at,
-        updated_at=post.updated_at
+        updated_at=post.updated_at,
     )
 
 
@@ -175,7 +167,7 @@ async def get_post(
 async def delete_post(
     post_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> None:
     """
     Delete a post (author, moderator, or owner only)
@@ -183,10 +175,7 @@ async def delete_post(
     post = await db.get(Post, post_id)
 
     if not post:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Post not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Post not found")
 
     # Check permissions
     can_delete = False
@@ -196,10 +185,8 @@ async def delete_post(
     elif post.circle_id:
         # Check if user is moderator or owner of the circle
         membership = await db.execute(
-            select(CircleMember)
-            .where(
-                CircleMember.circle_id == post.circle_id,
-                CircleMember.user_id == current_user.id
+            select(CircleMember).where(
+                CircleMember.circle_id == post.circle_id, CircleMember.user_id == current_user.id
             )
         )
         member = membership.scalar_one_or_none()
@@ -209,7 +196,7 @@ async def delete_post(
     if not can_delete:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="You don't have permission to delete this post"
+            detail="You don't have permission to delete this post",
         )
 
     await db.delete(post)
@@ -222,7 +209,7 @@ async def get_circle_posts(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user_from_session),
     limit: int = 50,
-    offset: int = 0
+    offset: int = 0,
 ) -> list[PostResponse]:
     """
     Get posts from a specific circle
@@ -230,16 +217,13 @@ async def get_circle_posts(
     """
     # Check if user is a member
     membership = await db.execute(
-        select(CircleMember)
-        .where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == current_user.id
+        select(CircleMember).where(
+            CircleMember.circle_id == circle_id, CircleMember.user_id == current_user.id
         )
     )
     if not membership.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this circle"
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this circle"
         )
 
     # Get the circle name (ia o singură dată)
@@ -268,7 +252,7 @@ async def get_circle_posts(
                 circle_id=post.circle_id,
                 circle_name=circle.name if circle else None,
                 created_at=post.created_at,
-                updated_at=post.updated_at
+                updated_at=post.updated_at,
             )
         )
 

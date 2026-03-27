@@ -72,7 +72,7 @@ function RegisterPage() {
         <form onSubmit={handleSubmit} className="register-form" noValidate>
           {/* Username Field */}
           <div className="form-group">
-            <label htmlFor="username">Username *</label>
+            <label htmlFor="username">Username</label>
             <input
               id="username"
               name="username"
@@ -109,7 +109,7 @@ function RegisterPage() {
           
           {/* Email Field */}
           <div className="form-group">
-            <label htmlFor="email">Email *</label>
+            <label htmlFor="email">Email</label>
             <input
               id="email"
               name="email"
@@ -132,7 +132,7 @@ function RegisterPage() {
 
           {/* Password Field */}
           <div className="form-group">
-            <label htmlFor="password">Password *</label>
+            <label htmlFor="password">Password</label>
             <input
               id="password"
               name="password"
@@ -155,7 +155,7 @@ function RegisterPage() {
           
           {/* Confirm Password Field */}
           <div className="form-group">
-            <label htmlFor="confirmPassword">Confirm Password *</label>
+            <label htmlFor="confirmPassword">Confirm Password</label>
             <input
               id="confirmPassword"
               name="confirmPassword"

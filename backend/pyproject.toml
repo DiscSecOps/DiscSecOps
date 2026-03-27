@@ -70,10 +70,13 @@ ignore = [
     "E501",
 ]
 
-[tool.ruff.lint.extend-per-file-ignores]
+[tool.ruff.lint.per-file-ignores]
 # FastAPI dependencies necessarily use function calls in argument defaults
 "**/api/**/*.py" = ["B008"]
 "alembic/versions/*.py" = ["E501"]
+
+# Ignore F403 (import *) in E2E step definitions
+"tests/e2e/step_defs/*.py" = ["F403"]
 
 [tool.ruff.lint.isort]
 # These settings ensure Ruff behaves exactly like your old isort "profile = black"

@@ -1,11 +1,37 @@
-// frontend/tests/integration/AddMemberModal.test.jsx
+// frontend/tests/unit/AddMemberModal.test.jsx
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent, waitFor, userEvent, mockCircleMemberService, mockApi, mockConfig } from '../helpers/test-utils';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 
-// Setup all mocks at once
-mockConfig();
-mockApi();
-mockCircleMemberService();
+// ==========================================
+// ALL MOCKS MUST BE AT TOP LEVEL
+// ==========================================
+
+// Mock api first (top level)
+vi.mock('../../src/services/api', () => ({
+  default: {
+    get: vi.fn(),
+    post: vi.fn(),
+    put: vi.fn(),
+    delete: vi.fn(),
+  }
+}));
+
+// Mock config (top level - don't use mockConfig function)
+vi.mock('../../src/config', () => ({
+  API_BASE_URL: 'http://mocked-for-tests.local'
+}));
+
+// Mock circleMemberService (top level)
+vi.mock('../../src/services/circleMember.service', () => ({
+  circleMemberService: {
+    searchUsers: vi.fn(),
+    addMember: vi.fn(),
+    removeMember: vi.fn(),
+    updateRole: vi.fn(),
+    updateCircleName: vi.fn(),
+  }
+}));
 
 // ==========================================
 // IMPORTS AFTER MOCKS
@@ -25,13 +51,12 @@ describe('AddMemberModal', () => {
   };
 
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Reset specific mock
     circleMemberService.searchUsers.mockReset();
     circleMemberService.addMember.mockReset();
     circleMemberService.removeMember.mockReset();
     circleMemberService.updateRole.mockReset();
     circleMemberService.updateCircleName.mockReset();
+
   });
 
   it('searches for users when search button is clicked', async () => {
@@ -44,6 +69,7 @@ describe('AddMemberModal', () => {
 
     render(<AddMemberModal {...defaultProps} />);
 
+    // Așteaptă să apară modal-ul
     await waitFor(() => {
       expect(screen.getByText('Add Member to Circle')).toBeInTheDocument();
     });

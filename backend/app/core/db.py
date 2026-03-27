@@ -21,7 +21,7 @@ AsyncSessionLocal = async_sessionmaker(
     autoflush=False,
     bind=engine,
     class_=AsyncSession,
-    expire_on_commit=False  # Prevents lazy loading issues with async PostgreSQL
+    expire_on_commit=False,  # Prevents lazy loading issues with async PostgreSQL
 )
 
 

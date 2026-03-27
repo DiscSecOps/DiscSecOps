@@ -18,8 +18,7 @@ router = APIRouter(prefix="/circles", tags=["Circles"])
 
 @router.get("/my", response_model=list[CircleResponse])
 async def get_my_circles(
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    db: AsyncSession = Depends(get_db), current_user: User = Depends(get_current_user_from_session)
 ) -> list[CircleResponse]:
     """
     Get circles where current user is a member
@@ -59,11 +58,7 @@ async def get_my_circles(
                 role_enum = member.role
 
             # Get badge
-            badge_map = {
-                CircleRole.OWNER: "👑",
-                CircleRole.MODERATOR: "🛡️",
-                CircleRole.MEMBER: "👤"
-            }
+            badge_map = {CircleRole.OWNER: "👑", CircleRole.MODERATOR: "🛡️", CircleRole.MEMBER: "👤"}
             badge = badge_map.get(role_enum, "👤")
 
             members_list.append(
@@ -73,7 +68,7 @@ async def get_my_circles(
                     username=user_result.username,
                     role=role_enum,  # Use enum, not string
                     badge=badge,
-                    joined_at=member.joined_at
+                    joined_at=member.joined_at,
                 )
             )
 
@@ -86,7 +81,7 @@ async def get_my_circles(
                 owner_name=owner_name,
                 members=members_list,
                 member_count=member_count,
-                created_at=circle.created_at
+                created_at=circle.created_at,
             )
         )
 
@@ -97,36 +92,29 @@ async def get_my_circles(
 async def create_circle(
     circle_data: CircleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> CircleResponse:
     """
     Create a new circle
     User becomes owner and first member
     """
     # Check if circle name is already taken
-    existing = await db.execute(
-        select(Circle).where(Circle.name == circle_data.name)
-    )
+    existing = await db.execute(select(Circle).where(Circle.name == circle_data.name))
     if existing.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A circle with this name already exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="A circle with this name already exists"
         )
 
     # Create circle
     new_circle = Circle(
-        name=circle_data.name,
-        description=circle_data.description,
-        owner_id=current_user.id
+        name=circle_data.name, description=circle_data.description, owner_id=current_user.id
     )
     db.add(new_circle)
     await db.flush()  # Get circle ID without commit
 
     # Add owner as member with role "owner"
     owner_member = CircleMember(
-        circle_id=new_circle.id,
-        user_id=current_user.id,
-        role=CircleRole.OWNER
+        circle_id=new_circle.id, user_id=current_user.id, role=CircleRole.OWNER
     )
     db.add(owner_member)
 
@@ -150,11 +138,11 @@ async def create_circle(
                 username=owner_name or "",
                 role=CircleRole.OWNER,
                 badge="👑",
-                joined_at=owner_member.joined_at
+                joined_at=owner_member.joined_at,
             )
         ],
         member_count=1,
-        created_at=new_circle.created_at
+        created_at=new_circle.created_at,
     )
 
 
@@ -162,7 +150,7 @@ async def create_circle(
 async def get_circle(
     circle_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> CircleResponse:
     """
     Get circle details by ID
@@ -170,27 +158,18 @@ async def get_circle(
     """
     # Get circle with members
     circle_result = await db.execute(
-        select(Circle)
-        .where(Circle.id == circle_id)
-        .options(selectinload(Circle.members))
+        select(Circle).where(Circle.id == circle_id).options(selectinload(Circle.members))
     )
     circle = circle_result.scalar_one_or_none()
 
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # Check if user is a member
-    user_member = next(
-        (m for m in circle.members if m.user_id == current_user.id),
-        None
-    )
+    user_member = next((m for m in circle.members if m.user_id == current_user.id), None)
     if not user_member:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this circle"
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this circle"
         )
 
     # Get usernames for all members
@@ -207,11 +186,7 @@ async def get_circle(
             role_enum = member.role
 
         # Badge map for roles
-        badge_map = {
-            CircleRole.OWNER: "👑",
-            CircleRole.MODERATOR: "🛡️",
-            CircleRole.MEMBER: "👤"
-        }
+        badge_map = {CircleRole.OWNER: "👑", CircleRole.MODERATOR: "🛡️", CircleRole.MEMBER: "👤"}
         badge = badge_map.get(role_enum, "👤")
 
         member_responses.append(
@@ -221,7 +196,7 @@ async def get_circle(
                 username=user_result.username,
                 role=role_enum,  # Use enum, not string
                 badge=badge,
-                joined_at=member.joined_at
+                joined_at=member.joined_at,
             )
         )
 
@@ -237,7 +212,7 @@ async def get_circle(
         owner_name=owner_name,
         members=member_responses,
         member_count=len(circle.members),
-        created_at=circle.created_at
+        created_at=circle.created_at,
     )
 
 
@@ -246,7 +221,7 @@ async def update_circle(
     circle_id: int,
     circle_data: CircleCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> CircleResponse:
     """
     Update circle details (owner only)
@@ -254,16 +229,12 @@ async def update_circle(
     circle = await db.get(Circle, circle_id)
 
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # Check if user is owner
     if circle.owner_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the circle owner can update it"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only the circle owner can update it"
         )
 
     # Update fields
@@ -281,7 +252,7 @@ async def update_circle(
 async def delete_circle(
     circle_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> None:
     """
     Delete a circle (owner only)
@@ -289,28 +260,25 @@ async def delete_circle(
     circle = await db.get(Circle, circle_id)
 
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # Check if user is owner
     if circle.owner_id != current_user.id:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the circle owner can delete it"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only the circle owner can delete it"
         )
 
     # Delete circle (cascade will delete members and posts)
     await db.delete(circle)
     await db.commit()
 
+
 @router.put("/{circle_id}/name", response_model=CircleResponse)
 async def update_circle_name(
     circle_id: int,
     request: dict,  # {"name": "New Circle Name"}
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_endpoint)
+    current_user: User = Depends(get_current_user_endpoint),
 ) -> CircleResponse:
     """
     Update circle name (owner only)
@@ -318,24 +286,20 @@ async def update_circle_name(
     # 1. Check if circle exists
     circle = await db.get(Circle, circle_id)
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # 2. Check if current user is owner
     if circle.owner_id != current_user.id:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the circle owner can change the name"
+            detail="Only the circle owner can change the name",
         )
 
     # 3. Check if new name is already taken
     new_name = request.get("name")
     if not new_name or len(new_name) < 3:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Name must be at least 3 characters"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Name must be at least 3 characters"
         )
 
     existing = await db.execute(
@@ -343,8 +307,7 @@ async def update_circle_name(
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="A circle with this name already exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="A circle with this name already exists"
         )
 
     # 4. Update name

@@ -2,6 +2,7 @@
 Security utilities for authentication
 Handles password hashing, JWT tokens, and session management
 """
+
 import secrets
 from datetime import UTC, datetime, timedelta
 from typing import Any
@@ -19,6 +20,7 @@ pwd_context = PasswordHash((Argon2Hasher(),))
 # ============================================================================
 # PASSWORD HASHING
 # ============================================================================
+
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """
@@ -54,6 +56,7 @@ def get_password_hash(password: str) -> str:
 # JWT TOKEN MANAGEMENT
 # ============================================================================
 
+
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     """
     Create JWT access token
@@ -73,16 +76,10 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     if expires_delta:
         expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.now(UTC) + timedelta(
-            minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES
-        )
+        expire = datetime.now(UTC) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
 
     to_encode.update({"exp": expire})
-    encoded_jwt = jwt.encode(
-        to_encode,
-        settings.SECRET_KEY,
-        algorithm=settings.ALGORITHM
-    )
+    encoded_jwt = jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
     return encoded_jwt
 
 
@@ -99,16 +96,13 @@ def decode_token(token: str) -> Any:
     Raises:
         JWTError: If token is invalid or expired
     """
-    return jwt.decode(
-        token,
-        settings.SECRET_KEY,
-        algorithms=[settings.ALGORITHM]
-    )
+    return jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
 
 
 # ============================================================================
 # SESSION MANAGEMENT
 # ============================================================================
+
 
 def create_session_token() -> str:
     """

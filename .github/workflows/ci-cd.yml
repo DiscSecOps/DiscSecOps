@@ -57,6 +57,20 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
+      test_db:
+        image: postgres:15
+        env:
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: test_db
+        ports:
+          - 5434:5432
+        options: >-
+          --health-cmd "pg_isready -U $$POSTGRES_USER"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
     steps:
       # ============================================================================
       # COMMON STEPS (run for both backend and frontend)
@@ -89,25 +103,34 @@ jobs:
 
       - name: Setup Backend Environment
         run: |
-          # Create .env file with database credentials from GitHub Secrets
+          # Create .env for development
           touch backend/.env
-          
-          # Database connection strings
-          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env
-          echo "TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env          
-          
-          # Install backend dependencies and run migrations
+          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:5432/${{ secrets.DB_NAME }}" >> backend/.env
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" >> backend/.env
+    
+          # Create .env.test for E2E tests
+          touch backend/.env.test
+          echo "TEST_USER=testuser" >> backend/.env.test
+          echo "TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}" >> backend/.env.test
+          echo "TEST_USER_EMAIL=testuser@test.com" >> backend/.env.test
+    
+          # Install backend dependencies
           make install-backend
-
+          
       - name: Setup Test Database & Start Backend Server
         run: |
-          # Seed database with test data
-          make seed-database   
-          
-          # Start backend server in background
-          # Frontend tests need this running
-          make run-backend-for-ci
-
+          # Run migrations on test_db
+          cd backend
+          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run alembic upgrade head
+    
+          # Seed test data (optional - create test users)
+          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run python scripts/create_test_users.py
+    
+          # Start backend server with test_db in background
+          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+    
+          # Wait for backend to start
+          sleep 10
       # ============================================================================
       # BACKEND-SPECIFIC STEPS
       # Only runs when matrix.target == 'backend'
@@ -201,8 +224,9 @@ jobs:
             exit 1
           fi
           
-          # Run E2E tests
-          make test-e2e
+          # Run E2E tests (backend already running with test_db)
+              cd ../backend
+              uv run pytest tests/e2e/step_defs/ -v
 
       # ============================================================================
       # CLEANUP (runs for both matrix targets)

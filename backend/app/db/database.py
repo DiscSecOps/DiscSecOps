@@ -1,6 +1,7 @@
 """
 Async database configuration and session management
 """
+
 from collections.abc import AsyncGenerator
 
 from sqlalchemy.ext.asyncio import (
@@ -20,11 +21,7 @@ engine = create_async_engine(settings.DATABASE_URL, echo=True)
 # expire_on_commit=False prevents objects from being expired after commit,
 # which can be useful for accessing attributes outside of the session.
 AsyncSessionLocal = async_sessionmaker(
-    autocommit=False,
-    autoflush=False,
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
+    autocommit=False, autoflush=False, bind=engine, class_=AsyncSession, expire_on_commit=False
 )
 
 

@@ -17,5 +17,6 @@ async def reset_database() -> None:
         await conn.run_sync(Base.metadata.create_all)
     print("✅ Database reset complete")
 
+
 if __name__ == "__main__":
     asyncio.run(reset_database())

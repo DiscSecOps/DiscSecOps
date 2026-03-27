@@ -38,7 +38,7 @@ ACCESS_TOKEN_EXPIRE_MINUTES=30
 PROJECT_NAME="DevSecOps Social App"
 VERSION=0.1.0
 API_V1_STR=/api/v1
-BACKEND_CORS_ORIGINS=["http://localhost:5173","http://localhost:3000"]
+BACKEND_CORS_ORIGINS=["http://localhost:3000"]
 ```
 
 **What we have in `backend/.env.example`:**

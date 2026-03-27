@@ -1,7 +1,9 @@
+# backend/tests/unit/test_security.py
 """
 Unit tests for backend/app/core/security.py
 Tests password hashing, JWT tokens, and session management
 """
+
 import re
 from datetime import UTC, datetime, timedelta
 
@@ -131,11 +133,7 @@ class TestJWTTokens:
 
     def test_token_contains_correct_data(self):
         """Test that token payload contains all provided data"""
-        data = {
-            "sub": "testuser",
-            "email": "test@example.com",
-            "role": "admin"
-        }
+        data = {"sub": "testuser", "email": "test@example.com", "role": "admin"}
         token = create_access_token(data)
         decoded = decode_token(token)
 
@@ -176,7 +174,7 @@ class TestJWTTokens:
         fake_token = jwt.encode(
             {**data, "exp": datetime.now(UTC) + timedelta(minutes=30)},
             "wrong-secret-key",
-            algorithm=settings.ALGORITHM
+            algorithm=settings.ALGORITHM,
         )
 
         with pytest.raises(jwt.InvalidSignatureError):
@@ -196,7 +194,7 @@ class TestJWTTokens:
         wrong_algo_token = jwt.encode(
             {**data, "exp": datetime.now(UTC) + timedelta(minutes=30)},
             settings.SECRET_KEY,
-            algorithm="HS512"
+            algorithm="HS512",
         )
 
         with pytest.raises(jwt.InvalidAlgorithmError):
@@ -245,7 +243,7 @@ class TestSessionManagement:
         """Test that session token is valid hexadecimal"""
         token = create_session_token()
         # Should only contain hex characters (0-9, a-f)
-        assert re.match(r'^[0-9a-f]{64}$', token) is not None
+        assert re.match(r"^[0-9a-f]{64}$", token) is not None
 
     def test_session_token_uniqueness(self):
         """Test that session tokens are unique"""

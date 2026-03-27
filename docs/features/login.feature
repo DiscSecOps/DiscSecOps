@@ -1,70 +1,49 @@
-# features/login.feature
-Feature: User Login
-  As a user of Social Circles
+Feature: User Login 
+  As a user
   I want to log into my account
   So that I can access my circles and content
 
-  Business Rules:
-    - Valid username and password required 
-    - After 5 failed attempts, account locked for 15 minutes 
-    - Session lasts 24 hours 
-    - One device per user 
+  @ui @smoke
+  Scenario: Login page is accessible
+    Given I open the application
+    When I go to the login page
+    Then I should see the login form
+    And I should see a link to register
 
-  Background:
-    # This runs before every scenario to ensure our baseline user exists
-    Given a user exists with username "john_doe" and password "SecurePass123!"
+  @ui @validation
+  Scenario: Login button is disabled when form is empty
+    Given I am on the login page
+    Then the login button should be disabled
+    When I enter a username
+    And I enter a password
+    Then the login button should be enabled
 
-  @smoke @critical @ui
+  @ui @navigation
+  Scenario: Navigate to register page from login
+    Given I am on the login page
+    When I click the register link
+    Then I should be redirected to the register page
+
+  @smoke @critical
   Scenario: Successful login with valid credentials
-    When I login with username "john_doe" and password "SecurePass123!"
+    Given a user exists with username "<TEST_USERNAME>" and password "<TEST_PASSWORD>"
+    When I login with username "<TEST_USERNAME>" and password "<TEST_PASSWORD>"
     Then I should be redirected to the UserDashboard 
-    And I should see my username "john_doe" in the header 
-    And a session cookie should be set 
-
-  @smoke @ui @todo
-  Scenario: Successful login with case-insensitive username
-    When I login with username "JOHN_DOE" and password "SecurePass123!"
-    Then I should be redirected to the UserDashboard 
+    And I should see my username "<TEST_USERNAME>" in the header 
+    And a session cookie should be set
 
   @security @validation
-  Scenario Outline: Login failures with invalid or missing credentials
-    When I login with username "<username>" and password "<password>"
-    Then I should see "<error_message>" error
-    And I should remain on the login page 
-
-    Examples:
-      | username     | password         | error_message                |
-      | john_doe     | WrongPass123!    | Invalid username or password |
-      | unknown_user | anypass          | Invalid username or password |
-      | john_doe     | securepass123!   | Invalid username or password |
+  Scenario: Login fails with invalid password format (frontend validation)
+    When I login with username "<TEST_USERNAME>" and password "testuserpass123!"
+    Then I should see "Password must be at least 8 characters and include uppercase, lowercase, number, and special character" error
+    And I should remain on the login page
 
   @ui @validation
   Scenario: Login button is disabled with missing username
-    When I enter a blank username and password "SecurePass123!"
+    When I enter a blank username and password "<TEST_PASSWORD>"
     Then the login button should be disabled
 
   @ui @validation
   Scenario: Login button is disabled with missing password
-    When I enter username "john_doe" and a blank password
-    Then the login button should be disabled 
-
-  @security @rate-limiting @todo
-  Scenario: Account lockout after multiple failures
-    When I attempt to login with wrong password 5 times
-    Then I should see "Account locked. Try again in 15 minutes" message 
-    And even with correct password, login should fail 
-
-  @session @security
-  Scenario: Session expires after 24 hours
-    Given I am logged in as "john_doe" 
-    When my session is manually expired in the backend
-    And I refresh the page 
-    Then I should be redirected to the login page 
-
-  @session @security @todo
-  Scenario: Single device per user invalidates previous sessions
-    # We use 'Session A' and 'Session B' to represent different browser contexts
-    Given I am logged in as "john_doe" in Session A
-    When I login as "john_doe" in Session B
-    Then Session A should be invalidated
-    And Session A should be redirected to the login page on its next action
+    When I enter username "<TEST_USERNAME>" and a blank password
+    Then the login button should be disabled

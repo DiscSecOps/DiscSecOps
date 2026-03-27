@@ -1,4 +1,3 @@
-
 import asyncio
 
 from sqlalchemy import text
@@ -43,8 +42,9 @@ async def verify_tables() -> None:
             )
         )
         if not result.scalar():
-            print("❌ Missing column: circle_members.role"
-            "(expected: 'owner', 'moderator', 'member')")
+            print(
+                "❌ Missing column: circle_members.role(expected: 'owner', 'moderator', 'member')"
+            )
             exit(1)
 
         # 3. Optional: verify roles still exists if using new schema)
@@ -54,6 +54,7 @@ async def verify_tables() -> None:
 
         print("✅ All social tables and new schema columns found!")
         exit(0)
+
 
 if __name__ == "__main__":
     asyncio.run(verify_tables())

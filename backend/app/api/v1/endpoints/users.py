@@ -11,6 +11,7 @@ from app.schemas.social import UserSearchResponse
 
 router = APIRouter(prefix="/users", tags=["Users"])
 
+
 # ======================================================
 # GET ALL USERS (with pagination)
 # ======================================================
@@ -19,7 +20,7 @@ async def get_all_users(
     skip: int = 0,
     limit: int = 100,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> list[UserResponse]:
     """
     Get all users with pagination
@@ -47,6 +48,7 @@ async def get_all_users(
         for user in users
     ]
 
+
 # ======================================================
 # SEARCH USERS (to add to circle)
 # ======================================================
@@ -55,21 +57,20 @@ async def search_users(
     query: str,
     circle_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> list[UserSearchResponse]:
     # 1. Verify current user has permission
     permission_check = await db.execute(
-        select(CircleMember)
-        .where(
+        select(CircleMember).where(
             CircleMember.circle_id == circle_id,
             CircleMember.user_id == current_user.id,
-            CircleMember.role.in_(["owner", "moderator"])
+            CircleMember.role.in_(["owner", "moderator"]),
         )
     )
     if not permission_check.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only circle owners and moderators can search for new members"
+            detail="Only circle owners and moderators can search for new members",
         )
 
     # 2. If query is empty, return empty list
@@ -83,9 +84,9 @@ async def search_users(
     existing_ids = [row[0] for row in existing_members.fetchall()]
 
     # 4. Search users
-    stmt = select(User).where(
-    User.id != current_user.id,
-    User.username.ilike(f"%{query}%")).limit(20)
+    stmt = (
+        select(User).where(User.id != current_user.id, User.username.ilike(f"%{query}%")).limit(20)
+    )
 
     # Exclude existing members if any
     if existing_ids:
@@ -97,10 +98,7 @@ async def search_users(
     # 5. Return results
     return [
         UserSearchResponse(
-            id=user.id,
-            username=user.username,
-            email=user.email,
-            is_already_member=False
+            id=user.id, username=user.username, email=user.email, is_already_member=False
         )
         for user in users
     ]
