@@ -1,92 +1,130 @@
-# backend/tests/e2e/step_test/test_registration.py
 """Registration feature tests using Page Object Model."""
 
 import pytest
-from tests.e2e.pages.registration_page import RegistrationPage
-from pytest_bdd import scenarios, given,then, when
-from tests.e2e.conftest import replace_variables
+from playwright.sync_api import expect
+from pytest_bdd import given, scenarios, then, when
 
+from tests.e2e.conftest import replace_variables
+from tests.e2e.pages.registration_page import RegistrationPage
+
+# ==========================================
+# SCENARIOS
+# ==========================================
 scenarios("registration.feature")
 
-# ==========================================
-# GIVEN STEPS
-# ==========================================
-@given("I open the application")
-def open_app(page):
-    page.goto("/")
 
 # ==========================================
 # FIXTURES
 # ==========================================
 @pytest.fixture
-def login_page(page):
-    """Provide a LoginPage instance and navigate to Registration page."""
-    lp = RegistrationPage(page)
-    lp.goto()
-    return lp
+def register_page(page):
+    rp = RegistrationPage(page)
+    rp.goto()
+    return rp
 
 
 # ==========================================
-# REGISTRATION STEPS
+# GIVEN
 # ==========================================
 
 
-@when("I fill in the registration form with:")
-def when_fill_registration_form(datatable, given_on_registration_page):
-    """Fill the registration form with data from the feature file."""
-    reg_page: RegistrationPage = given_on_registration_page
-    data = dict(datatable)
-
-    reg_page.register_as(
-        username=replace_variables(data.get("username", "")),
-        fullname=data.get("full_name", ""),  # Aici rămâne nemodificat
-        email=replace_variables(data.get("email", "")),
-        password=replace_variables(data.get("password", "")),
-        confirm=replace_variables(data.get("confirm", "")),
-    )
+@given("I open the application and I am not logged in")
+def open_app(page):
+    base_url = replace_variables("<FRONTEND_URL>")
+    page.goto(base_url)
 
 
-@then('I should see "Account created for <TEST_USERNAME>! You can now login." message')
-def then_see_success_message(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.expect_success_message(replace_variables("<TEST_USERNAME>"))
+@given("I am on the register page")
+def on_register_page(register_page):
+    register_page.expect_form_visible()
 
 
-@when("I submit the form with invalid email")
-def when_invalid_email(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.register_as(
-        username="testuser2",
-        fullname="",
-        email="invalid-email",
-        password="Password123!",
-        confirm="Password123!",
-    )
+# ==========================================
+# WHEN
+# ==========================================
+@when("I enter a username")
+def enter_username(register_page):
+    register_page.fill_username(replace_variables("<TEST_USERNAME>"))
 
 
-@then('I should see "Please enter a valid email address" error')
-def then_see_email_error(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.expect_error_message("Please enter a valid email address")
+@when("I enter an email")
+def enter_email(register_page):
+    register_page.fill_email(replace_variables("<TEST_EMAIL>"))
 
 
-@then('I should see "Password must be at least 8 characters" error')
-def then_see_password_error(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.expect_error_message("Password must be at least 8 characters")
+@when("I enter an invalid email")
+def enter_invalid_email(register_page):
+    register_page.fill_email("invalid-email")
 
 
-@then(
-    'I should see "Password must be at least 8 characters and include uppercase, lowercase, number, and special character" error'
-)
-def then_see_password_complexity_error(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.expect_error_message(
-        "Password must be at least 8 characters and include uppercase, lowercase, number, and special character"
-    )
+@when("I enter a password")
+def enter_password(register_page):
+    register_page.fill_password(replace_variables("<TEST_PASSWORD>"))
 
 
-@then('I should see "Passwords do not match" error')
-def then_see_password_mismatch_error(given_on_registration_page):
-    reg_page: RegistrationPage = given_on_registration_page
-    reg_page.expect_error_message("Passwords do not match")
+@when("I enter a confirm password")
+def enter_confirm_password(register_page):
+    register_page.fill_confirm_password(replace_variables("<TEST_PASSWORD>"))
+
+
+@when("I enter a different confirm password")
+def enter_different_confirm(register_page):
+    register_page.fill_confirm_password("DifferentPass123!")
+
+
+@when('I click the "Create Account" button')
+def click_register(register_page):
+    register_page.click_register()
+
+
+@when('I click the "Login here" link')
+def click_login_link(register_page):
+    register_page.click_login_link()
+
+
+# ==========================================
+# THEN
+# ==========================================
+@then('I should see the "Create Account" title')
+def see_title(register_page):
+    register_page.expect_title_visible()
+
+
+@then("I should see the registration form")
+def see_form(register_page):
+    register_page.expect_form_visible()
+
+
+@then('I should see a "Login here" link')
+def see_login_link(register_page):
+    expect(register_page.login_link).to_be_visible()
+
+
+@then('the "Create Account" button should be disabled')
+def button_disabled(register_page):
+    register_page.expect_register_button_disabled()
+
+
+@then('the "Create Account" button should be enabled')
+def button_enabled(register_page):
+    register_page.expect_register_button_enabled()
+
+
+@then("I should be redirected to the login page")
+def redirected_to_login(register_page):
+    register_page.expect_redirect_to_login()
+
+
+@then("I should see an email error message")
+def email_error(register_page):
+    register_page.expect_error_for_email()
+
+
+@then("I should see a confirm password error message")
+def confirm_password_error(register_page):
+    register_page.expect_error_for_confirm_password()
+
+
+@then("I should remain on the register page")
+def remain_on_register(register_page):
+    register_page.expect_on_register_page()

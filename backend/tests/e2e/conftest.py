@@ -11,7 +11,7 @@ from collections.abc import Generator
 import nest_asyncio
 import pytest
 from dotenv import load_dotenv
-from playwright.sync_api import sync_playwright
+from playwright.sync_api import Page, sync_playwright
 from sqlalchemy import select, text
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -126,6 +126,25 @@ def clean_database_before_e2e_test(request):
 # ==========================================
 # 3. TEST DATA FACTORIES (for E2E)
 # ==========================================
+@pytest.fixture(scope="session")
+def authenticate_and_create_storage_state(page: Page):
+    auth_file = "auth.json"
+
+    # Verify if auth file already exists to avoid redundant logins
+    if not os.path.exists(auth_file):
+        print("Auth file not found. Creating auth.json...")
+        # If auth file doesn't exist, perform login steps and save storage state
+        page.goto("http://localhost:3000/login")
+        page.fill("input[name='username']", "user_test")
+        page.fill("input[name='password']", "password_test")
+        page.click("button[type='submit']")
+        page.context.storage_state(path=auth_file)
+    else:
+        print(f"Found existing auth file at {auth_file}")
+
+    # Return the path to the auth file so it can be used in tests
+    return auth_file
+
 
 # ==========================================
 # 3a. USER FACTORY

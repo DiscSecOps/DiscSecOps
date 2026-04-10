@@ -1,6 +1,8 @@
 # backend/tests/e2e/pages/login_page.py
 """Page Object Model for Login page."""
 
+import os
+
 from playwright.sync_api import Page, expect
 
 
@@ -11,15 +13,17 @@ class LoginPage:
         self.username_input = page.locator("#username")
         self.password_input = page.locator("#password")
         self.login_button = page.get_by_role("button", name="Login")
-        self.register_link = page.get_by_text("Don't have an account? Register here")
+        self.register_link = page.get_by_role("link", name="Register here")
+        self.base_url = os.getenv("FRONTEND_URL", "http://localhost:3000")
 
     # ======================
     # PAGE LOAD / NAVIGATION
     # ======================
     def goto(self):
-        self.page.goto("/login")
+        self.page.goto(f"{self.base_url}/login")
         self.page.wait_for_load_state("networkidle")
         expect(self.form).to_be_visible()
+        assert self.page.url.endswith("/login"), f"Expected /login, got {self.page.url}"
 
     # ======================
     # FORM ACTIONS

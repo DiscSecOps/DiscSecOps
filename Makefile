@@ -160,12 +160,12 @@ install-playwright:
 # Note: E2E tests are in backend/ because they use Python + Playwright bindings
 test-e2e: ## Run E2E tests in headless mode (for CI)
 	@echo "🎭 Running E2E Tests..."
-	cd backend && DATABASE_URL="$(TEST_DATABASE_URL)" uv run pytest tests/e2e/step_test/ -v
+	cd backend && uv run pytest tests/e2e/step_test/ -v
 	@echo "✅ E2E tests complete"
 
 test-e2e-headed: ## Run E2E tests with visible browser (for local debugging)
 	@echo "🎭 Running Headed E2E Tests..."
-	cd backend && DATABASE_URL="$(TEST_DATABASE_URL)" DISPLAY=:1 uv run pytest tests/e2e/step_test/ --headed --slowmo 1500 -v
+	cd backend && uv run pytest tests/e2e/step_test/ --headed --slowmo 500 -v
 	@echo "✅ Headed E2E tests complete"
 # ============================================================================
 # RUN SERVERS

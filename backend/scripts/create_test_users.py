@@ -20,7 +20,7 @@ from app.db.models import User
 load_dotenv(".env.test")
 
 # Define which users to create (order matters)
-USER_KEYS = ["ALICE", "BOB", "CHARLIE", "NEW_USER_USERNAME", "NEW_USER2_USERNAME"]
+USER_KEYS = ["TEST", "ALICE", "BOB", "CHARLIE", "NEW_USER_USERNAME", "NEW_USER2_USERNAME"]
 
 
 async def create_test_users():
