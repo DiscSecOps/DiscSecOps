@@ -23,7 +23,7 @@ load_dotenv(".env.test")
 USER_KEYS = ["TEST", "ALICE", "BOB", "CHARLIE", "NEW_USER_USERNAME", "NEW_USER2_USERNAME"]
 
 
-async def create_test_users():
+async def create_test_users() -> None:
     """Create test users if they don't exist"""
     async with AsyncSessionLocal() as session:
         created = []
