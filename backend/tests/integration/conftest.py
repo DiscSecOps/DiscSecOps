@@ -33,7 +33,7 @@ load_dotenv(".env.test")
 # DATABASE CONFIGURATION
 # ============================================================================
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@db:5432/app_db")
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://user:password@127.0.0.1:5432/app_db")
 
 
 @pytest_asyncio.fixture(scope="session")
@@ -160,7 +160,7 @@ async def create_test_circle(db_session: AsyncSession, create_test_user) -> Call
 
         # Add members
         for member_data in circle_data["members"]:
-            member_user = await create_test_user(member_data["username"])
+            member_user = await create_test_user(member_data["username"], member_data["password"])
             member = CircleMember(
                 circle_id=circle.id,
                 user_id=member_user.id,

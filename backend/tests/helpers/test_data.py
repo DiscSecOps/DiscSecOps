@@ -18,14 +18,18 @@ ALICE = os.getenv("ALICE_USERNAME", "alice")
 BOB = os.getenv("BOB_USERNAME", "bob")
 CHARLIE = os.getenv("CHARLIE_USERNAME", "charlie")
 
+ALICE_PASSWORD = os.getenv("ALICE__PASSWORD", "AlicePass123!")
+BOB_PASSWORD = os.getenv("BOB_PASSWORD", "BobPass123!")
+CHARLIE_PASSWORD = os.getenv("CHARLIE_PASSWORD", "CharliePass123!")
+
 TEST_CIRCLES = {
     "family": {
         "name": "Family",
         "description": "Family circle for sharing memories",
         "owner": ALICE,
         "members": [
-            {"username": BOB, "role": "moderator"},
-            {"username": CHARLIE, "role": "member"},
+            {"username": BOB, "password": BOB_PASSWORD, "role": "moderator"},
+            {"username": CHARLIE, "password": CHARLIE_PASSWORD, "role": "member"},
         ],
     },
     "friends": {
@@ -33,8 +37,8 @@ TEST_CIRCLES = {
         "description": "Close friends circle",
         "owner": ALICE,
         "members": [
-            {"username": BOB, "role": "member"},
-            {"username": CHARLIE, "role": "member"},
+            {"username": BOB, "password": BOB_PASSWORD, "role": "member"},
+            {"username": CHARLIE, "password": CHARLIE_PASSWORD, "role": "member"},
         ],
     },
     "work": {
@@ -42,7 +46,7 @@ TEST_CIRCLES = {
         "description": "Work colleagues",
         "owner": ALICE,
         "members": [
-            {"username": BOB, "role": "member"},
+            {"username": BOB, "password": BOB_PASSWORD, "role": "member"},
         ],
     },
 }

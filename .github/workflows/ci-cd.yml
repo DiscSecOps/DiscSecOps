@@ -1,51 +1,33 @@
 name: CI/CD Pipeline
 
 on:
-  # Allow manual trigger from GitHub Actions tab
   workflow_dispatch:
-  
-  # Automatic triggers
   push:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  # Weekly schedule: every Sunday at 1:30 AM
   schedule:
     - cron: '30 1 * * 0'
 
-# ============================================================================
-# PERMISSIONS
-# ============================================================================
-# Define what permissions GitHub Actions has
-# IMPORTANT: security-events: write is REQUIRED for CodeQL to upload results
-# ----------------------------------------------------------------------------
 permissions:
-  actions: read          # Read workflow files
-  contents: read         # Read repository contents
-  security-events: write  # Write security results (CodeQL, etc.) - FIXED!
+  actions: read
+  contents: read
+  security-events: write
 
 jobs:
   ci:
-    # Dynamically name the job based on matrix target
     name: ${{ matrix.target == 'backend' && 'Backend CI' || 'Frontend CI' }}
     runs-on: ubuntu-latest
-    
+
     strategy:
-      # Continue other jobs even if one fails
       fail-fast: false
       matrix:
         target: [backend, frontend]
 
-    # ============================================================================
-    # SERVICES
-    # ============================================================================
-    # PostgreSQL database shared between backend and frontend jobs
-    # ----------------------------------------------------------------------------
     services:
       db:
         image: postgres:15
         env:
-          POSTGRES_SERVER: 127.0.0.1
           POSTGRES_USER: ${{ secrets.DB_USER }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
           POSTGRES_DB: ${{ secrets.DB_NAME }}
@@ -73,85 +55,101 @@ jobs:
 
     steps:
       # ============================================================================
-      # COMMON STEPS (run for both backend and frontend)
+      # CHECKOUT & CODEQL
       # ============================================================================
-      
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # ----------------------------------------------------------------------------
-      # CODEQL INITIALIZATION
-      # Note: We initialize CodeQL early, but the actual analysis runs at the end
-      # ----------------------------------------------------------------------------
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v4
         with:
-          # Select language based on matrix target
           languages: ${{ matrix.target == 'backend' && 'python' || 'javascript-typescript' }}
-          build-mode: none  # No build needed for Python/JS
+          build-mode: none
 
-      # ----------------------------------------------------------------------------
-      # ENVIRONMENT SETUP
-      # ----------------------------------------------------------------------------
-      
-      - name: Install uv (Python package manager)
+      # ============================================================================
+      # PYTHON SETUP
+      # ============================================================================
+      - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
           python-version: "3.12"
           enable-cache: true
-          cache-dependency-glob: "backend/uv.lock"        
+          cache-dependency-glob: "backend/uv.lock"
 
-      - name: Setup Backend Environment
+      # ============================================================================
+      # ENV SETUP
+      # ============================================================================
+      - name: Setup environment files
         run: |
-          # Create .env for development
-          touch backend/.env
-          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@db:5432/${{ secrets.DB_NAME }}" >> backend/.env
-          echo "TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" >> backend/.env
-    
-          # Create .env.test for E2E tests
-          touch backend/.env.test
-          echo "TEST_USER=testuser" >> backend/.env.test
-          echo "TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}" >> backend/.env.test
-          echo "TEST_USER_EMAIL=testuser@test.com" >> backend/.env.test
-    
-          # Install backend dependencies
-          make install-backend
-          
-      - name: Setup Test Database & Start Backend Server
+          # Create backend .env
+          cat <<EOF > backend/.env
+          DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}
+          TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5434/test_db
+          EOF
+
+          # Create test env
+          cat <<EOF > backend/.env.test
+          TEST_USER=testuser
+          TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}
+          TEST_USER_EMAIL=testuser@test.com
+          EOF
+
+      # ============================================================================
+      # INSTALL DEPENDENCIES
+      # ============================================================================
+      - name: Install backend dependencies
+        run: make install-backend
+
+      # ============================================================================
+      # WAIT FOR DATABASES
+      # ============================================================================
+      - name: Wait for databases
         run: |
-          # Run migrations on test_db
+          for i in {1..20}; do
+            pg_isready -h 127.0.0.1 -p 5434 -U ${{ secrets.DB_USER }} && break
+            echo "Waiting for test_db..."
+            sleep 2
+          done
+
+      # ============================================================================
+      # SETUP TEST DATABASE & START BACKEND
+      # ============================================================================
+      - name: Setup test DB and start backend
+        run: |
+          set -a
+          source backend/.env
+          set +a
+
           cd backend
-          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run alembic upgrade head
-    
-          # Seed test data (optional - create test users)
-          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run python scripts/create_test_users.py
-    
-          # Start backend server with test_db in background
-          DATABASE_URL="postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@test_db:5432/test_db" uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
-    
-          # Wait for backend to start
+
+          # Switch to test DB
+          export DATABASE_URL=$TEST_DATABASE_URL
+
+          uv run alembic upgrade head
+          uv run python scripts/create_test_users.py
+
+          uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+
+          echo "⏳ Waiting for backend..."
           sleep 10
+
       # ============================================================================
-      # BACKEND-SPECIFIC STEPS
-      # Only runs when matrix.target == 'backend'
+      # BACKEND JOBS
       # ============================================================================
-      
-      - name: 🐍 Backend - Lint, Format, Security
+      - name: 🐍 Backend - Lint & Security
         if: matrix.target == 'backend'
         run: |
           make lint-backend
           make security-backend
 
-      - name: 🐍 Backend - Run Unit and Integration Tests
+      - name: 🐍 Backend - Tests
         if: matrix.target == 'backend'
         run: make test-backend
 
       # ============================================================================
-      # FRONTEND-SPECIFIC STEPS
-      # Only runs when matrix.target == 'frontend'
+      # FRONTEND JOBS
       # ============================================================================
-      
-      - name: ⚛️ Frontend - Setup Node.js
+      - name: Setup Node.js
         if: matrix.target == 'frontend'
         uses: actions/setup-node@v4
         with:
@@ -159,97 +157,77 @@ jobs:
           cache: "npm"
           cache-dependency-path: "frontend/package-lock.json"
 
-      - name: ⚛️ Frontend - Install Dependencies
+      - name: Install frontend dependencies
         if: matrix.target == 'frontend'
         run: make install-frontend
 
-      - name: ⚛️ Frontend - Security Audit
+      - name: Frontend audit
         if: matrix.target == 'frontend'
         run: make audit-frontend
 
-      - name: ⚛️ Frontend - Lint
+      - name: Frontend lint
         if: matrix.target == 'frontend'
         run: make lint-frontend
 
-      - name: ⚛️ Frontend - Unit Tests (Vitest)
+      - name: Frontend unit tests
         if: matrix.target == 'frontend'
-        run: make test-frontend-unit 
+        run: make test-frontend-unit
 
-      - name: ⚛️ Frontend - Integration Tests (Vitest)
+      - name: Frontend integration tests
         if: matrix.target == 'frontend'
         run: make test-frontend-integration
 
-      # ----------------------------------------------------------------------------
-      # PLAYWRIGHT SETUP (for E2E tests)
-      # Complex caching strategy to speed up CI
-      # ----------------------------------------------------------------------------
-      
-      - name: ⚛️ Frontend - Cache Playwright Browsers
+      # ============================================================================
+      # PLAYWRIGHT / E2E
+      # ============================================================================
+      - name: Cache Playwright
         if: matrix.target == 'frontend'
         id: playwright-cache
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          # Cache key based on uv.lock (where Playwright version is defined)
-          # FIXED: Was pointing to backend/pyproject.toml before!
           key: ${{ runner.os }}-playwright-${{ hashFiles('backend/uv.lock') }}
-      
-      - name: ⚛️ Frontend - Install Playwright Browsers
-        if: >-
-          matrix.target == 'frontend' &&
-          steps.playwright-cache.outputs.cache-hit != 'true'
+
+      - name: Install Playwright browsers
+        if: matrix.target == 'frontend' && steps.playwright-cache.outputs.cache-hit != 'true'
         run: make install-playwright
 
-      - name: ⚛️ Frontend - Install Playwright System Dependencies
-        if: >-
-          matrix.target == 'frontend' &&
-          steps.playwright-cache.outputs.cache-hit == 'true'
+      - name: Install Playwright deps
+        if: matrix.target == 'frontend' && steps.playwright-cache.outputs.cache-hit == 'true'
         run: make install-playwright-deps-only
 
-      - name: ⚛️ Frontend - Run E2E Tests
+      - name: Run E2E tests
         if: matrix.target == 'frontend'
         env:
           BASE_URL: http://127.0.0.1:8000
-          FRONTEND_URL: http://localhost:3000
         run: |
-          # Start frontend in background
-          make run-frontend & 
-          
-          # Wait for frontend to be ready (max 120 seconds)
+          make run-frontend &
+
           npx wait-on http://localhost:3000 --timeout 120000
-          
-          # Verify frontend started successfully
+
           if [ $? -ne 0 ]; then
-            echo "❌ Frontend server failed to start"
+            echo "❌ Frontend failed to start"
             exit 1
           fi
-          
-          # Run E2E tests (backend already running with test_db)
-              cd ../backend
-              uv run pytest tests/e2e/step_defs/ -v
+
+          cd backend
+          uv run pytest tests/e2e/step_defs/ -v
 
       # ============================================================================
-      # CLEANUP (runs for both matrix targets)
+      # CLEANUP
       # ============================================================================
-      
-      - name: 🧹 Cleanup background processes
-        if: always()  # Run even if previous steps fail
+      - name: Cleanup
+        if: always()
         run: |
-          echo "Shutting down background servers..."
-          pkill -f "npm" || true   # Kill npm processes
-          pkill -f "node" || true   # Kill node processes
-          pkill -f "uvicorn" || true # Kill uvicorn (backend)
+          pkill -f "npm" || true
+          pkill -f "node" || true
+          pkill -f "uvicorn" || true
 
       # ============================================================================
-      # CODEQL ANALYSIS
-      # IMPORTANT: This must run AFTER all tests but with proper permissions
+      # CODEQL
       # ============================================================================
-      
-      - name: Perform CodeQL Analysis
+      - name: CodeQL Analysis
         uses: github/codeql-action/analyze@v4
         with:
-          # Category helps identify which language was analyzed
           category: "/language:${{ matrix.target == 'backend' && 'python' || 'javascript-typescript' }}"
-          # FIXED: upload must be 'always', 'never', or 'failure-only'
-          # The previous expression ${{ github.repository_owner == github.actor }} was INCORRECT
-          upload: always  # Always upload results to GitHub Security tab
+          upload: always

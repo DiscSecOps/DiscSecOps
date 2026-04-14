@@ -27,10 +27,12 @@ async def test_get_feed_empty(client: AsyncClient, create_test_user) -> None:
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_feed_with_posts(
     client: AsyncClient, create_test_user, create_test_circle, create_test_post
 ) -> None:
     alice_data = get_user("alice")
+    print("alice_data: ", alice_data)
 
     alice = await create_test_user(alice_data["username"], alice_data["password"])
     circle = await create_test_circle("Family", owner=alice)
@@ -40,7 +42,8 @@ async def test_get_feed_with_posts(
         json={"username": alice_data["username"], "password": alice_data["password"]},
     )
 
-    await create_test_post("family_welcome", author=alice, circle=circle)
+    test_post = await create_test_post("Welcome to Family Circle!", author=alice, circle=circle)
+    print("test_post: ", test_post)
 
     response = await client.get("/api/v1/posts/feed")
 

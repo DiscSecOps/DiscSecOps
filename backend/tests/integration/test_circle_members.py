@@ -9,9 +9,12 @@ from tests.helpers.test_data import get_user
 
 
 @pytest.mark.asyncio
+@pytest.mark.integration
 async def test_get_my_circles_empty(client: AsyncClient, create_test_user) -> None:
     """GET /circles/my returns empty list if user has no circles"""
     alice_data = get_user("alice")
+
+    await create_test_user(alice_data["username"], alice_data["password"])
 
     # Login as alice
     login_response = await client.post(

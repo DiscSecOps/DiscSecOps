@@ -32,7 +32,6 @@ install: install-backend install-frontend
 install-backend:
 	@echo "🐍 Installing Backend..."
 	cd backend && uv sync
-	cd backend && uv run alembic upgrade head
 	@echo "✅ Backend ready!"
 
 install-frontend:

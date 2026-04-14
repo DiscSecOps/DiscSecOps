@@ -39,8 +39,6 @@ class Settings(BaseSettings):
     # CORS - Allow frontend to access API
     ALLOWED_ORIGINS: list[str] = [
         "http://localhost:3000",  # React dev server
-        "http://localhost:5173",  # Vite dev server
-        "http://localhost:4173",  # Vite preview
     ]
 
 
