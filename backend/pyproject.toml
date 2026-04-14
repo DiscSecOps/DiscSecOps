@@ -90,6 +90,7 @@ skip-magic-trailing-comma = false
 line-ending = "auto"
 
 [tool.pytest.ini_options]
+asyncio_default_fixture_loop_scope = "function"
 testpaths = ["tests"]
 # Tell pytest-bdd where the features folder is
 # Because pyproject.toml is in /backend, we go up one level (..) to the root, then into docs

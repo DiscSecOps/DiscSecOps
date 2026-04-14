@@ -211,7 +211,7 @@ jobs:
           fi
 
           cd backend
-          uv run pytest tests/e2e/step_defs/ -v
+          uv run pytest tests/e2e/step_test/ -v
 
       # ============================================================================
       # CLEANUP
