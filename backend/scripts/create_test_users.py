@@ -20,7 +20,7 @@ from app.db.models import User
 load_dotenv(".env.test")
 
 # Define which users to create (order matters)
-USER_KEYS = ["TEST", "ALICE", "BOB", "CHARLIE", "NEW_USER_USERNAME", "NEW_USER2_USERNAME"]
+USER_KEYS = ["TEST", "ALICE", "BOB", "CHARLIE", "NEW_USER", "NEW_USER2"]
 
 
 async def create_test_users() -> None:
@@ -36,8 +36,10 @@ async def create_test_users() -> None:
             full_name = os.getenv(f"{key}_FULL_NAME", key.capitalize())
 
             if not username or not password:
-                print(f"⚠️ Skipping {key}: missing username or password in .env.test")
-                continue
+                raise ValueError(
+                    f"Missing required env vars for {key}: "
+                    f"{key}_USERNAME or {key}_PASSWORD not set"
+                )
 
             result = await session.execute(select(User).where(User.username == username))
             existing = result.scalar_one_or_none()

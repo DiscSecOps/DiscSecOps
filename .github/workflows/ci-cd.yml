@@ -81,18 +81,15 @@ jobs:
       # ============================================================================
       - name: Setup environment files
         run: |
-          # Create backend .env
+          # Backend runtime config
           cat <<EOF > backend/.env
           DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}
           TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5434/test_db
           EOF
 
-          # Create test env
-          cat <<EOF > backend/.env.test
-          TEST_USER=testuser
-          TEST_USER_PASSWORD=${{ secrets.TEST_USER_PASSWORD }}
-          TEST_USER_EMAIL=testuser@test.com
-          EOF
+          # CRITICAL: do NOT generate test data here
+          # Use repository-defined test dataset instead
+          cp backend/.env.test backend/.env.test
 
       # ============================================================================
       # INSTALL DEPENDENCIES

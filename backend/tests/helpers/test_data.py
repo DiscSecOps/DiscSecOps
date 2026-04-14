@@ -4,10 +4,11 @@ Test data constants and helpers for backend tests
 """
 
 import os
+from pathlib import Path
 
 from dotenv import load_dotenv
 
-load_dotenv(".env.test")
+load_dotenv(dotenv_path=Path(__file__).resolve().parents[2] / ".env.test")
 
 # ============================================================================
 # TEST CIRCLES
@@ -18,7 +19,7 @@ ALICE = os.getenv("ALICE_USERNAME", "alice")
 BOB = os.getenv("BOB_USERNAME", "bob")
 CHARLIE = os.getenv("CHARLIE_USERNAME", "charlie")
 
-ALICE_PASSWORD = os.getenv("ALICE__PASSWORD", "AlicePass123!")
+ALICE_PASSWORD = os.getenv("ALICE_PASSWORD", "AlicePass123!")
 BOB_PASSWORD = os.getenv("BOB_PASSWORD", "BobPass123!")
 CHARLIE_PASSWORD = os.getenv("CHARLIE_PASSWORD", "CharliePass123!")
 
@@ -101,20 +102,21 @@ TEST_POSTS = {
 
 def get_user(username: str) -> dict:
     """Get user data by username from environment variables"""
+
     key = username.upper()
+
     username_value = os.getenv(f"{key}_USERNAME")
+    password_value = os.getenv(f"{key}_PASSWORD")
+    email_value = os.getenv(f"{key}_EMAIL")
 
     if not username_value:
-        # Fallback: try with exact match
-        username_value = os.getenv(f"{key}")
-        if not username_value:
-            raise ValueError(f"No user data found for username '{username}' in .env.test")
+        raise ValueError(f"No user data found for username '{username}' in .env.test")
 
     return {
         "username": username_value,
-        "password": os.getenv(f"{key}_PASSWORD"),
-        "email": os.getenv(f"{key}_EMAIL"),
-        "full_name": username.capitalize(),
+        "password": password_value,
+        "email": email_value,
+        "full_name": os.getenv(f"{key}_FULL_NAME", username.capitalize()),
         "is_active": True,
     }
 
