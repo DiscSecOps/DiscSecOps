@@ -144,7 +144,7 @@ jobs:
 
       - name: 🐍 Backend - Tests
         if: matrix.target == 'backend'
-        run: make test-backend
+        run: make test-backend-all
 
       # ============================================================================
       # FRONTEND JOBS
