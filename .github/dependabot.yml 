@@ -1,0 +1,105 @@
+version: 2
+updates:
+  # ============================================
+  # React / npm frontend dependencies
+  # ============================================
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Stockholm"
+    versioning-strategy: "auto"
+    commit-message:
+      prefix: "fix(deps)"
+      prefix-development: "chore(dev-deps)"
+      include: "scope"
+    groups:
+      react:
+        patterns:
+          - "react"
+          - "react-dom"
+          - "react-router-dom"
+        update-types:
+          - "minor"
+          - "patch"
+      production-dependencies:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "security"
+      - "frontend"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Cameloasa"
+      - "shzad78"
+      - "Haidar2025"
+      - "MattiasHammarhorn"
+    ignore:
+      - dependency-name: "webpack"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+
+  # ============================================
+  # Python backend dependencies (FastAPI)
+  # ============================================
+  - package-ecosystem: "pip"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Stockholm"
+    versioning-strategy: "auto"
+    commit-message:
+      prefix: "fix(deps-python)"
+      include: "scope"
+    groups:
+      python-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    labels:
+      - "dependencies"
+      - "security"
+      - "backend"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "Cameloasa"
+      - "shzad78"
+      - "Haidar2025"
+      - "MattiasHammarhorn"
+
+  # ============================================
+  # GitHub Actions (workflow dependencies)
+  # ============================================
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "Europe/Stockholm"
+    commit-message:
+      prefix: "ci"
+    labels:
+      - "ci"
+      - "dependencies"
+    open-pull-requests-limit: 5
+    reviewers:
+      - "Cameloasa"
+      - "shzad78"
+      - "Haidar2025"
+      - "MattiasHammarhorn"
