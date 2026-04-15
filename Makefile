@@ -128,7 +128,7 @@ lint-frontend: ## Run frontend linter (ESLint)
 
 audit-frontend: ## Run frontend security audit (npm audit)
 	@echo "🛡️ Auditing frontend dependencies..."
-	cd frontend && npm audit --omit=dev
+	cd frontend && npm audit --omit=dev --audit-level=high
 	@echo "✅ Frontend audit complete"
 
 ## End-to-End Testing (Playwright)
