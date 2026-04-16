@@ -71,7 +71,7 @@ jobs:
           output: 'trivy-backend.sarif'
       
       - name: Upload backend security reports (artifacts)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: backend-security-reports
           path: |
@@ -133,7 +133,7 @@ jobs:
           out: 'dependency-check-report.html'
       
       - name: Upload frontend security reports (artifacts)
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: frontend-security-reports
           path: |
@@ -168,7 +168,7 @@ jobs:
       
       - name: Upload Gitleaks report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: gitleaks-report
           path: gitleaks-report.json
