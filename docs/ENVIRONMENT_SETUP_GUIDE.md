@@ -369,7 +369,7 @@ jobs:
       - name: Install dependencies
         run: |
           cd backend
-          pip install -r requirements.txt
+          pip install -r pyproject.toml
           
       - name: Run tests
         run: |

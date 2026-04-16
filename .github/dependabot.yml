@@ -92,8 +92,8 @@ updates:
       day: "monday"
       time: "08:00"
       timezone: "Europe/Stockholm"
-    commit-message:
-      prefix: "ci"
+    # commit-message:
+    #   prefix: "ci"
     labels:
       - "ci"
       - "dependencies"

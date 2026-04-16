@@ -54,12 +54,12 @@ jobs:
       - name: Run Bandit (Python security linter)
         continue-on-error: true
         run: |
-          bandit -r backend/ -f json -o bandit-report.json -- exclude tools
-          bandit -r backend/ -f txt -o bandit-report.txt -- exclude tools
+          bandit -r backend/ -x tools -f json -o bandit-report.json
+          bandit -r backend/ -x tools -f txt -o bandit-report.txt
       
       - name: Run Safety (check dependencies for CVEs)
         run: |
-          safety check -r backend/requirements.txt --json > safety-report.json
+          safety check -r backend/pyproject.toml --json > safety-report.json
       
       - name: Run Trivy on backend code
         uses: aquasecurity/trivy-action@master
