@@ -5,7 +5,7 @@ description = "Backend for DiscSecOps FastAPI + React Social Application"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "alembic>=1.14.0",
+    "alembic>=1.18.4",
     "argon2-cffi>=23.1.0",
     "asyncpg>=0.29.0",
     "email-validator>=2.2.0",
@@ -26,7 +26,7 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "alembic>=1.14.0",
+    "alembic>=1.18.4",
     "aiosqlite>=0.19.0",
     "argon2-cffi>=23.1.0",
     "bandit>=1.8.0",
