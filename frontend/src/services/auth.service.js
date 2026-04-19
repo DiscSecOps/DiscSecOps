@@ -20,7 +20,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Login failed';
       console.error('Login error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 
@@ -39,7 +39,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Registration failed';
       console.error('Register error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 
@@ -71,7 +71,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to request password reset';
       console.error('Password reset request error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 
@@ -88,7 +88,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to reset password';
       console.error('Password reset error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 
@@ -104,7 +104,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to verify email';
       console.error('Email verification error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 
@@ -120,7 +120,7 @@ export const authService = {
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to resend verification email';
       console.error('Resend verification error:', errorMsg);
-      throw new Error(errorMsg);
+      throw new Error(errorMsg, { cause: err });
     }
   },
 

@@ -31,29 +31,42 @@ function SearchPage() {
     }
   }, [query]);
 
-  useEffect(() => {
-    if (query) {
-      performSearch();
-    } else {
-    loadAllUsers();
-  }
-}, [query, performSearch]);
+  // Wrapping the callback function in an async wrapper to keep the eslint happy
+  const loadAllUsers = useCallback(async () => {
+    setLoading(true);
+    try {
+      const usersResponse = await api.get('/users?limit=100');
+      setResults({
+        users: usersResponse.data || [],
+        circles: [],
+        posts: []
+      });
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-  const loadAllUsers = async () => {
-  setLoading(true);
-  try {
-    const usersResponse = await api.get('/users?limit=100');
-    setResults({
-      users: usersResponse.data || [],
-      circles: [],
-      posts: []
-    });
-  } catch (error) {
-    console.error('Failed to load users:', error);
-  } finally {
-    setLoading(false);
-  }
-  };
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchData = async () => {
+      if (query) {
+        await performSearch();
+      } else {
+        await loadAllUsers();
+      }
+    }
+
+    if (isMounted) {
+      fetchData();
+    }
+
+    return () => {
+      isMounted = false;
+    };
+  }, [query, performSearch, loadAllUsers]);
 
 
   return (
