@@ -38,13 +38,13 @@ jobs:
         image: postgres:15
         env:
           POSTGRES_SERVER: 127.0.0.1
-          POSTGRES_USER: ${{ secrets.DB_USER }}
-          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          POSTGRES_DB: ${{ secrets.DB_NAME }}
+          POSTGRES_USER: ${{ secrets.DB_USER || 'postgres' }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD || 'postgres' }}
+          POSTGRES_DB: ${{ secrets.DB_NAME || 'app_db' }}
         ports:
           - 5432:5432
         options: >-
-          --health-cmd "pg_isready -U $$POSTGRES_USER"
+          --health-cmd "pg_isready -U postgres"
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
@@ -67,8 +67,8 @@ jobs:
       - name: Setup Backend Environment
         run: |
           touch backend/.env
-          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env
-          echo "TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER }}:${{ secrets.DB_PASSWORD }}@127.0.0.1:5432/${{ secrets.DB_NAME }}" >> backend/.env          
+          echo "DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER || 'postgres' }}:${{ secrets.DB_PASSWORD || 'postgres' }}@127.0.0.1:5432/${{ secrets.DB_NAME || 'app_db' }}" >> backend/.env
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://${{ secrets.DB_USER || 'postgres' }}:${{ secrets.DB_PASSWORD || 'postgres' }}@127.0.0.1:5432/${{ secrets.DB_NAME || 'app_db' }}" >> backend/.env          
           make install-backend
 
       - name: Setup Test Database & Start Backend Server
