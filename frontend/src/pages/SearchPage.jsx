@@ -51,7 +51,7 @@ function SearchPage() {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchData = async () => {
+    const getData = async () => {
       if (query) {
         await performSearch();
       } else {
@@ -60,7 +60,7 @@ function SearchPage() {
     }
 
     if (isMounted) {
-      fetchData();
+      getData();
     }
 
     return () => {
