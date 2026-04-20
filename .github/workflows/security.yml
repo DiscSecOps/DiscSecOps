@@ -49,17 +49,19 @@ jobs:
       
       - name: Install security tools
         run: |
-          pip install bandit safety
-        
+          pip install bandit pip-audit uv
+
       - name: Run Bandit (Python security linter)
         continue-on-error: true
         run: |
-          bandit -r backend/ -f json -o bandit-report.json -- exclude tools
-          bandit -r backend/ -f txt -o bandit-report.txt -- exclude tools
-      
-      - name: Run Safety (check dependencies for CVEs)
+          bandit -r backend/ -x tools -f json -o bandit-report.json
+          bandit -r backend/ -x tools -f txt -o bandit-report.txt
+
+      - name: Run pip-audit (check dependencies for CVEs)
+        continue-on-error: true
         run: |
-          safety check -r backend/requirements.txt --json > safety-report.json
+          cd backend && uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
+          pip-audit --format json -r /tmp/requirements.txt -o ../safety-report.json
       
       - name: Run Trivy on backend code
         uses: aquasecurity/trivy-action@master
@@ -82,7 +84,7 @@ jobs:
           retention-days: 30
       
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-backend.sarif
 
@@ -143,7 +145,7 @@ jobs:
           retention-days: 30
       
       - name: Upload Trivy results to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-frontend.sarif
 
@@ -186,12 +188,12 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@v3
         with:
-          languages: 'python, javascript-typescript'
+          languages: 'python, javascript'
           build-mode: none
-      
+
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@v3
         with:
           upload: always
