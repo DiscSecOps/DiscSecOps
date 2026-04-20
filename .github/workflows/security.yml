@@ -184,13 +184,15 @@ jobs:
     name: CodeQL Analysis
     
     steps:
-      - name: Checkout code
+      - name: Checkout repository
         uses: actions/checkout@v4
       
       - name: Initialize CodeQL
         uses: github/codeql-action/init@v3
         with:
-          languages: 'python, javascript'
+          languages: |
+            python
+            javascript
           build-mode: none
 
       - name: Perform CodeQL Analysis
