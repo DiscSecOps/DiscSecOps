@@ -68,7 +68,7 @@ jobs:
         run: |
           touch backend/.env
           echo "DATABASE_URL=postgresql+asyncpg://user:password@127.0.0.1:5432/app_db" >> backend/.env
-          echo "TEST_DATABASE_URL=postgresql+asyncpg://user:password@127.0.0.1:5432/test_db" >> backend/.env          
+          echo "TEST_DATABASE_URL=postgresql+asyncpg://user:password@127.0.0.1:5432/app_db" >> backend/.env          
           make install-backend
 
       - name: Setup Test Database & Start Backend Server
