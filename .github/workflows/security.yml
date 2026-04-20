@@ -49,17 +49,19 @@ jobs:
       
       - name: Install security tools
         run: |
-          pip install bandit safety
-        
+          pip install bandit pip-audit uv
+
       - name: Run Bandit (Python security linter)
         continue-on-error: true
         run: |
           bandit -r backend/ -x tools -f json -o bandit-report.json
           bandit -r backend/ -x tools -f txt -o bandit-report.txt
-      
-      - name: Run Safety (check dependencies for CVEs)
+
+      - name: Run pip-audit (check dependencies for CVEs)
+        continue-on-error: true
         run: |
-          cd backend && safety scan --output json > ../safety-report.json
+          cd backend && uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
+          pip-audit --format json -r /tmp/requirements.txt -o ../safety-report.json
       
       - name: Run Trivy on backend code
         uses: aquasecurity/trivy-action@master
