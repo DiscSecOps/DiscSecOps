@@ -206,7 +206,7 @@ Runs on push to main/develop branches and pull requests
 
 -    Checkout code: Fetches the repository code so the runner can access it.
 
--    Initialize CodeQL: Prepares the GitHub Advanced Security scanner for either Python or JavaScript/TypeScript depending on the matrix target.
+-    Initialize CodeQL: Prepares the GitHub Advanced Security scanner for either Python or JavaScript depending on the matrix target.
 
 -    Install uv: Sets up the Python package manager and caches dependencies based on the backend/uv.lock file.
 
