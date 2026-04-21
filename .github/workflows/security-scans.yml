@@ -1,0 +1,141 @@
+name: Security Scans
+ 
+on:
+  workflow_dispatch:
+ 
+  pull_request:
+    branches: [main]
+    paths:
+      - 'backend/**'
+      - 'frontend/**'
+ 
+  schedule:
+    - cron: '0 2 * * *'   # rulează o dată pe zi, ieftin
+ 
+permissions:
+  contents: read
+  security-events: write
+ 
+jobs:
+  backend-security:
+    runs-on: ubuntu-latest
+    name: Backend Security Scan
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+ 
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+ 
+      - name: Install security tools
+        run: |
+          pip install bandit pip-audit uv
+ 
+      - name: Run Bandit
+        continue-on-error: true
+        run: |
+          bandit -r backend/ -x tools -f json -o bandit-report.json
+ 
+      - name: Run pip-audit
+        continue-on-error: true
+        run: |
+          cd backend && uv export --format requirements-txt --no-hashes > /tmp/requirements.txt
+          pip-audit --format json -r /tmp/requirements.txt -o ../safety-report.json
+ 
+      - name: Run Trivy on backend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './backend'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-backend.sarif'
+ 
+      - name: Upload backend reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: backend-security-reports
+          path: |
+            bandit-report.json
+            safety-report.json
+            trivy-backend.sarif
+          retention-days: 3
+ 
+      - name: Upload Trivy to Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-backend.sarif
+ 
+  frontend-security:
+    runs-on: ubuntu-latest
+    name: Frontend Security Scan
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+ 
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+ 
+      - name: Install dependencies
+        run: |
+          cd frontend
+          npm ci
+ 
+      - name: Run npm audit
+        continue-on-error: true
+        run: |
+          cd frontend
+          npm audit --json > npm-audit-report.json
+ 
+      - name: Run Trivy on frontend
+        uses: aquasecurity/trivy-action@master
+        with:
+          scan-type: 'fs'
+          scan-ref: './frontend'
+          severity: 'CRITICAL,HIGH'
+          format: 'sarif'
+          output: 'trivy-frontend.sarif'
+ 
+      - name: Upload frontend reports
+        uses: actions/upload-artifact@v7
+        with:
+          name: frontend-security-reports
+          path: |
+            frontend/npm-audit-report.json
+            trivy-frontend.sarif
+          retention-days: 3
+ 
+      - name: Upload Trivy to Security tab
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy-frontend.sarif
+ 
+  secrets-scanning:
+    runs-on: ubuntu-latest
+    name: Secrets Scanning (Gitleaks)
+ 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+ 
+      - name: Run Gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        continue-on-error: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+ 
+      - name: Upload Gitleaks report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: gitleaks-report
+          path: gitleaks-report.json
+          retention-days: 3
