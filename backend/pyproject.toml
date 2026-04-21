@@ -46,7 +46,7 @@ dev = [
     "python-dotenv>=1.0.1",
     "python-multipart>=0.0.26",
     "ruff>=0.9.0",
-    "safety>=3.2.0",
+    "safety>=3.7.0",
     "sqlalchemy>=2.0.36",
     "uvicorn[standard]>=0.34.0",
 ]
