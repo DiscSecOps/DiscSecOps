@@ -1,7 +1,7 @@
 # ============================================================================
 # ROOT MAKEFILE - Full Stack Project (FastAPI + React)
 # ============================================================================
-# This Makefile manages both backend (Python/FastAPI) and frontend (React/TypeScript)
+# This Makefile manages both backend (Python/FastAPI) and frontend (React/JavaScript)
 # from a single location.
 #
 # Project structure:
