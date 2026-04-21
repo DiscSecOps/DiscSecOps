@@ -55,7 +55,7 @@ jobs:
       # ============================================================================
       
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Install uv (Python package manager)
         uses: astral-sh/setup-uv@v7
