@@ -198,7 +198,7 @@ Our E2E layer tests the complete user journey from the React UI down to the data
 
 ## CI/CD Pipeline
 
-GitHub Actions workflow located in .github/workflows/ci-cd.yml:
+GitHub Actions workflow located in .github/workflows/:
 
 Runs on push to main/develop branches and pull requests
 
