@@ -43,7 +43,7 @@ updates:
       - "Cameloasa"
       - "shzad78"
       - "Haidar2025"
-      - "MattiasHammarhorn"
+      - "MattHamm"
     ignore:
       - dependency-name: "webpack"
         update-types: ["version-update:semver-major"]
