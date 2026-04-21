@@ -39,17 +39,7 @@ updates:
       - "security"
       - "frontend"
     open-pull-requests-limit: 10
-    reviewers:
-      - "Cameloasa"
-      - "shzad78"
-      - "Haidar2025"
-      - "MattHamm"
-    ignore:
-      - dependency-name: "webpack"
-        update-types: ["version-update:semver-major"]
-      - dependency-name: "eslint"
-        update-types: ["version-update:semver-major"]
-
+ 
   # ============================================
   # Python backend dependencies (FastAPI)
   # ============================================
@@ -65,23 +55,19 @@ updates:
       prefix: "fix(deps-python)"
       include: "scope"
     groups:
-      python-dependencies:
-        patterns:
-          - "*"
+      python-safe-updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     labels:
       - "dependencies"
       - "security"
       - "backend"
     open-pull-requests-limit: 10
-    reviewers:
-      - "Cameloasa"
-      - "shzad78"
-      - "Haidar2025"
-      - "MattiasHammarhorn"
-
+ 
   # ============================================
   # GitHub Actions (workflow dependencies)
   # ============================================
@@ -92,14 +78,7 @@ updates:
       day: "monday"
       time: "08:00"
       timezone: "Europe/Stockholm"
-    # commit-message:
-    #   prefix: "ci"
     labels:
       - "ci"
       - "dependencies"
     open-pull-requests-limit: 5
-    reviewers:
-      - "Cameloasa"
-      - "shzad78"
-      - "Haidar2025"
-      - "MattiasHammarhorn"
