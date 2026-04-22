@@ -1,11 +1,12 @@
 name: E2E Tests
 
 on:
-  # Run only when it actually matters (release validation)
+  pull_request:
+    branches: [main]
+
   push:
     branches: [main]
 
-  # Manual trigger for debugging / local validation
   workflow_dispatch:
 
 permissions:
