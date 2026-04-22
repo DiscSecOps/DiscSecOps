@@ -1,13 +1,16 @@
 name: CodeQL
- 
+
 on:
   push:
     branches: [main, develop]
+
   pull_request:
     branches: [main]
+
   schedule:
     - cron: '0 3 * * *'
- 
+
+  workflow_dispatch:
 permissions:
   contents: read
   security-events: write
