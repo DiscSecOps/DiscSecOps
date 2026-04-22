@@ -2,16 +2,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 
-// https://vite.dev/config/
 export default defineConfig({
+  base: '/frontend/',
   plugins: [react()],
   server: {
-    host: '0.0.0.0', // host for container
+    host: '0.0.0.0',
     port: 3000, // force Vite dev server to run on port 3000
-    strictPort: true,  // exit if port is already in use
-    watch: {
-      usePolling: true // For dev containers
-    },
+    strictPort: true,
+    watch: { usePolling: true },
     open: true, // Automatically open browser on startup
   },
 });
