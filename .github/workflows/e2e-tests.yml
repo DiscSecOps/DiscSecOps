@@ -64,7 +64,7 @@ jobs:
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
 
           # Wait for backend readiness (critical for stability)
-          npx wait-on http://127.0.0.1:8000/health --timeout 120000
+          npx wait-on http-get://127.0.0.1:8000/health --timeout 120000
 
       # ============================================================================
       # FRONTEND SETUP
