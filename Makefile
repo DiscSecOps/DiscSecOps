@@ -167,6 +167,7 @@ run-test-backend: ## Start backend for E2E tests (uses .env created in CI)
 	@echo "🐍 Starting Backend with TEST database..."
 	cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port $(BACKEND_PORT)
 
+
 run-frontend: ## Start React development server
     @echo "⚛️ Starting Frontend on port $(FRONTEND_PORT)..."
     cd frontend && npm run dev
