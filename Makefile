@@ -165,7 +165,7 @@ run-backend-for-ci: ## Start backend for CI (runs in background)
 
 run-test-backend: ## Start backend with test database (for E2E tests)
 	@echo "🐍 Starting Backend with TEST database..."
-	cd backend && DATABASE_URL="$(TEST_DATABASE_URL)" uv run uvicorn app.main:app --port $(BACKEND_PORT) --reload
+	cd backend && uv run uvicorn app.main:app --host 0.0.0.0 --port $(BACKEND_PORT)
 
 run-frontend: ## Start React development server
 	@echo "⚛️ Starting Frontend on port $(FRONTEND_PORT)..."
