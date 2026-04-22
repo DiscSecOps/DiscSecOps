@@ -58,7 +58,7 @@ jobs:
           make install-backend
           make seed-database
 
-          make run-backend-for-ci &
+          make run-test-backend &
           BACKEND_PID=$!
 
           echo "BACKEND_PID=$BACKEND_PID" >> $GITHUB_ENV
