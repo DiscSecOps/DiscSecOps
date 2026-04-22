@@ -15,10 +15,11 @@ import './App.css';
 
 
 function App() {
+  const basename = import.meta.env.MODE === "production" ? "/frontend" : "";
   return (
     <AuthProvider>
       <DarkModeProvider>
-      <Router basename="/frontend">
+       <Router basename={basename}>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LoginPage />} />
