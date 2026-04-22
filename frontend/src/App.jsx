@@ -18,7 +18,7 @@ function App() {
   return (
     <AuthProvider>
       <DarkModeProvider>
-      <Router>
+      <Router basename="/frontend">
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LoginPage />} />
