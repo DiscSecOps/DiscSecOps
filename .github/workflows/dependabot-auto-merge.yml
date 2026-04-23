@@ -1,26 +1,72 @@
-name: Dependabot Auto-Merge
- 
+name: Dependabot Safe Auto-Merge
+
 on:
   pull_request:
     types: [opened, synchronize]
   pull_request_review:
     types: [submitted]
- 
+
 permissions:
   contents: write
   pull-requests: write
- 
+
 jobs:
-  auto-merge:
+  validate:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
- 
+
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # ============================
+      # BACKEND VALIDATION (Python)
+      # ============================
+      - name: Install backend deps
+        working-directory: backend
+        run: uv sync
+
+      - name: Run backend tests
+        working-directory: backend
+        run: uv run pytest -q
+
+      - name: Python security scan
+        working-directory: backend
+        run: uv run pip-audit --strict
+
+      # ============================
+      # FRONTEND VALIDATION (npm)
+      # ============================
+      - name: Install frontend deps
+        working-directory: frontend
+        run: npm ci
+
+      - name: Run frontend tests
+        working-directory: frontend
+        run: npm test --if-present
+
+      - name: Frontend security scan
+        working-directory: frontend
+        run: npm audit --audit-level=high
+
+      # ============================
+      # LOCKFILE VALIDATION
+      # ============================
+      - name: Check for lockfile changes
+        run: |
+          if [[ -n "$(git status --porcelain)" ]]; then
+            echo "❌ Lockfile drift detected. Failing."
+            exit 1
+          fi
+
+      # ============================
+      # AUTO-APPROVE + AUTO-MERGE
+      # ============================
       - name: Approve Dependabot PR
         uses: hmarr/auto-approve-action@v3
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
- 
+
       - name: Enable auto-merge
         run: gh pr merge --auto --squash "$PR_URL"
         env:
