@@ -1,20 +1,23 @@
 """User Registration feature tests."""
+
 import re
 
 from playwright.sync_api import Page, expect
 from pytest_bdd import given, parsers, scenarios, then, when
 
 # Dynamically load all scenarios from the registration feature file
-scenarios('../features/registration.feature')
+scenarios("../features/registration.feature")
 
 # ==========================================
 # GIVEN STEPS (Setup)
 # ==========================================
 
-@given('I am on the registration page')
+
+@given("I am on the registration page")
 def _(page: Page):
     """Navigates to the registration page before every scenario."""
     page.goto("/register")
+
 
 @given(parsers.parse('a user exists with username "{username}" and password "{password}"'))
 def _(create_test_user_synchronous, username, password):
@@ -24,11 +27,13 @@ def _(create_test_user_synchronous, username, password):
     """
     create_test_user_synchronous(username=username, plain_password=password)
 
+
 # ==========================================
 # WHEN STEPS (Actions)
 # ==========================================
 
-@when('I fill in the registration form with:')
+
+@when("I fill in the registration form with:")
 def _(page: Page, datatable):
     """
     The Magic Datatable Step!
@@ -59,27 +64,33 @@ def _(page: Page, datatable):
         # For the confirm password:
         page.get_by_placeholder("Confirm your password").fill(data["confirm"])
 
-@when('I click the register button')
+
+@when("I click the register button")
 def _(page: Page):
     page.get_by_role("button", name="Create Account").click()
     # page.pause()  # <-- This will pause the test and open Playwright Inspector for debugging. Remove or comment out in production tests!
+
 
 # ==========================================
 # THEN STEPS (Assertions)
 # ==========================================
 
-@then('I should be redirected to the login page')
+
+@then("I should be redirected to the login page")
 def _(page: Page):
     expect(page).to_have_url(re.compile(r".*/login"))
 
-@then('I should remain on the registration page')
+
+@then("I should remain on the registration page")
 def _(page: Page):
     expect(page).to_have_url(re.compile(r".*/register"))
+
 
 @then(parsers.parse('I should see "{message}" message'))
 def _(page: Page, message: str):
     """Handles success messages (usually green toasts/alerts)."""
     expect(page.get_by_text(message)).to_be_visible()
+
 
 @then(parsers.parse('I should see "{error_message}" error'))
 def _(page: Page, error_message: str):
@@ -107,4 +118,3 @@ def _(page: Page, error_message: str):
 
     # 3. If it's totally blank, force a failure so we can see the Playwright log
     raise AssertionError(f"Could not find any error message matching: '{error_message}'")
-

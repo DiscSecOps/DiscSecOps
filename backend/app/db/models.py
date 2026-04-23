@@ -17,6 +17,7 @@ class Role(Base):
     """
     Role model for system and circle permissions
     """
+
     __tablename__ = "roles"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -38,6 +39,7 @@ class User(Base):
         created_at: Timestamp when user was created
         updated_at: Timestamp when user was last updated
     """
+
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -52,15 +54,18 @@ class User(Base):
     )
 
     # Relationships
-    owned_circles: Mapped[list["Circle"]] = relationship(back_populates="owner",
-                                                         foreign_keys="Circle.owner_id")
+    owned_circles: Mapped[list["Circle"]] = relationship(
+        back_populates="owner", foreign_keys="Circle.owner_id"
+    )
     circle_memberships: Mapped[list["CircleMember"]] = relationship(back_populates="user")
     posts: Mapped[list["Post"]] = relationship(back_populates="author")
+
 
 class Circle(Base):
     """
     Circle model for groups of users
     """
+
     __tablename__ = "circles"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -79,6 +84,7 @@ class CircleMember(Base):
     """
     Association table for Circle members
     """
+
     __tablename__ = "circle_members"
 
     circle_id: Mapped[int] = mapped_column(ForeignKey("circles.id"), primary_key=True)
@@ -95,6 +101,7 @@ class Post(Base):
     """
     Post model for user content
     """
+
     __tablename__ = "posts"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
@@ -103,12 +110,14 @@ class Post(Base):
     author_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
     circle_id: Mapped[int | None] = mapped_column(ForeignKey("circles.id"))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
-    updated_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True),
-                                                        onupdate=func.now())
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), onupdate=func.now()
+    )
 
     # Relationships
     author: Mapped["User"] = relationship(back_populates="posts")
     circle: Mapped["Circle | None"] = relationship(back_populates="posts")
+
 
 # Session model for session-based authentication (alternative to JWT)
 class UserSession(Base):
@@ -116,12 +125,11 @@ class UserSession(Base):
     User session model for session-based authentication
     Frontend team requested sessions instead of just JWT tokens
     """
+
     __tablename__ = "user_sessions"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
-    session_token: Mapped[str] = mapped_column(
-        String(255), unique=True, index=True, nullable=False
-    )
+    session_token: Mapped[str] = mapped_column(String(255), unique=True, index=True, nullable=False)
     user_id: Mapped[int] = mapped_column(nullable=False, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)
     expires_at: Mapped[datetime] = mapped_column(DateTime, nullable=False)

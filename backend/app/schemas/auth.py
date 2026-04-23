@@ -3,6 +3,7 @@ Authentication schemas
 Request and response models for registration, login, and user data
 Updated to match frontend expectations: username-based login!
 """
+
 import re
 from datetime import datetime
 
@@ -21,23 +22,26 @@ class UserCreate(BaseModel):
         "email": "john.doe@example.com"
     }
     """
+
     username: str = Field(..., min_length=3, max_length=50, description="Unique username")
     email: EmailStr = Field(..., description="User email (unique)")
-    password: str = Field(..., min_length=8, max_length=50, description="Password (min 8 characters)")
+    password: str = Field(
+        ..., min_length=8, max_length=50, description="Password (min 8 characters)"
+    )
     full_name: str | None = Field(None, max_length=100, description="User's full name")
 
-    @field_validator('password')
+    @field_validator("password")
     @classmethod
     def validate_password(cls, v: str) -> str:
         """Validate password complexity"""
-        if not re.search(r'[A-Z]', v):
-            raise ValueError('Password must contain at least one uppercase letter')
-        if not re.search(r'[a-z]', v):
-            raise ValueError('Password must contain at least one lowercase letter')
-        if not re.search(r'[0-9]', v):
-            raise ValueError('Password must contain at least one number')
+        if not re.search(r"[A-Z]", v):
+            raise ValueError("Password must contain at least one uppercase letter")
+        if not re.search(r"[a-z]", v):
+            raise ValueError("Password must contain at least one lowercase letter")
+        if not re.search(r"[0-9]", v):
+            raise ValueError("Password must contain at least one number")
         if not re.search(r'[!@#$%^&*(),.?":{}|<>]', v):
-            raise ValueError('Password must contain at least one special character')
+            raise ValueError("Password must contain at least one special character")
         return v
 
 
@@ -53,6 +57,7 @@ class UserLogin(BaseModel):
 
     Note: Frontend uses USERNAME, not email!
     """
+
     username: str = Field(..., description="Username")
     password: str = Field(..., description="User password")
 
@@ -64,6 +69,7 @@ class UserResponse(BaseModel):
     Note: Never includes password or hashed_password
     Email re-added as per frontend team request
     """
+
     id: int
     username: str
     email: EmailStr
@@ -85,6 +91,7 @@ class Token(BaseModel):
         "token_type": "bearer"
     }
     """
+
     access_token: str = Field(..., description="JWT access token")
     token_type: str = Field(default="bearer", description="Token type")
 
@@ -102,6 +109,7 @@ class SessionResponse(BaseModel):
         "user": {...}
     }
     """
+
     success: bool = Field(default=True)
     username: str
     session_token: str | None = Field(None, description="Only if using session-based auth")
@@ -113,4 +121,5 @@ class TokenData(BaseModel):
     Schema for decoded token data
     Used internally for token validation
     """
+
     username: str | None = None

@@ -36,21 +36,9 @@ async def create_test_data() -> None:
 
             # 2. Create some circles
             circles = [
-                {
-                    "name": "Family",
-                    "description": "My family circle",
-                    "owner_id": new_user.id
-                },
-                {
-                    "name": "Friends",
-                    "description": "Best friends forever",
-                    "owner_id": new_user.id
-                },
-                {
-                    "name": "Work",
-                    "description": "Work colleagues",
-                    "owner_id": new_user.id
-                }
+                {"name": "Family", "description": "My family circle", "owner_id": new_user.id},
+                {"name": "Friends", "description": "Best friends forever", "owner_id": new_user.id},
+                {"name": "Work", "description": "Work colleagues", "owner_id": new_user.id},
             ]
 
             for circle_data in circles:
@@ -59,11 +47,7 @@ async def create_test_data() -> None:
                 await session.flush()
 
                 # Add owner as member with role "owner"
-                circle_member = CircleMember(
-                    circle_id=circle.id,
-                    user_id=new_user.id,
-                    role="owner"
-                )
+                circle_member = CircleMember(circle_id=circle.id, user_id=new_user.id, role="owner")
                 session.add(circle_member)
 
                 # Add some posts in circles
@@ -71,7 +55,7 @@ async def create_test_data() -> None:
                     title=f"Welcome to {circle.name}",
                     content=f"This is the first post in {circle.name} circle",
                     author_id=new_user.id,
-                    circle_id=circle.id
+                    circle_id=circle.id,
                 )
                 session.add(post)
 
@@ -80,7 +64,7 @@ async def create_test_data() -> None:
                 title="Hello World",
                 content="This is my first public post",
                 author_id=new_user.id,
-                circle_id=None
+                circle_id=None,
             )
             session.add(public_post)
 
@@ -112,11 +96,7 @@ async def create_test_data() -> None:
                     else:  # Third circle: member
                         role = "member"
 
-                    circle_member = CircleMember(
-                        circle_id=circle.id,
-                        user_id=user2.id,
-                        role=role
-                    )
+                    circle_member = CircleMember(circle_id=circle.id, user_id=user2.id, role=role)
                     session.add(circle_member)
 
             # Final commit
@@ -127,9 +107,7 @@ async def create_test_data() -> None:
             print("Test user already exists, checking if we need to add circles...")
 
             # Check if user has any circles
-            circles_result = await session.execute(
-                select(Circle).where(Circle.owner_id == user.id)
-            )
+            circles_result = await session.execute(select(Circle).where(Circle.owner_id == user.id))
             existing_circles = circles_result.scalars().all()
 
             if not existing_circles:

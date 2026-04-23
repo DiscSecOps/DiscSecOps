@@ -59,15 +59,13 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
         )
 
     # Check if email already exists
-    email = await db.execute(select(User).where(
-            func.lower(User.email) == func.lower(user_data.email)
-        ))
+    email = await db.execute(
+        select(User).where(func.lower(User.email) == func.lower(user_data.email))
+    )
     db_email = email.scalar_one_or_none()
 
     if db_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken")
 
     # Hash password using Argon2
     hashed_password = get_password_hash(user_data.password)
@@ -90,16 +88,13 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
         success=True,
         username=new_user.username,
         session_token=None,  # No session token on registration - user must login separately
-        user=UserResponse.model_validate(new_user)
+        user=UserResponse.model_validate(new_user),
     )
 
 
 @router.post("/login", response_model=SessionResponse)
 async def login(
-    credentials: UserLogin,
-    request: Request,
-    response: Response,
-    db: AsyncSession = Depends(get_db)
+    credentials: UserLogin, request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ) -> SessionResponse:
     """
     Login user and create session (SESSION-BASED AUTH)
@@ -119,30 +114,23 @@ async def login(
     """
     try:
         # Find user by username
-        result = await db.execute(
-            select(User).where(User.username == credentials.username)
-        )
+        result = await db.execute(select(User).where(User.username == credentials.username))
         user = result.scalar_one_or_none()
 
         if not user:
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password"
             )
 
         # Verify password
         if not verify_password(credentials.password, user.hashed_password):
             raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
+                status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid username or password"
             )
 
         # Check if user is active
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is inactive"
-            )
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Account is inactive")
 
         # Generate secure session token
         session_token = secrets.token_urlsafe(32)
@@ -185,10 +173,7 @@ async def login(
         )
 
         return SessionResponse(
-            success=True,
-            username=user.username,
-            session_token=session_token,
-            user=user_response
+            success=True, username=user.username, session_token=session_token, user=user_response
         )
 
     except HTTPException:
@@ -198,14 +183,13 @@ async def login(
         logger.error(traceback.format_exc())
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed due to server error"
+            detail="Login failed due to server error",
         ) from e
 
 
 # Dependency returns current authenticated user based on session token
 async def get_current_user_from_session(
-    request: Request,
-    db: AsyncSession = Depends(get_db)
+    request: Request, db: AsyncSession = Depends(get_db)
 ) -> User:
     """
     Dependency to get current authenticated user
@@ -214,10 +198,7 @@ async def get_current_user_from_session(
     session_token = request.cookies.get("session_token")
 
     if not session_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Not authenticated")
 
     # Find valid session
     session_result = await db.execute(
@@ -229,21 +210,15 @@ async def get_current_user_from_session(
 
     if not session:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or invalid"
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Session expired or invalid"
         )
 
     # Find user
-    user_result = await db.execute(
-        select(User).where(User.id == session.user_id)
-    )
+    user_result = await db.execute(select(User).where(User.id == session.user_id))
     user = user_result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="User not found")
 
     return user
 
@@ -251,7 +226,7 @@ async def get_current_user_from_session(
 # Endpoints that require authentication can use this dependency to get the current user
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_endpoint(
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> UserResponse:
     """
     Get current authenticated user
@@ -267,11 +242,10 @@ async def get_current_user_endpoint(
         updated_at=current_user.updated_at,
     )
 
+
 @router.post("/logout")
 async def logout(
-    request: Request,
-    response: Response,
-    db: AsyncSession = Depends(get_db)
+    request: Request, response: Response, db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
     """
     Logout user - invalidate session and clear cookie
@@ -292,9 +266,4 @@ async def logout(
         # Clear cookie
         response.delete_cookie("session_token", path="/")
 
-    return {
-        "success": True,
-        "message": "Logged out successfully"
-    }
-
-
+    return {"success": True, "message": "Logged out successfully"}

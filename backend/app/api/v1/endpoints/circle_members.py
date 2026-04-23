@@ -27,7 +27,7 @@ async def add_member(
     circle_id: int,
     request: AddMemberRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> MemberActionResponse:
     """
     Add a user to circle (owner/moderator only)
@@ -37,46 +37,37 @@ async def add_member(
     # 1. Check if circle exists
     circle = await db.get(Circle, circle_id)
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # 2. Check if current user has permission (owner or moderator)
     permission = await db.execute(
-        select(CircleMember)
-        .where(
+        select(CircleMember).where(
             CircleMember.circle_id == circle_id,
             CircleMember.user_id == current_user.id,
-            CircleMember.role.in_(["owner", "moderator"])
+            CircleMember.role.in_(["owner", "moderator"]),
         )
     )
     if not permission.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only circle owners and moderators can add members"
+            detail="Only circle owners and moderators can add members",
         )
 
     # 3. Check if user to add exists
     user_to_add = await db.get(User, request.user_id)
     if not user_to_add:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     # 4. Check if already a member
     existing = await db.execute(
-        select(CircleMember)
-        .where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == request.user_id
+        select(CircleMember).where(
+            CircleMember.circle_id == circle_id, CircleMember.user_id == request.user_id
         )
     )
     if existing.scalar_one_or_none():
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="User is already a member of this circle"
+            detail="User is already a member of this circle",
         )
 
     # 5. Add new member
@@ -84,7 +75,7 @@ async def add_member(
         circle_id=circle_id,
         user_id=request.user_id,
         role=CircleRole.MEMBER,
-        joined_at=datetime.now()
+        joined_at=datetime.now(),
     )
     db.add(new_member)
     await db.commit()
@@ -96,13 +87,11 @@ async def add_member(
         user_id=new_member.user_id,
         username=user_to_add.username,
         role=CircleRole(new_member.role),
-        joined_at=new_member.joined_at
+        joined_at=new_member.joined_at,
     )
 
     return MemberActionResponse(
-        success=True,
-        message="Member added successfully",
-        member=member_response
+        success=True, message="Member added successfully", member=member_response
     )
 
 
@@ -114,7 +103,7 @@ async def remove_member(
     circle_id: int,
     user_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> MemberActionResponse:
     """
     Remove member from circle
@@ -124,47 +113,37 @@ async def remove_member(
     # 1. Check if circle exists
     circle = await db.get(Circle, circle_id)
     if not circle:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Circle not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Circle not found")
 
     # 2. Get member to remove
     member_result = await db.execute(
-        select(CircleMember)
-        .where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == user_id
+        select(CircleMember).where(
+            CircleMember.circle_id == circle_id, CircleMember.user_id == user_id
         )
     )
     member = member_result.scalar_one_or_none()
     if not member:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member not found in this circle"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Member not found in this circle"
         )
 
     # 3. Cannot remove the owner
     if member.role == CircleRole.OWNER:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot remove the circle owner"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Cannot remove the circle owner"
         )
 
     # 4. Get current user's role
     current_member = await db.execute(
-        select(CircleMember)
-        .where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == current_user.id
+        select(CircleMember).where(
+            CircleMember.circle_id == circle_id, CircleMember.user_id == current_user.id
         )
     )
     current = current_member.scalar_one_or_none()
 
     if not current:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="You are not a member of this circle"
+            status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this circle"
         )
 
     # 5. Check permissions
@@ -176,22 +155,19 @@ async def remove_member(
         if member.role == CircleRole.MODERATOR:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail="Moderators cannot remove other moderators"
+                detail="Moderators cannot remove other moderators",
             )
     else:
         # Members cannot remove anyone
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only owners and moderators can remove members"
+            detail="Only owners and moderators can remove members",
         )
 
     # 6. Remove member
     user = await db.get(User, user_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     username = user.username
 
@@ -199,9 +175,7 @@ async def remove_member(
     await db.commit()
 
     return MemberActionResponse(
-        success=True,
-        message=f"Member {username} removed successfully",
-        member=None
+        success=True, message=f"Member {username} removed successfully", member=None
     )
 
 
@@ -214,7 +188,7 @@ async def update_member_role(
     user_id: int,
     request: UpdateRoleRequest,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user_from_session)
+    current_user: User = Depends(get_current_user_from_session),
 ) -> MemberActionResponse:
     """
     Change member's role (owner only)
@@ -224,39 +198,33 @@ async def update_member_role(
     """
     # 1. Check if current user is OWNER
     owner_check = await db.execute(
-        select(CircleMember)
-        .where(
+        select(CircleMember).where(
             CircleMember.circle_id == circle_id,
             CircleMember.user_id == current_user.id,
-            CircleMember.role == CircleRole.OWNER
+            CircleMember.role == CircleRole.OWNER,
         )
     )
     if not owner_check.scalar_one_or_none():
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Only the circle owner can change roles"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Only the circle owner can change roles"
         )
 
     # 2. Get member to update
     member_result = await db.execute(
-        select(CircleMember)
-        .where(
-            CircleMember.circle_id == circle_id,
-            CircleMember.user_id == user_id
+        select(CircleMember).where(
+            CircleMember.circle_id == circle_id, CircleMember.user_id == user_id
         )
     )
     member = member_result.scalar_one_or_none()
     if not member:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Member not found in this circle"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Member not found in this circle"
         )
 
     # 3. Cannot change owner's role
     if member.role == CircleRole.OWNER:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Cannot change the circle owner's role"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Cannot change the circle owner's role"
         )
 
     # 4. Update role
@@ -268,21 +236,18 @@ async def update_member_role(
     # 5. Get username for response
     user = await db.get(User, user_id)
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
 
     member_response = CircleMemberResponse(
         circle_id=member.circle_id,
         user_id=member.user_id,
         username=user.username,
         role=member.role,
-        joined_at=member.joined_at
+        joined_at=member.joined_at,
     )
 
     return MemberActionResponse(
         success=True,
         message=f"Role changed from {old_role} to {request.role}",
-        member=member_response
+        member=member_response,
     )

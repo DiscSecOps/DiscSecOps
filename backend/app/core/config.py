@@ -17,9 +17,7 @@ class Settings(BaseSettings):
     SESSION_SECRET_KEY=your-session-secret-change-in-production
     """
 
-    model_config = SettingsConfigDict(
-        env_file=".env", env_ignore_empty=True, extra="ignore"
-    )
+    model_config = SettingsConfigDict(env_file=".env", env_ignore_empty=True, extra="ignore")
 
     # API Configuration
     PROJECT_NAME: str = "DevSecOps Social App API"
@@ -40,9 +38,9 @@ class Settings(BaseSettings):
 
     # CORS - Allow frontend to access API
     ALLOWED_ORIGINS: list[str] = [
-        "http://localhost:3000",      # React dev server
-        "http://localhost:5173",      # Vite dev server
-        "http://localhost:4173",      # Vite preview
+        "http://localhost:3000",  # React dev server
+        "http://localhost:5173",  # Vite dev server
+        "http://localhost:4173",  # Vite preview
     ]
 
 
