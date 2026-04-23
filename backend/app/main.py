@@ -13,6 +13,7 @@ from app.api.v1.endpoints import auth, circle_members, circles, posts, users
 from app.core.config import settings
 from app.core.db import engine
 
+from app.core.security_headers import SecurityHeadersMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
@@ -41,6 +42,8 @@ app.add_middleware(
     allow_methods=["*"],  # Allow all HTTP methods
     allow_headers=["*"],  # Allow all headers
 )
+# Security headers middleware (global)
+app.add_middleware(SecurityHeadersMiddleware)
 
 # Include all routers at /api/v1 (versioned API)
 # Frontend expects: http://localhost:8000/api/v1/auth/login
