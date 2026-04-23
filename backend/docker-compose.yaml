@@ -1,0 +1,39 @@
+version: "3.9"
+ 
+services:
+  db:
+    image: postgres:15
+    container_name: devsecops_db
+    restart: always
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: app_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+ 
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: devsecops_backend
+    restart: always
+    depends_on:
+      - db
+    environment:
+      DATABASE_URL: postgresql+asyncpg://user:password@db:5432/app_db
+      ENVIRONMENT: development
+      DEBUG: "true"
+      FRONTEND_URL: http://localhost:3000
+      SECRET_KEY: ${SECRET_KEY}
+      SESSION_SECRET_KEY: ${SESSION_SECRET_KEY}
+      ALGORITHM: HS256
+      SESSION_EXPIRE_MINUTES: 1440
+    ports:
+      - "8000:8000"
+    command: uvicorn app.main:app --host 0.0.0.0 --port 8000
+ 
+volumes:
+  postgres_data:
