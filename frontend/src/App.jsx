@@ -12,14 +12,14 @@ import AuthProvider from './contexts/AuthProvider';
 import { DarkModeProvider } from './contexts/DarkModeProvider'; 
 import Layout from './components/layout/Layout.jsx';
 import './App.css';
+import { APP_BASE_PATH } from './config';
 
 
 function App() {
-  const basename = import.meta.env.MODE === "production" ? "/frontend" : "";
   return (
     <AuthProvider>
       <DarkModeProvider>
-       <Router basename={basename}>
+       <Router basename={APP_BASE_PATH}>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LoginPage />} />
