@@ -86,7 +86,7 @@ test-backend:
 
 lint-backend:
 	@echo "🔍 Linting backend..."
-	cd backend && uv run ruff check .
+	cd backend && uv run ruff check . --fix
 	cd backend && uv run mypy .
 	@echo "✅ Backend linting complete"
 
