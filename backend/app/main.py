@@ -13,7 +13,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from app.api.v1.endpoints import auth, circle_members, circles, posts, users
 from app.core.config import settings
 from app.core.db import engine
-
 from app.core.security_headers import SecurityHeadersMiddleware
 
 
