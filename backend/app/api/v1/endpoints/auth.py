@@ -167,7 +167,7 @@ async def login(
             key="session_token",
             value=session_token,
             httponly=True,
-            secure=False,  # Set to True in production with HTTPS
+            secure=True,  # Set to True in production with HTTPS
             samesite="lax",
             max_age=settings.SESSION_EXPIRE_MINUTES * 60,
             path="/",
