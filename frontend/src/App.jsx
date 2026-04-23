@@ -19,7 +19,7 @@ function App() {
   return (
     <AuthProvider>
       <DarkModeProvider>
-       <Router basename={APP_BASE_PATH}>
+       <Router basename='/DiscSecOps/'>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LoginPage />} />
