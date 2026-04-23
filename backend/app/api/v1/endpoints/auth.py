@@ -162,12 +162,14 @@ async def login(
         db.add(new_session)
         await db.commit()
 
+        secure_flag = settings.ENVIRONMENT == "production"
+        
         # Set HTTP-only cookie (more secure than localStorage)
         response.set_cookie(
             key="session_token",
             value=session_token,
             httponly=True,
-            secure=True,  # Set to True in production with HTTPS
+            secure=secure_flag,  # Set to True in production with HTTPS
             samesite="lax",
             max_age=settings.SESSION_EXPIRE_MINUTES * 60,
             path="/",
