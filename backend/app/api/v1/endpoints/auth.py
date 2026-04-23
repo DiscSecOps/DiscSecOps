@@ -163,7 +163,7 @@ async def login(
         await db.commit()
 
         secure_flag = settings.ENVIRONMENT == "production"
-        
+
         # Set HTTP-only cookie (more secure than localStorage)
         response.set_cookie(
             key="session_token",
