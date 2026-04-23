@@ -5,9 +5,9 @@
 # from a single location.
 #
 # Project structure:
-# ├── backend/         # FastAPI + Python
-# ├── frontend/        # React + JavaScript  
-# ├── Makefile         # THIS FILE
+# ├── backend/		 # FastAPI + Python
+# ├── frontend/		# React + JavaScript  
+# ├── Makefile		 # THIS FILE
 # └── generate-secrets.py
 # ============================================================================
 
@@ -212,6 +212,15 @@ secrets: ## Generate secure secrets for .env files (JWT keys, passwords, etc.)
 # ============================================================================
 # MAINTENANCE
 # ============================================================================
+.PHONY: sync
+
+sync: ## Sync backend & frontend dependencies after pulling changes
+	@echo "🔄 Syncing backend dependencies..."
+	cd backend && uv sync
+	@echo "🔄 Syncing frontend dependencies..."
+	cd frontend && npm install
+	@echo "✅ All dependencies are now in sync!"
+# ----------------------------------------------------------------------------
 # Cleanup and utility commands
 # ----------------------------------------------------------------------------
 
@@ -225,7 +234,7 @@ clean: ## Clean up build artifacts and caches
 
 help: ## Display this help message
 	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║     🚀 AVAILABLE COMMANDS - Full Stack Project               ║"
+	@echo "║	 🚀 AVAILABLE COMMANDS - Full Stack Project			   ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "📦 INSTALLATION:"
