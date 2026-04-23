@@ -1,6 +1,15 @@
 # ============================================================================
 # ROOT MAKEFILE - Full Stack Project (FastAPI + React)
 # ============================================================================
+# This Makefile manages both backend (Python/FastAPI) and frontend (React/JavaScript)
+# from a single location.
+#
+# Project structure:
+# ├── backend/		 # FastAPI + Python
+# ├── frontend/		# React + JavaScript  
+# ├── Makefile		 # THIS FILE
+# └── generate-secrets.py
+# ============================================================================
 
 # ============================================================================
 # CONFIGURATION
@@ -178,6 +187,18 @@ secrets:
 # ============================================================================
 # MAINTENANCE
 # ============================================================================
+.PHONY: sync
+
+sync: ## Sync backend & frontend dependencies after pulling changes
+	@echo "🔄 Syncing backend dependencies..."
+	cd backend && uv sync
+	@echo "🔄 Syncing frontend dependencies..."
+	cd frontend && npm install
+	@echo "✅ All dependencies are now in sync!"
+# ----------------------------------------------------------------------------
+# Cleanup and utility commands
+# ----------------------------------------------------------------------------
+
 .PHONY: clean help
 
 clean:
@@ -188,7 +209,7 @@ clean:
 
 help:
 	@echo "╔══════════════════════════════════════════════════════════════╗"
-	@echo "║     🚀 AVAILABLE COMMANDS - Full Stack Project               ║"
+	@echo "║	 🚀 AVAILABLE COMMANDS - Full Stack Project			   ║"
 	@echo "╚══════════════════════════════════════════════════════════════╝"
 	@echo ""
 	@echo "📦 INSTALLATION:"
