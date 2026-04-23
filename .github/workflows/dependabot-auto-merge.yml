@@ -11,57 +11,26 @@ permissions:
   pull-requests: write
 
 jobs:
-  validate:
+  auto-merge:
     if: github.actor == 'dependabot[bot]'
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Wait for CI to be green
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const pr = context.payload.pull_request
+            const checks = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha
+            })
+            const allPassed = checks.data.check_runs.every(c => c.conclusion === "success")
+            if (!allPassed) {
+              core.setFailed("CI is not green yet.")
+            }
 
-      # ============================
-      # BACKEND VALIDATION (Python)
-      # ============================
-      - name: Install backend deps
-        working-directory: backend
-        run: uv sync
-
-      - name: Run backend tests
-        working-directory: backend
-        run: uv run pytest -q
-
-      - name: Python security scan
-        working-directory: backend
-        run: uv run pip-audit --strict
-
-      # ============================
-      # FRONTEND VALIDATION (npm)
-      # ============================
-      - name: Install frontend deps
-        working-directory: frontend
-        run: npm ci
-
-      - name: Run frontend tests
-        working-directory: frontend
-        run: npm test --if-present
-
-      - name: Frontend security scan
-        working-directory: frontend
-        run: npm audit --audit-level=high
-
-      # ============================
-      # LOCKFILE VALIDATION
-      # ============================
-      - name: Check for lockfile changes
-        run: |
-          if [[ -n "$(git status --porcelain)" ]]; then
-            echo "❌ Lockfile drift detected. Failing."
-            exit 1
-          fi
-
-      # ============================
-      # AUTO-APPROVE + AUTO-MERGE
-      # ============================
       - name: Approve Dependabot PR
         uses: hmarr/auto-approve-action@v3
         with:
