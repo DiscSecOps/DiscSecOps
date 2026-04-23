@@ -4,9 +4,10 @@ import react from '@vitejs/plugin-react'
 
 // https://vite.dev/config/
 export default defineConfig({
+  base: process.env.VITE_APP_BASE_PATH || '/frontend/',   // 🔥 necesar pentru GitHub Pages
   plugins: [react()],
   server: {
-    host: '0.0.0.0', // host for container
+    host: '0.0.0.0', // host for container 
     port: 3000, // force Vite dev server to run on port 3000
     strictPort: true,  // exit if port is already in use
     watch: {
