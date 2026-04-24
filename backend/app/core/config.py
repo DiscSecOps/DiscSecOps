@@ -37,7 +37,8 @@ class Settings(BaseSettings):
 
     # CORS
     ALLOWED_ORIGINS: list[str] = [
-        "http://localhost:3000"
+        "http://localhost:3000",
+        "https://discsecops.github.io"
     ]
 
     # Environment
