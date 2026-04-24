@@ -2,9 +2,7 @@ name: Deploy Backend to Railway
 
 on:
   push:
-    branches: [main, fix/railway-deploy-workflow]
-  
-  workflow_dispatch: # Manual trigger for testing
+    branches: [main]
 
 permissions:
   contents: read
