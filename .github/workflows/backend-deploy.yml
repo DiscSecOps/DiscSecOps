@@ -1,19 +1,39 @@
 name: Deploy Backend to Railway
- 
+
 on:
   push:
     branches: [main]
- 
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
- 
+
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v3
- 
-      - name: Deploy to Railway
-        uses: railwayapp/railway-action@v2
+        uses: actions/checkout@v4
+
+      # ----------------------------
+      # Install Node (needed for Railway CLI)
+      # ----------------------------
+      - name: Setup Node
+        uses: actions/setup-node@v4
         with:
-          serviceId: ${{ secrets.RAILWAY_SERVICE_ID }}
-          apiToken: ${{ secrets.RAILWAY_API_TOKEN }}
+          node-version: 20
+
+      # ----------------------------
+      # Install Railway CLI
+      # ----------------------------
+      - name: Install Railway CLI
+        run: npm install -g @railway/cli
+
+      # ----------------------------
+      # Authenticate Railway
+      # ----------------------------
+      - name: Authenticate Railway
+        run: railway login --token ${{ secrets.RAILWAY_API_TOKEN }}
+
+      # ----------------------------
+      # Deploy to Railway
+      # ----------------------------
+      - name: Deploy to Railway
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
