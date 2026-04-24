@@ -2,7 +2,7 @@ name: Deploy Backend to Railway
 
 on:
   push:
-    branches: [fix/railway-deploy-workflow]
+    branches: [main, fix/railway-deploy-workflow]
 
 permissions:
   contents: read
