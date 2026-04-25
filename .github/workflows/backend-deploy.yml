@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -12,28 +15,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ----------------------------
-      # Install Node (needed for Railway CLI)
-      # ----------------------------
-      - name: Setup Node
+      - name: Set up Node
         uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      # ----------------------------
-      # Install Railway CLI
-      # ----------------------------
       - name: Install Railway CLI
         run: npm install -g @railway/cli
 
-      # ----------------------------
-      # Authenticate Railway
-      # ----------------------------
-      - name: Authenticate Railway
-        run: railway login --token ${{ secrets.RAILWAY_API_TOKEN }}
-
-      # ----------------------------
-      # Deploy to Railway
-      # ----------------------------
       - name: Deploy to Railway
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID }}
+        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID_DISCSECOPS }} --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment production --detach
+        env:
+          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
