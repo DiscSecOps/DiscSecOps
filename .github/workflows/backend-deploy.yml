@@ -1,4 +1,4 @@
-name: Deploy Backend to Railway
+name: Deploy Backend to Render
 
 on:
   push:
@@ -12,18 +12,5 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-
-      - name: Install Railway CLI
-        run: npm install -g @railway/cli
-
-      - name: Deploy to Railway
-        run: railway up --service ${{ secrets.RAILWAY_SERVICE_ID_DISCSECOPS }} --project ${{ secrets.RAILWAY_PROJECT_ID }} --environment production --detach
-        env:
-          RAILWAY_TOKEN: ${{ secrets.RAILWAY_API_TOKEN }}
+      - name: Deploy to Render
+        run: curl -X POST ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
