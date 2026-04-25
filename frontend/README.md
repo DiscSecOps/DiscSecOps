@@ -28,21 +28,21 @@ npm run test:run  # Single run
 npm run test:e2e  # Runs all .feature files
 npm run test:e2e:ui  # Interactive UI
 
-frontend/                    # React + Vite
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   ├── utils/
-│   │   ├── services/
-│   │   └── App.jsx
-│   ├── tests
-│   │   ├── unit/              # Vitest tests
-│   │   └── e2e/               # Playwright BDD tests
-│   ├── public/
-│   ├── package.json
-│   ├── vite.config.js
-│   ├── vitest.config.js
-│   └── playwright.config.js
+frontend/                    # React + Vite  
+│   ├── src/  
+│   │   ├── components/  
+│   │   ├── pages/  
+│   │   ├── utils/  
+│   │   ├── services/  
+│   │   └── App.jsx  
+│   ├── tests  
+│   │   ├── unit/              # Vitest tests  
+│   │   └── e2e/               # Playwright BDD tests  
+│   ├── public/  
+│   ├── package.json  
+│   ├── vite.config.js  
+│   ├── vitest.config.js  
+│   └── playwright.config.js  
 
 ### API:
 
