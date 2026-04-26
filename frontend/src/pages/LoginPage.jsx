@@ -1,6 +1,6 @@
 // frontend/src/pages/LoginPage.jsx
 import { useState } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/useAuth.js';
 import './LoginPage.css';
 
@@ -83,8 +83,8 @@ function LoginPage() {
         </form>
         
         <div className="login-links">
-          <p>Don't have an account? <a href="/register">Register here</a></p>
-          <p><a href="/forgot-password">Forgot password?</a></p>
+          <p>Don't have an account? <Link to="/register">Register here</Link></p>
+          <p><Link to="/forgot-password">Forgot password?</Link></p>
         </div>
       </div>
     </div>
