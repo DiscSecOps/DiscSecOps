@@ -5,15 +5,24 @@ Uses an isolated FastAPI test app with a fresh Limiter per test to avoid
 state leakage between tests. No database required — purely tests the
 rate limiting layer.
 """
+
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from fastapi.testclient import TestClient
-from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
+
+
+async def _handle_rate_limit(request: Request, exc: Exception) -> JSONResponse:
+    """Typed rate limit handler compatible with FastAPI's add_exception_handler."""
+    return JSONResponse(status_code=429, content={"error": f"Rate limit exceeded: {exc}"})
+
 
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def make_app(limit: str = "3/minute") -> tuple[FastAPI, TestClient]:
     """
@@ -23,7 +32,7 @@ def make_app(limit: str = "3/minute") -> tuple[FastAPI, TestClient]:
     test_limiter = Limiter(key_func=get_remote_address)
     app = FastAPI()
     app.state.limiter = test_limiter
-    app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+    app.add_exception_handler(RateLimitExceeded, _handle_rate_limit)
 
     @app.get("/limited")
     @test_limiter.limit(limit)
@@ -40,6 +49,7 @@ def make_app(limit: str = "3/minute") -> tuple[FastAPI, TestClient]:
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
 
 class TestRateLimitingBasic:
     """Core rate limiting behaviour"""
@@ -150,6 +160,7 @@ class TestRateLimiterConfiguration:
     def test_limiter_attached_to_real_app_state(self):
         """The production app must have a limiter on its state."""
         from app.main import app
+
         assert hasattr(app.state, "limiter"), (
             "app.state.limiter is not set — did you forget to wire slowapi in main.py?"
         )
@@ -159,11 +170,13 @@ class TestRateLimiterConfiguration:
         from slowapi import Limiter as SlowApiLimiter
 
         from app.main import app
+
         assert isinstance(app.state.limiter, SlowApiLimiter)
 
     def test_ratelimitexceeded_handler_registered(self):
         """A handler for RateLimitExceeded must be registered so 429s are JSON."""
         from app.main import app
+
         assert RateLimitExceeded in app.exception_handlers, (
             "No exception handler for RateLimitExceeded registered in main.py"
         )
