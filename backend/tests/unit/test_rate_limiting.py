@@ -11,7 +11,6 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
 
-
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
@@ -157,8 +156,9 @@ class TestRateLimiterConfiguration:
 
     def test_limiter_instance_is_slowapi_limiter(self):
         """The object attached to app.state must be a slowapi Limiter."""
-        from app.main import app
         from slowapi import Limiter as SlowApiLimiter
+
+        from app.main import app
         assert isinstance(app.state.limiter, SlowApiLimiter)
 
     def test_ratelimitexceeded_handler_registered(self):

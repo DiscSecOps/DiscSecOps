@@ -12,7 +12,6 @@ from sqlalchemy.ext.asyncio import AsyncSession  # noqa: F401 - used in fixture 
 
 from app.core.limiter import limiter
 
-
 # ---------------------------------------------------------------------------
 # Fixtures
 # ---------------------------------------------------------------------------
