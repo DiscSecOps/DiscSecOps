@@ -6,9 +6,9 @@ from collections.abc import AsyncGenerator
 from contextlib import asynccontextmanager
 from typing import Any
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
-from slowapi import _rate_limit_exceeded_handler
+from fastapi.responses import JSONResponse
 from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.endpoints import auth, circle_members, circles, posts, users
@@ -39,7 +39,17 @@ app = FastAPI(
 
 # Attach rate limiter state and 429 exception handler
 app.state.limiter = limiter
-app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
+
+
+async def _handle_rate_limit_exceeded(request: Request, exc: Exception) -> JSONResponse:
+    """Typed wrapper around slowapi's rate limit handler for mypy compatibility."""
+    return JSONResponse(
+        status_code=429,
+        content={"error": f"Rate limit exceeded: {exc}"},
+    )
+
+
+app.add_exception_handler(RateLimitExceeded, _handle_rate_limit_exceeded)
 
 # Configure CORS for frontend access
 app.add_middleware(
