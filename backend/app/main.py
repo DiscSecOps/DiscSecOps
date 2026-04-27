@@ -8,10 +8,13 @@ from typing import Any
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
 
 from app.api.v1.endpoints import auth, circle_members, circles, posts, users
 from app.core.config import settings
 from app.core.db import engine
+from app.core.limiter import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
 
 
@@ -33,6 +36,10 @@ app = FastAPI(
     description="Social application backend with authentication and circles",
     lifespan=lifespan
 )
+
+# Attach rate limiter state and 429 exception handler
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Configure CORS for frontend access
 app.add_middleware(
