@@ -1,0 +1,30 @@
+{
+  // Python interpreter - points to the uv virtual environment
+  "python.defaultInterpreterPath": "${workspaceFolder}/backend/.venv/bin/python",
+  "python.interpreter.infoVisibility": "always",
+
+  // Pylance analysis - use the uv venv so slowapi and all packages resolve
+  "python.analysis.extraPaths": [
+    "${workspaceFolder}/backend/.venv/lib/python3.12/site-packages"
+  ],
+  "python.analysis.venvPath": "${workspaceFolder}/backend",
+  "python.analysis.venv": ".venv",
+  "python.analysis.typeCheckingMode": "basic",
+
+  // Ruff as the formatter/linter (consistent with CI)
+  "[python]": {
+    "editor.defaultFormatter": "charliermarsh.ruff",
+    "editor.formatOnSave": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
+    }
+  },
+
+  // Test discovery
+  "python.testing.pytestEnabled": true,
+  "python.testing.pytestPath": "${workspaceFolder}/backend/.venv/bin/pytest",
+  "python.testing.pytestArgs": [
+    "backend/tests"
+  ]
+}

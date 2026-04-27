@@ -1,0 +1,17 @@
+{
+  "venvPath": ".",
+  "venv": ".venv",
+  "pythonVersion": "3.12",
+  "pythonPlatform": "Linux",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "warning",
+  "include": [
+    "app",
+    "tests"
+  ],
+  "exclude": [
+    ".venv",
+    "alembic/versions"
+  ]
+}
