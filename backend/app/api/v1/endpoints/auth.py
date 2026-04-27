@@ -164,13 +164,17 @@ async def login(
 
         secure_flag = settings.ENVIRONMENT == "production"
 
+        # For cross-origin requests (GitHub Pages → Render), use samesite="none"
+        # This allows cookies to be sent with cross-origin requests
+        samesite_value = "none" if settings.ENVIRONMENT == "production" else "lax"
+
         # Set HTTP-only cookie (more secure than localStorage)
         response.set_cookie(
             key="session_token",
             value=session_token,
             httponly=True,
             secure=secure_flag,  # Set to True in production with HTTPS
-            samesite="lax",
+            samesite=samesite_value,
             max_age=settings.SESSION_EXPIRE_MINUTES * 60,
             path="/",
         )
@@ -291,8 +295,15 @@ async def logout(
             await db.delete(session)
             await db.commit()
 
-        # Clear cookie
-        response.delete_cookie("session_token", path="/")
+        # Clear cookie with same settings as login
+        secure_flag = settings.ENVIRONMENT == "production"
+        samesite_value = "none" if settings.ENVIRONMENT == "production" else "lax"
+        response.delete_cookie(
+            "session_token",
+            path="/",
+            secure=secure_flag,
+            samesite=samesite_value
+        )
 
     return {
         "success": True,
