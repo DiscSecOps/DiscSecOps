@@ -138,6 +138,12 @@ async def db_session(async_engine: AsyncEngine) -> AsyncGenerator[AsyncSession, 
 async def client(db_session: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """Test client with overridden database dependency."""
 
+    # Reset rate limiter BEFORE yielding the client.
+    # All fixtures that call /auth/login (test_owner, test_moderator, etc.)
+    # depend on this fixture, so this reset is guaranteed to run first —
+    # preventing counter bleed from previous tests.
+    limiter._storage.reset()
+
     async def override_get_db() -> AsyncGenerator[AsyncSession, None]:
         yield db_session
 
@@ -229,18 +235,14 @@ def clean_database_before_test(request):
     """
     Automatically wipes all database tables before E2E tests ONLY.
     Integration tests use the db_session transaction rollback instead.
-    Also resets the rate limiter storage before every test to prevent
-    counter bleed between tests.
+    Rate limiter reset is handled inside the `client` fixture, which
+    is guaranteed to run before any fixture that calls login endpoints.
     """
-    # Reset rate limiter counters before every test regardless of type
-    limiter._storage.reset()
-
     # ✅ Check if the test is inside the 'e2e' folder.
     # If it isn't, skip the truncate and just run the test!
     print(f"\n[DEBUG] Running test: {request.node.name} at {request.node.path}")
     if "e2e" not in str(request.node.path):
         yield
-        limiter._storage.reset()  # also reset after, for safety
         return
 
     async def _truncate():
