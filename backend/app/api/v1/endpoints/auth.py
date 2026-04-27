@@ -13,7 +13,7 @@ import logging
 import secrets
 import traceback
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy import func, select
@@ -166,7 +166,8 @@ async def login(
 
         # For cross-origin requests (GitHub Pages → Render), use samesite="none"
         # This allows cookies to be sent with cross-origin requests
-        samesite_value = "none" if settings.ENVIRONMENT == "production" else "lax"
+        # Type annotation for mypy: Literal['lax', 'none']
+        samesite_value: Literal["lax", "none"] = "none" if settings.ENVIRONMENT == "production" else "lax"
 
         # Set HTTP-only cookie (more secure than localStorage)
         response.set_cookie(
@@ -297,7 +298,7 @@ async def logout(
 
         # Clear cookie with same settings as login
         secure_flag = settings.ENVIRONMENT == "production"
-        samesite_value = "none" if settings.ENVIRONMENT == "production" else "lax"
+        samesite_value: Literal["lax", "none"] = "none" if settings.ENVIRONMENT == "production" else "lax"
         response.delete_cookie(
             "session_token",
             path="/",
