@@ -11,7 +11,7 @@ from app.core.config import settings
 # Create an asynchronous engine to connect to the PostgreSQL database
 # The DATABASE_URL is loaded from settings, which defaults to the local dev container DB
 # or can be overridden by an environment variable (e.g., for Neon).
-engine = create_async_engine(settings.DATABASE_URL, echo=True)
+engine = create_async_engine(settings.DATABASE_URL_CLEAN, echo=True)
 
 # Create a sessionmaker for asynchronous sessions
 # expire_on_commit=False prevents objects from being expired after commit,

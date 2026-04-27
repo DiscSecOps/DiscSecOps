@@ -45,6 +45,9 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"  # overridden in production
     FRONTEND_URL: str = "http://localhost:3000"  # used for CSP
 
+    @property
+    def DATABASE_URL_CLEAN(self) -> str:
+        return self.DATABASE_URL.strip()
 
 # Global settings instance
 settings = Settings()
