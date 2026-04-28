@@ -22,7 +22,7 @@ function App() {
        <Router basename='/DiscSecOps/'>
         <Routes>
           {/* Public routes */}
-          <Route path="/" element={<LoginPage />} />
+          <Route index element={<LoginPage />} />
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
 
