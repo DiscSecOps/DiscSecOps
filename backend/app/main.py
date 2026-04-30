@@ -13,20 +13,13 @@ from typing import Any
 from fastapi import FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
-from slowapi import Limiter
 from slowapi.errors import RateLimitExceeded
-from slowapi.util import get_remote_address
 
 from app.api.v1.endpoints import auth, circle_members, circles, posts, users
 from app.core.config import settings
 from app.core.db import engine
+from app.core.limiter import limiter
 from app.core.security_headers import SecurityHeadersMiddleware
-
-# -----------------------------
-# RATE LIMITER CONFIG
-# -----------------------------
-limiter = Limiter(key_func=get_remote_address)
-
 
 # -----------------------------
 # LOGGING CONFIG

@@ -15,13 +15,12 @@ from datetime import datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
-from slowapi import Limiter
-from slowapi.util import get_remote_address
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
 from app.core.db import get_db
+from app.core.limiter import limiter
 from app.core.security import get_password_hash, verify_password
 from app.db.models import User, UserSession
 from app.schemas.auth import SessionResponse, UserCreate, UserLogin, UserResponse
@@ -34,9 +33,9 @@ logger = logging.getLogger("auth")
 # -----------------------------
 # RATE LIMITER
 # -----------------------------
-limiter = Limiter(key_func=get_remote_address)
 
-router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+router: APIRouter = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
 # -----------------------------
@@ -292,4 +291,3 @@ async def logout(
     })
 
     return {"success": True, "message": "Logged out successfully"}
-# settings. VERSION

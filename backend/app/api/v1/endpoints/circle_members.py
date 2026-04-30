@@ -16,7 +16,7 @@ from app.schemas.social import (
     UpdateRoleRequest,
 )
 
-router = APIRouter(prefix="/circles", tags=["Circle Members"])
+router: APIRouter = APIRouter(prefix="/circles", tags=["Circle Members"])
 
 
 # ======================================================
