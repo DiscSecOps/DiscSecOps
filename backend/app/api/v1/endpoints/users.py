@@ -9,7 +9,7 @@ from app.db.models import CircleMember, User
 from app.schemas.auth import UserResponse
 from app.schemas.social import UserSearchResponse
 
-router = APIRouter(prefix="/users", tags=["Users"])
+router: APIRouter = APIRouter(prefix="/users", tags=["Users"])
 
 # ======================================================
 # GET ALL USERS (with pagination)

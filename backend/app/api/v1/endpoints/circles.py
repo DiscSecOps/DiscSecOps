@@ -13,7 +13,7 @@ from app.schemas.social import (
     CircleRole,
 )
 
-router = APIRouter(prefix="/circles", tags=["Circles"])
+router: APIRouter = APIRouter(prefix="/circles", tags=["Circles"])
 
 
 @router.get("/my", response_model=list[CircleResponse])

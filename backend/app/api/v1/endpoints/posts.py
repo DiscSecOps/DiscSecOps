@@ -7,7 +7,7 @@ from app.core.db import get_db
 from app.db.models import Circle, CircleMember, Post, User
 from app.schemas.social import PostCreate, PostResponse
 
-router = APIRouter(prefix="/posts", tags=["Posts"])
+router: APIRouter = APIRouter(prefix="/posts", tags=["Posts"])
 
 
 @router.get("/feed", response_model=list[PostResponse])

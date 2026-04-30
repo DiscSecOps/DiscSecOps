@@ -21,22 +21,22 @@ class SecurityHeadersMiddleware:
                 headers = message.setdefault("headers", [])
 
                 # Basic security headers
-                headers.append((b"x-frame-options", b"DENY"))
-                headers.append((b"x-content-type-options", b"nosniff"))
-                headers.append((b"referrer-policy", b"strict-origin-when-cross-origin"))
-                headers.append((b"permissions-policy", b"geolocation=()"))
+                headers.append((b"x-frame-options", b"DENY"))                               # No <iframe> embedding
+                headers.append((b"x-content-type-options", b"nosniff"))                     # No content or MIME-sniffing
+                headers.append((b"referrer-policy", b"strict-origin-when-cross-origin"))    # No private data in referrer
+                headers.append((b"permissions-policy", b"geolocation=()"))                  # No geolocation access
 
                 # Cache control
                 headers.append((b"cache-control", b"no-store"))
 
                 # Content Security Policy
                 csp = (
-                    f"default-src 'self'; "
-                    f"script-src 'self'; "
-                    f"style-src 'self' 'unsafe-inline'; "
-                    f"img-src 'self' data:; "
-                    f"connect-src 'self' {settings.FRONTEND_URL}; "
-                    f"frame-ancestors 'none';"
+                    f"default-src 'self'; "                         # Allow resources same origin
+                    f"script-src 'self'; "                          # Allow scripts from same origin
+                    f"style-src 'self' 'unsafe-inline'; "           # Allow inline styles (for simplicity, but could be tightened)
+                    f"img-src 'self' data:; "                       # Allow images from same origin
+                    f"connect-src 'self' {settings.FRONTEND_URL}; " # Allow API calls to frontend
+                    f"frame-ancestors 'none';"                      # Disallow framing
                 )
                 headers.append((b"content-security-policy", csp.encode()))
 
