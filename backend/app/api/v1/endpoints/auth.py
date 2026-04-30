@@ -2,11 +2,10 @@
 """
 Authentication endpoints (ASYNC for PostgreSQL)
 Matches frontend expectations:
-- POST /api/v1/auth/register - Create new user account
-- POST /api/v1/auth/login - Login and get session
-- GET /api/v1/auth/me - Get current user
-- POST /api/v1/auth/logout - Logout and clear session
-- Username-based authentication (not email!)
+- POST /api/v1/auth/register
+- POST /api/v1/auth/login
+- GET /api/v1/auth/me
+- POST /api/v1/auth/logout
 """
 
 import logging
@@ -16,6 +15,8 @@ from datetime import datetime, timedelta
 from typing import Any, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -25,54 +26,37 @@ from app.core.security import get_password_hash, verify_password
 from app.db.models import User, UserSession
 from app.schemas.auth import SessionResponse, UserCreate, UserLogin, UserResponse
 
-logger = logging.getLogger(__name__)
+# -----------------------------
+# LOGGER
+# -----------------------------
+logger = logging.getLogger("auth")
+
+# -----------------------------
+# RATE LIMITER
+# -----------------------------
+limiter = Limiter(key_func=get_remote_address)
+
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
 
+# -----------------------------
+# REGISTER
+# -----------------------------
 @router.post("/register", response_model=SessionResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) -> SessionResponse:
-    """
-    Register a new user (ASYNC)
 
-    Frontend sends POST request to /api/auth/register with:
-    ```json
-    {
-        "username": "johndoe",
-        "email": "user@example.com",
-        "password": "SecurePass123!",
-        "full_name": "John Doe"  # Optional
-    }
-    ```
-
-    Returns:
-    - 201: User created successfully
-    - 400: Username already taken
-    - 400: Email already taken
-    """
-    # Check if username already exists
     username = await db.execute(select(User).where(User.username == user_data.username))
-    db_username = username.scalar_one_or_none()
+    if username.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Username already taken")
 
-    if db_username:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Username already taken"
-        )
+    email = await db.execute(
+        select(User).where(func.lower(User.email) == func.lower(user_data.email))
+    )
+    if email.scalar_one_or_none():
+        raise HTTPException(status_code=400, detail="Email already taken")
 
-    # Check if email already exists
-    email = await db.execute(select(User).where(
-            func.lower(User.email) == func.lower(user_data.email)
-        ))
-    db_email = email.scalar_one_or_none()
-
-    if db_email:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Email already taken"
-        )
-
-    # Hash password using Argon2
     hashed_password = get_password_hash(user_data.password)
 
-    # Create new user (no role_id - removed)
     new_user = User(
         username=user_data.username,
         email=user_data.email,
@@ -85,71 +69,90 @@ async def register(user_data: UserCreate, db: AsyncSession = Depends(get_db)) ->
     await db.commit()
     await db.refresh(new_user)
 
-    # Return success response matching frontend expectations
+    logger.info({
+        "event": "user_registered",
+        "username": new_user.username,
+        "user_id": new_user.id
+    })
+    print(f"✅ REGISTER: {new_user.username} (ID: {new_user.id})")
+
     return SessionResponse(
         success=True,
         username=new_user.username,
-        session_token=None,  # No session token on registration - user must login separately
+        session_token=None,
         user=UserResponse.model_validate(new_user)
     )
 
 
+# -----------------------------
+# LOGIN (with rate limiting + logging)
+# -----------------------------
 @router.post("/login", response_model=SessionResponse)
+@limiter.limit("5/minute")
 async def login(
     credentials: UserLogin,
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db)
 ) -> SessionResponse:
-    """
-    Login user and create session (SESSION-BASED AUTH)
 
-    Frontend sends POST request to /api/auth/login with:
-    ```json
-    {
-        "username": "johndoe",
-        "password": "SecurePass123!"
-    }
-    ```
-
-    Returns:
-    - 200: Login successful with session token
-    - 401: Invalid credentials
-    - 403: Account inactive
-    """
     try:
-        # Find user by username
+        # Find user
         result = await db.execute(
             select(User).where(User.username == credentials.username)
         )
         user = result.scalar_one_or_none()
 
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
-            )
+            client_ip = request.client.host if request.client else "unknown"
+            logger.warning({
+                "event": "auth_failed",
+                "username": credentials.username,
+                "ip": client_ip,
+                "reason": "user_not_found"
+            })
+            print(f"❌ LOGIN FAILED: {credentials.username} - {client_ip} - User not found")
+            raise HTTPException(status_code=401, detail="Invalid username or password")
 
         # Verify password
         if not verify_password(credentials.password, user.hashed_password):
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid username or password"
-            )
+            client_ip = request.client.host if request.client else "unknown"
+            logger.warning({
+                "event": "auth_failed",
+                "username": credentials.username,
+                "ip": client_ip,
+                "reason": "invalid_password"
+            })
+            print(f"❌ LOGIN FAILED: {credentials.username} - {client_ip} - Invalid password")
+            raise HTTPException(status_code=401, detail="Invalid username or password")
 
-        # Check if user is active
+        # Check active
         if not user.is_active:
-            raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Account is inactive"
-            )
+            client_ip = request.client.host if request.client else "unknown"
+            logger.warning({
+                "event": "auth_failed",
+                "username": credentials.username,
+                "ip": client_ip,
+                "reason": "inactive_account"
+            })
+            print(f"❌ LOGIN FAILED: {credentials.username} - {client_ip} - Inactive account")
+            raise HTTPException(status_code=403, detail="Account is inactive")
 
-        # Generate secure session token
+        # SUCCESS LOG
+        client_ip = request.client.host if request.client else "unknown"
+        logger.info({
+            "event": "auth_success",
+            "user_id": user.id,
+            "username": user.username,
+            "ip": client_ip
+        })
+        print(f"🔐 LOGIN SUCCESS: {user.username} (ID: {user.id}) - {client_ip}")
+
+        # Create session
         session_token = secrets.token_urlsafe(32)
-
-        # Create session in database
         now = datetime.now()
         expires_at = now + timedelta(minutes=settings.SESSION_EXPIRE_MINUTES)
+
         new_session = UserSession(
             session_token=session_token,
             user_id=user.id,
@@ -163,24 +166,18 @@ async def login(
         await db.commit()
 
         secure_flag = settings.ENVIRONMENT == "production"
+        samesite_value: Literal["lax", "none"] = "none" if secure_flag else "lax"
 
-        # For cross-origin requests (GitHub Pages → Render), use samesite="none"
-        # This allows cookies to be sent with cross-origin requests
-        # Type annotation for mypy: Literal['lax', 'none']
-        samesite_value: Literal["lax", "none"] = "none" if settings.ENVIRONMENT == "production" else "lax"
-
-        # Set HTTP-only cookie (more secure than localStorage)
         response.set_cookie(
             key="session_token",
             value=session_token,
             httponly=True,
-            secure=secure_flag,  # Set to True in production with HTTPS
+            secure=secure_flag,
             samesite=samesite_value,
             max_age=settings.SESSION_EXPIRE_MINUTES * 60,
             path="/",
         )
 
-        # Build user response (no role_id)
         user_response = UserResponse(
             id=user.id,
             username=user.username,
@@ -201,32 +198,27 @@ async def login(
     except HTTPException:
         raise
     except Exception as e:
-        logger.error(f"Login error: {type(e).__name__}: {str(e)}")
-        logger.error(traceback.format_exc())
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Login failed due to server error"
-        ) from e
+        logger.error({
+            "event": "auth_error",
+            "error": str(e),
+            "trace": traceback.format_exc()
+        })
+        print(f"🚨 AUTH ERROR: {str(e)}")
+        raise HTTPException(status_code=500, detail="Login failed due to server error") from e
 
 
-# Dependency returns current authenticated user based on session token
+# -----------------------------
+# GET CURRENT USER
+# -----------------------------
 async def get_current_user_from_session(
     request: Request,
     db: AsyncSession = Depends(get_db)
 ) -> User:
-    """
-    Dependency to get current authenticated user
-    Can be used in any endpoint that needs the current user
-    """
+
     session_token = request.cookies.get("session_token")
-
     if not session_token:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Not authenticated"
-        )
+        raise HTTPException(status_code=401, detail="Not authenticated")
 
-    # Find valid session
     session_result = await db.execute(
         select(UserSession)
         .where(UserSession.session_token == session_token)
@@ -235,35 +227,22 @@ async def get_current_user_from_session(
     session = session_result.scalar_one_or_none()
 
     if not session:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Session expired or invalid"
-        )
+        raise HTTPException(status_code=401, detail="Session expired or invalid")
 
-    # Find user
-    user_result = await db.execute(
-        select(User).where(User.id == session.user_id)
-    )
+    user_result = await db.execute(select(User).where(User.id == session.user_id))
     user = user_result.scalar_one_or_none()
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found"
-        )
+        raise HTTPException(status_code=401, detail="User not found")
 
     return user
 
 
-# Endpoints that require authentication can use this dependency to get the current user
 @router.get("/me", response_model=UserResponse)
 async def get_current_user_endpoint(
     current_user: User = Depends(get_current_user_from_session)
 ) -> UserResponse:
-    """
-    Get current authenticated user
-    Returns 401 if not authenticated
-    """
+
     return UserResponse(
         id=current_user.id,
         username=current_user.username,
@@ -274,19 +253,20 @@ async def get_current_user_endpoint(
         updated_at=current_user.updated_at,
     )
 
+
+# -----------------------------
+# LOGOUT
+# -----------------------------
 @router.post("/logout")
 async def logout(
     request: Request,
     response: Response,
     db: AsyncSession = Depends(get_db)
 ) -> dict[str, Any]:
-    """
-    Logout user - invalidate session and clear cookie
-    """
+
     session_token = request.cookies.get("session_token")
 
     if session_token:
-        # Delete session from database
         result = await db.execute(
             select(UserSession).where(UserSession.session_token == session_token)
         )
@@ -296,9 +276,9 @@ async def logout(
             await db.delete(session)
             await db.commit()
 
-        # Clear cookie with same settings as login
         secure_flag = settings.ENVIRONMENT == "production"
-        samesite_value: Literal["lax", "none"] = "none" if settings.ENVIRONMENT == "production" else "lax"
+        samesite_value: Literal["lax", "none"] = "none" if secure_flag else "lax"
+
         response.delete_cookie(
             "session_token",
             path="/",
@@ -306,9 +286,10 @@ async def logout(
             samesite=samesite_value
         )
 
-    return {
-        "success": True,
-        "message": "Logged out successfully"
-    }
+    logger.info({
+        "event": "logout",
+        "ip": (request.client.host if request.client else "unknown")
+    })
 
-
+    return {"success": True, "message": "Logged out successfully"}
+# settings. VERSION
